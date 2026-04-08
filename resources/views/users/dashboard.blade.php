@@ -1,0 +1,298 @@
+@extends('users.students')
+
+@section('content')
+<div class="container-fluid p-0 pb-5">
+
+    {{-- HEADER --}}
+    <div class="mb-4 text-start">
+        <h3 class="fw-bold text-dark">Dashboard</h3>
+        <p class="text-muted">Welcome back! Here is your learning overview.</p>
+    </div>
+
+    {{-- ✅ NEXT PRAYER HIGHLIGHT CARD --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
+        <div class="card-body p-4 text-white position-relative text-start">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashNextLabel">Upcoming Prayer</p>
+                    <h1 class="fw-bold mb-2" id="dashNextTime" style="font-size: 3.5rem;">--:--</h1>
+                    
+                    <div class="d-inline-flex align-items-center bg-white bg-opacity-25 rounded-pill px-3 py-1">
+                        <i class="far fa-clock me-2"></i>
+                        <span class="fw-bold small" id="dashCountdown">Calculating...</span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end d-none d-md-block opacity-25">
+                    <i class="fas fa-mosque fa-7x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 1. FULL MENU CARDS (6 Cards) --}}
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <a href="{{ route('student.progress.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #2962FF;">
+                        <i class="fas fa-chart-pie fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Progress</h5>
+                        <p class="text-muted small mb-0">View subject analytics</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.timetable.view') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #8B1E24;">
+                        <i class="far fa-calendar-alt fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Timetable</h5>
+                        <p class="text-muted small mb-0">Check class schedule</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.flashcards.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #F59E0B;">
+                        <i class="fas fa-layer-group fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Flashcards</h5>
+                        <p class="text-muted small mb-0">Study & memorize</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <a href="{{ route('student.resources.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #00897B;">
+                        <i class="far fa-folder-open fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Resources</h5>
+                        <p class="text-muted small mb-0">Notes & videos</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.messages.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #D93025;">
+                        <i class="far fa-comment-dots fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Messages</h5>
+                        <p class="text-muted small mb-0">Chat with teachers</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.profile.show') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #C05621;">
+                        <i class="far fa-user fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Profile</h5>
+                        <p class="text-muted small mb-0">Account settings</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {{-- 2. ANALYTICS ROW WITH PIE CHART --}}
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 text-start">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Subject-wise Performance</h5>
+                            <small class="text-muted">Real data analysis</small>
+                        </div>
+                    </div>
+                    <div style="height: 400px; position: relative;">
+                        <canvas id="performancePieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4 text-start">
+                    <h5 class="fw-bold text-dark mb-4">Study Summary</h5>
+                    <div class="mb-4">
+                        <h1 class="fw-bold mb-0 text-dark" style="font-size: 3rem;">{{ $totalQuizzes ?? 0 }}</h1>
+                        <p class="text-muted">Quizzes Completed</p>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-end mb-1">
+                            <h2 class="fw-bold mb-0 text-dark">{{ round($averageScore ?? 0, 1) }}%</h2>
+                            <small class="text-muted">Avg Score</small>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 10px;">
+                            <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {{ $averageScore ?? 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 3. GOOGLE CALENDAR --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-5">
+        <div class="card-header bg-white border-0 pt-4 px-4 text-start">
+            <h5 class="fw-bold text-dark"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
+        </div>
+        <div class="card-body p-4">
+            <div style="width: 100%; height: 600px; overflow: hidden; border-radius: 12px; border: 1px solid #eee;">
+                <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FKuala_Lumpur&src=ZW4ubWFsYXlzaWEjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%230B8043&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&mode=AGENDA" 
+                    style="border:0" width="100%" height="600" frameborder="0" scrolling="no">
+                </iframe>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{-- PRAYER WIDGET (FLOATING) --}}
+<div class="prayer-widget-container no-print">
+    <div id="prayerList" class="card border-0 shadow mb-3 d-none prayer-list-card">
+        <div class="card-body p-3 text-start">
+            <h6 class="fw-bold text-center border-bottom pb-2 mb-2">Waktu Solat (JAKIM)</h6>
+            <div class="d-flex justify-content-between small mb-1"><span>Subuh</span> <span id="time-Fajr" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Zohor</span> <span id="time-Dhuhr" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Asar</span> <span id="time-Asr" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Maghrib</span> <span id="time-Maghrib" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Isyak</span> <span id="time-Isha" class="fw-bold">--:--</span></div>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-end" onclick="togglePrayerList()" style="cursor: pointer;">
+        <div class="bg-white px-4 py-2 rounded-pill shadow-sm border me-3">
+            <div class="fw-bold small text-muted text-uppercase" id="nextPrayerName">Loading...</div>
+            <div class="fw-bold text-danger" id="nextPrayerTime">--:--</div>
+        </div>
+        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center shadow-lg prayer-icon">
+            <i class="far fa-clock fa-lg"></i>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: translateY(-5px); }
+    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: end; }
+    .prayer-icon { width: 60px; height: 60px; transition: transform 0.2s; }
+    .prayer-list-card { width: 220px; animation: slideUp 0.3s ease-out; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .text-start { text-align: left !important; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script>
+    // ✅ PIE CHART LOGIC
+    const pieCtx = document.getElementById('performancePieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: {!! json_encode(array_keys($subjectPerformance)) !!},
+            datasets: [{
+                data: {!! json_encode(array_values($subjectPerformance)) !!},
+                backgroundColor: ['#2962FF', '#F59E0B', '#10B981', '#D93025', '#8B5CF6'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } }
+            }
+        }
+    });
+
+    // ✅ PRAYER LOGIC (DASHBOARD + FLOATING)
+    function fetchPrayerTimes() {
+        const savedLoc = localStorage.getItem('prayerLoc') || '2.3133,102.4309';
+        const [lat, long] = savedLoc.split(',');
+        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=3`;
+
+        fetch(apiUrl).then(res => res.json()).then(data => {
+            const t = data.data.timings;
+            const prayers = {
+                "Subuh": t.Fajr,
+                "Zohor": t.Dhuhr,
+                "Asar": t.Asr,
+                "Maghrib": t.Maghrib,
+                "Isyak": t.Isha
+            };
+
+            // Update Floating Widget
+            document.getElementById('time-Fajr').innerText = t.Fajr;
+            document.getElementById('time-Dhuhr').innerText = t.Dhuhr;
+            document.getElementById('time-Asr').innerText = t.Asr;
+            document.getElementById('time-Maghrib').innerText = t.Maghrib;
+            document.getElementById('time-Isha').innerText = t.Isha;
+
+            updateNextPrayer(prayers);
+            setInterval(() => updateNextPrayer(prayers), 1000);
+        });
+    }
+
+    function updateNextPrayer(prayers) {
+        const now = moment();
+        let nextName = "";
+        let nextTime = null;
+
+        for (let name in prayers) {
+            let time = moment(prayers[name], "HH:mm");
+            if (time.isAfter(now)) {
+                nextName = name;
+                nextTime = time;
+                break;
+            }
+        }
+
+        if (!nextTime) {
+            nextName = "Subuh";
+            nextTime = moment(prayers["Subuh"], "HH:mm").add(1, 'days');
+        }
+
+        // Update Dashboard Card
+        document.getElementById('dashNextLabel').innerText = "Next: " + nextName;
+        document.getElementById('dashNextTime').innerText = nextTime.format("HH:mm");
+        
+        // Update Floating Widget
+        document.getElementById('nextPrayerName').innerText = nextName;
+        document.getElementById('nextPrayerTime').innerText = nextTime.format("HH:mm");
+
+        // Countdown Logic
+        const diff = moment.duration(nextTime.diff(now));
+        document.getElementById('dashCountdown').innerText = 
+            `${Math.floor(diff.asHours())}h ${diff.minutes()}m ${diff.seconds()}s remaining`;
+    }
+
+    fetchPrayerTimes();
+    function togglePrayerList() { document.getElementById('prayerList').classList.toggle('d-none'); }
+</script>
+@endsection
