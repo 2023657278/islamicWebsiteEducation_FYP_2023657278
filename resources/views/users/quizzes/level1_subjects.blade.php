@@ -24,7 +24,8 @@
     <div class="row g-4">
         @foreach($subjects as $sub)
         <div class="col-md-4 col-lg-3">
-            <a href="{{ route('student.quizzes.topics', $sub->id) }}" class="text-decoration-none">
+            {{-- 🟢 UPDATED: Pointing to the difficulties route instead of topics --}}
+            <a href="{{ route('student.quizzes.difficulties', $sub->id) }}" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm rounded-4 hover-scale transition-all">
                     <div class="card-body text-center p-5">
                         <div class="bg-light rounded-circle d-inline-flex p-3 mb-3 text-danger">

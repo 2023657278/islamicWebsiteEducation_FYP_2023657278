@@ -3,7 +3,8 @@
 <div class="container-fluid">
     <div class="p-4 bg-white shadow-sm rounded-lg border-left border-danger mb-4">
         <h4 class="font-weight-bold"><i class="fab fa-youtube text-danger mr-2"></i> Select Videos with #MRSM</h4>
-        <p class="text-muted mb-0">Choosing for Class: <strong>{{ \App\Models\Group::find($group_id)->group_name }}</strong></p>
+        {{-- Update the strong tag on line 6 to this: --}}
+<strong>{{ \App\Models\Group::find($group_id)?->group_name ?? 'General Resource' }}</strong>
     </div>
 
     <form action="{{ route('resources.sync.store_selected') }}" method="POST">

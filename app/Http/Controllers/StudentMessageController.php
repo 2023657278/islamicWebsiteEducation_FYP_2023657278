@@ -10,44 +10,36 @@ use App\Models\Timetable;
 
 class StudentMessageController extends Controller
 {
-    // 1. List Contacts (Teachers, Classmates, Broadcasts)
+    // 1. List Contacts (Teachers, Classmates, Announcements)
     public function index()
     {
         $student = Auth::user();
 
-        // A. GET INVOLVED TEACHERS (From Timetable)
-        $teacherIds = Timetable::where('group_id', $student->group_id)
-                        ->pluck('teacher_id')
-                        ->unique();
-        
+        // A. GET TEACHERS
+        $teacherIds = Timetable::where('group_id', $student->group_id)->pluck('teacher_id')->unique();
         $teachers = User::whereIn('id', $teacherIds)->get();
         $this->attachLastMessage($teachers, $student);
 
-        // B. GET CLASSMATES (Same Group)
+        // B. GET CLASSMATES
         $classmates = User::where('group_id', $student->group_id)
                         ->where('role', 'student')
-                        ->where('id', '!=', $student->id) // Exclude self
+                        ->where('id', '!=', $student->id)
                         ->get();
         $this->attachLastMessage($classmates, $student);
 
-        // C. GET BROADCASTS (Announcements)
-        $broadcastChannel = new User([
-            'id' => 0, 
-            'name' => 'Class Announcements',
-            'role' => 'system',
-            'profile_image' => null
-        ]);
-        
-        $lastBroadcast = Message::where('type', 'broadcast')
-                            ->where('target_id', $student->group_id)
-                            ->latest()
-                            ->first();
-        $broadcastChannel->last_message = $lastBroadcast;
+        // C. CHANNEL 1: SCHOOL ANNOUNCEMENTS (Global)
+        $globalChannel = new User(['id' => 0, 'name' => 'School Announcements', 'role' => 'system']);
+        $globalChannel->last_message = Message::where('type', 'global')->latest()->first();
 
-        return view('users.messages.index', compact('teachers', 'classmates', 'broadcastChannel'));
+        // D. CHANNEL 2: CLASS ANNOUNCEMENTS (Group)
+        $groupChannel = new User(['id' => 0, 'name' => 'Class Announcements', 'role' => 'system']);
+        $groupChannel->last_message = Message::where('type', 'group')
+                                        ->where('target_id', $student->group_id)
+                                        ->latest()->first();
+
+        return view('users.messages.index', compact('teachers', 'classmates', 'globalChannel', 'groupChannel'));
     }
 
-    // Helper to attach last message
     private function attachLastMessage($users, $student)
     {
         foreach ($users as $user) {
@@ -59,66 +51,85 @@ class StudentMessageController extends Controller
         }
     }
 
-    // 2. Show Chat
+    // 2. Show Chat (FIXED: Added 'id' to dummy objects)
     public function show($id)
     {
         $student = Auth::user();
 
-        // HANDLE BROADCAST CHANNEL (ID = 0)
-        if ($id == 0) {
-            $teacher = new User([
-                'id' => 0,
-                'name' => 'Class Announcements',
+        // SCHOOL ANNOUNCEMENTS (Read-Only)
+        if ($id === 'global') {
+            $teacher = (object)[
+                'id' => 'global', // Added ID to fix the error
+                'name' => 'School Announcements', 
                 'role' => 'system'
-            ]);
-            
-            $messages = Message::where('type', 'broadcast')
-                            ->where('target_id', $student->group_id)
-                            ->orderBy('created_at', 'asc')
-                            ->get();
-            
+            ];
+            $messages = Message::where('type', 'global')->with('sender')->orderBy('created_at', 'asc')->get();
             $isBroadcast = true;
+            return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
+        }
+
+        // CLASS ANNOUNCEMENTS (Class Chat)
+        if ($id === 'group') {
+            $teacher = (object)[
+                'id' => 'group', // Added ID to fix the error
+                'name' => 'Class Announcements', 
+                'role' => 'system'
+            ];
+            $messages = Message::where('type', 'group')
+                               ->where('target_id', $student->group_id)
+                               ->with('sender')
+                               ->orderBy('created_at', 'asc')
+                               ->get();
+            
+            // Set to false to show the chat input box
+            $isBroadcast = false; 
             
             return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
         }
 
-        // HANDLE PRIVATE CHAT
+        // PRIVATE CHAT
         $teacher = User::findOrFail($id);
-
-        $isTeacher = Timetable::where('group_id', $student->group_id)->where('teacher_id', $id)->exists();
-        $isClassmate = ($teacher->group_id == $student->group_id && $teacher->role == 'student');
-
-        if (!$isTeacher && !$isClassmate) {
-            return redirect()->route('student.messages.index')->with('error', 'You cannot message this user.');
-        }
-
         $messages = Message::where(function($q) use ($student, $teacher) {
-                            $q->where('sender_id', $student->id)->where('target_id', $teacher->id);
-                        })->orWhere(function($q) use ($student, $teacher) {
-                            $q->where('sender_id', $teacher->id)->where('target_id', $student->id);
-                        })
-                        ->orderBy('created_at', 'asc')
-                        ->get();
+                        $q->where('sender_id', $student->id)->where('target_id', $teacher->id);
+                    })->orWhere(function($q) use ($student, $teacher) {
+                        $q->where('sender_id', $teacher->id)->where('target_id', $student->id);
+                    })
+                    ->with('sender')
+                    ->orderBy('created_at', 'asc')
+                    ->get();
 
         $isBroadcast = false;
-
         return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
     }
 
-    // 3. Send Message (FIXED)
+    // 3. Send Message
     public function store(Request $request, $id)
     {
-        if ($id == 0) {
-            return back()->with('error', 'You cannot reply to announcements.');
-        }
-
+        $student = Auth::user();
         $request->validate(['message' => 'required|string']);
 
+        if ($id === 'global') {
+            return back()->with('error', 'You cannot reply to school-wide announcements.');
+        }
+
+        // Save to Group Chat
+        if ($id === 'group') {
+            Message::create([
+                'sender_id' => $student->id,
+                'target_id' => $student->group_id,
+                'type'      => 'group',
+                'subject'   => 'Group Chat',
+                'message'   => $request->message,
+            ]);
+            return back();
+        }
+
+        // Save Private Message
         Message::create([
-            'sender_id' => Auth::id(),
+            'sender_id' => $student->id,
             'target_id' => $id,
             'type'      => 'private',
-            'subject'   => 'Private Chat', // ✅ ADDED THIS LINE TO FIX ERROR 1364
+            'subject'   => 'Private Chat',
             'message'   => $request->message,
         ]);
 

@@ -4,24 +4,10 @@
 <style>
     .wa-list-container { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; height: 85vh; display: flex; flex-direction: column; }
     .wa-header { background-color: #00a884; color: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; }
-    .wa-search-box { padding: 10px; background: #f0f2f5; border-bottom: 1px solid #e9edef; }
-    .wa-search-input { background: white; border: none; border-radius: 8px; padding: 8px 15px; width: 100%; font-size: 0.9rem; }
     .wa-contact-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f2f5; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; }
     .wa-contact-item:hover { background-color: #f5f6f6; }
-    
-    /* Updated Avatar Styling for consistency */
-    .wa-avatar { 
-        width: 45px; height: 45px; border-radius: 50%; 
-        background-color: #dfe5e7; margin-right: 15px; 
-        display: flex; align-items: center; justify-content: center; 
-        overflow: hidden; color: #fff; flex-shrink: 0; 
-    }
-    .wa-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
+    .wa-avatar { width: 45px; height: 45px; border-radius: 50%; background-color: #dfe5e7; margin-right: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #fff; flex-shrink: 0; }
+    .wa-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .wa-info { flex: 1; overflow: hidden; text-align: left; }
     .wa-time { font-size: 0.75rem; color: #667781; margin-left: 10px; }
     .section-title { padding: 10px 15px; background: #f0f2f5; font-size: 0.75rem; font-weight: bold; color: #54656f; text-transform: uppercase; text-align: left; }
@@ -33,36 +19,50 @@
             <div class="wa-list-container shadow-sm">
                 <div class="wa-header">
                     <h5 class="mb-0 fw-bold">WhatsApp PAI</h5>
-                    <div><i class="fas fa-search"></i></div>
                 </div>
                 
                 <div style="overflow-y: auto; flex: 1;">
                     
-                    {{-- 1. BROADCAST SECTION --}}
+                    {{-- ANNOUNCEMENTS --}}
                     <div class="section-title">Announcements</div>
-                    <a href="{{ route('student.messages.show', 0) }}" class="wa-contact-item">
-                        <div class="wa-avatar bg-warning"><i class="fas fa-bullhorn"></i></div>
+                    
+                    <a href="{{ route('student.messages.show', 'global') }}" class="wa-contact-item">
+                        <div class="wa-avatar bg-danger"><i class="fas fa-university"></i></div>
                         <div class="wa-info">
                             <div class="d-flex justify-content-between">
-                                <span class="fw-bold text-dark">Class Announcements</span>
-                                @if($broadcastChannel->last_message)
-                                    <span class="wa-time">{{ $broadcastChannel->last_message->created_at->format('H:i') }}</span>
+                                <span class="fw-bold text-dark">School Announcements</span>
+                                @if($globalChannel->last_message)
+                                    <span class="wa-time">{{ $globalChannel->last_message->created_at->format('H:i') }}</span>
                                 @endif
                             </div>
                             <p class="text-muted small mb-0 text-truncate">
-                                {{ $broadcastChannel->last_message ? $broadcastChannel->last_message->message : 'No announcements yet' }}
+                                {{ $globalChannel->last_message ? $globalChannel->last_message->message : 'No school news yet' }}
                             </p>
                         </div>
                     </a>
 
-                    {{-- 2. TEACHERS SECTION --}}
+                    <a href="{{ route('student.messages.show', 'group') }}" class="wa-contact-item">
+                        <div class="wa-avatar bg-warning"><i class="fas fa-bullhorn"></i></div>
+                        <div class="wa-info">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold text-dark">Class Announcements</span>
+                                @if($groupChannel->last_message)
+                                    <span class="wa-time">{{ $groupChannel->last_message->created_at->format('H:i') }}</span>
+                                @endif
+                            </div>
+                            <p class="text-muted small mb-0 text-truncate">
+                                {{ $groupChannel->last_message ? $groupChannel->last_message->message : 'No class news yet' }}
+                            </p>
+                        </div>
+                    </a>
+
+                    {{-- TEACHERS --}}
                     <div class="section-title">My Teachers</div>
                     @foreach($teachers as $teacher)
                     <a href="{{ route('student.messages.show', $teacher->id) }}" class="wa-contact-item">
                         <div class="wa-avatar">
-                            {{-- ✅ FIXED: Added profile_images folder to the path --}}
                             @if($teacher->profile_image)
-                                <img src="{{ asset('storage/profile_images/' . $teacher->profile_image) }}" alt="{{ $teacher->name }}">
+                                <img src="{{ asset('storage/profile_images/' . $teacher->profile_image) }}">
                             @else
                                 <span class="text-secondary fw-bold">{{ substr($teacher->name, 0, 2) }}</span>
                             @endif
@@ -74,30 +74,25 @@
                                     <span class="wa-time">{{ $teacher->last_message->created_at->format('H:i') }}</span>
                                 @endif
                             </div>
-                            <p class="text-muted small mb-0 text-truncate">
-                                {{ $teacher->last_message ? $teacher->last_message->message : 'Tap to chat' }}
-                            </p>
+                            <p class="text-muted small mb-0 text-truncate">{{ $teacher->last_message ? $teacher->last_message->message : 'Tap to chat' }}</p>
                         </div>
                     </a>
                     @endforeach
 
-                    {{-- 3. CLASSMATES SECTION --}}
+                    {{-- CLASSMATES --}}
                     <div class="section-title">Classmates</div>
                     @foreach($classmates as $student)
                     <a href="{{ route('student.messages.show', $student->id) }}" class="wa-contact-item">
                         <div class="wa-avatar bg-light">
-                            {{-- ✅ FIXED: Added profile_images folder to the path --}}
                             @if($student->profile_image)
-                                <img src="{{ asset('storage/profile_images/' . $student->profile_image) }}" alt="{{ $student->name }}">
+                                <img src="{{ asset('storage/profile_images/' . $student->profile_image) }}">
                             @else
                                 <span class="text-secondary fw-bold small">{{ substr($student->name, 0, 2) }}</span>
                             @endif
                         </div>
                         <div class="wa-info">
                             <span class="fw-bold text-dark d-block">{{ $student->name }}</span>
-                            <p class="text-muted small mb-0 text-truncate">
-                                {{ $student->last_message ? $student->last_message->message : 'Tap to chat' }}
-                            </p>
+                            <p class="text-muted small mb-0 text-truncate">{{ $student->last_message ? $student->last_message->message : 'Tap to chat' }}</p>
                         </div>
                     </a>
                     @endforeach

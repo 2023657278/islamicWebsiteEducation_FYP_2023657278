@@ -14,27 +14,32 @@ use App\Models\QuizAttempt;
 class StudentProfileController extends Controller
 {
     public function show()
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        // 1. Calculate Achievement Data
-        $attempts = QuizAttempt::where('user_id', $user->id)->get();
-        
-        $achievements = (object) [
-            'highest_score' => $attempts->max('score') ?? 0,
-            'total_quizzes' => $attempts->count(),
-            'perfect_scores' => $attempts->where('score', 100)->count(),
-            'telegram_status' => $user->telegram_chat_id ? 1 : 0
-        ];
+    // 1. Calculate Achievement Data (Keep your existing logic)
+    $attempts = QuizAttempt::where('user_id', $user->id)->get();
+    
+    $achievements = (object) [
+        'highest_score' => $attempts->max('score') ?? 0,
+        'total_quizzes' => $attempts->count(),
+        'perfect_scores' => $attempts->where('score', 100)->count(),
+        'telegram_status' => $user->telegram_chat_id ? 1 : 0
+    ];
 
-        // 🟢 TELEGRAM LOGIC: Generate code if not exists
-        if (!session('telegram_code')) {
-            session(['telegram_code' => Str::upper(Str::random(6))]);
-        }
-        $telegramCode = session('telegram_code');
-
-        return view('users.profile.show', compact('user', 'telegramCode', 'achievements'));
+    // 🟢 TELEGRAM HANDSHAKE FIX: Save code to DATABASE, not just session
+    // If the user isn't connected and doesn't have a code yet, generate and save one
+    if (!$user->telegram_chat_id && !$user->verification_code) {
+        $user->update([
+            'verification_code' => strtoupper(Str::random(6))
+        ]);
     }
+
+    // Use the code from the database so the Python bot can find it
+    $telegramCode = $user->verification_code;
+
+    return view('users.profile.show', compact('user', 'telegramCode', 'achievements'));
+}
 
     public function edit()
     {

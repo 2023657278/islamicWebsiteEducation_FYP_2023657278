@@ -41,6 +41,7 @@
         .hero-image { width: 100%; border-radius: 20px; }
 
         /* --- Tools with Descriptions --- */
+        .feature-section { background-color: whitesmoke; color: black; }
         .feature-card { background: white; padding: 25px; border-radius: 20px; border: 1px solid #eee; transition: 0.3s; height: 100%; display: flex; flex-direction: column; text-align: left; }
         .feature-card:hover { transform: translateY(-5px); border-color: var(--primary-red); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .feature-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; margin-bottom: 15px; }
@@ -114,7 +115,7 @@
     </section>
 
     
-    <section id="features">
+    <section id="features" class="feature-section">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="fw-bold display-6">Integrated Learning Tools</h2>
@@ -226,12 +227,12 @@
                     <h2 class="fw-bold display-5 mb-4">About Platform</h2>
                     <p class="text-muted mb-4">Developed specifically for students at MRSM Terendak, Melaka. This platform combines traditional Islamic education with modern learning technology to help you excel in your studies.</p>
                     
-                    <div class="row g-4 mt-2">
-                        <div class="col-6">
+                    <div class="row g-4 text-center">
+                        <div class="col-5">
                             <div class="stat-icon shadow-sm mb-3"><i class="fas fa-user-graduate"></i></div>
                             <h5 class="fw-bold">Student-Centric</h5>
                         </div>
-                        <div class="col-6">
+                        <div class="col-5">
                             <div class="stat-icon shadow-sm mb-3"><i class="fas fa-check-double"></i></div>
                             <h5 class="fw-bold">Interactive</h5>
                         </div>

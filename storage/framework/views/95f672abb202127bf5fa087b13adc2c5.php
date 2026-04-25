@@ -23,8 +23,34 @@ endif;
 unset($__errorArgs, $__bag); ?>" 
                                 name="name" value="<?php echo e(old('name')); ?>" required autocomplete="name" autofocus 
                                 placeholder="Full Name">
-                            <label for="name"><?php echo e(__('Name')); ?></label>
+                            <label for="name"><?php echo e(__('Full Name')); ?></label>
                             <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <span class="invalid-feedback" role="alert">
+                                    <strong><?php echo e($message); ?></strong>
+                                </span>
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input id="no_maktab" type="text" class="form-control <?php $__errorArgs = ['no_maktab'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
+                                name="no_maktab" value="<?php echo e(old('no_maktab')); ?>" required 
+                                placeholder="No. Maktab">
+                            <label for="no_maktab"><?php echo e(__('No. Maktab')); ?></label>
+                            <?php $__errorArgs = ['no_maktab'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -102,6 +128,9 @@ unset($__errorArgs, $__bag); ?>"
                                 name="password" required autocomplete="new-password"
                                 placeholder="Password">
                             <label for="password"><?php echo e(__('Password')); ?></label>
+                            <div class="form-text text-muted small px-2">
+                                * Must be <strong>at least 9 characters</strong>, include <strong>A-Z</strong>, <strong>a-z</strong>, <strong>0-9</strong>, and a <strong>special symbol</strong>.
+                            </div>
                             <?php $__errorArgs = ['password'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

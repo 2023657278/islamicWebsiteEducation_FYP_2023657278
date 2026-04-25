@@ -55,20 +55,24 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::get('/student/progress', [StudentProgressController::class, 'index'])->name('student.progress.index');
 
     // =========================================================
-    // 🎓 HIERARCHICAL QUIZ CENTER (NEW STRUCTURE)
+    // 🎓 HIERARCHICAL QUIZ CENTER (RE-STRUCTURED FOR PROGRESSION)
     // =========================================================
     Route::group(['prefix' => 'student/quizzes', 'as' => 'student.quizzes.'], function () {
         
-        // Level 1: Subject Selection (Main Page)
+        // Level 1: Subject Selection
         Route::get('/', [StudentQuizController::class, 'index'])->name('index');
 
-        // Level 2: Topic Selection (e.g., Fiqh -> Solat, Puasa)
-        Route::get('/subject/{subject_id}', [StudentQuizController::class, 'topics'])->name('topics');
+        // Level 2: Difficulty Selection (Easy, Medium, Hard)
+        // This replaces the old 'topics' route
+        Route::get('/subject/{subject_id}', [StudentQuizController::class, 'difficulties'])->name('difficulties');
 
-        // Level 3: Quiz List by Difficulty
-        Route::get('/subject/{subject_id}/topic/{topic}', [StudentQuizController::class, 'list'])->name('list');
+        // Level 3: Topic Selection (Filtered by the chosen difficulty)
+        Route::get('/subject/{subject_id}/level/{difficulty}', [StudentQuizController::class, 'topicsByDifficulty'])->name('topics_diff');
 
-        // Level 4: Take Quiz & Submit
+        // Level 4: Final Quiz List (Filtered by Difficulty AND Topic)
+        Route::get('/subject/{subject_id}/level/{difficulty}/topic/{topic}', [StudentQuizController::class, 'listByTopic'])->name('list');
+
+        // Level 5: Take Quiz & Submit (Unchanged)
         Route::get('/{id}/take', [StudentQuizController::class, 'show'])->name('take');
         Route::post('/{id}/submit', [StudentQuizController::class, 'submit'])->name('submit');
     });

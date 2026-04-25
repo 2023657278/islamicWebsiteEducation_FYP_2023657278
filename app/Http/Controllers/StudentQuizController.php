@@ -13,14 +13,11 @@ use App\Services\TelegramService;
 class StudentQuizController extends Controller
 {
     // =========================================================
-    // LEVEL 1: SELECT SUBJECT
+    // LEVEL 1: SELECT SUBJECT (Kept as is)
     // =========================================================
     public function index()
     {
-        // Only show subjects that have quizzes
         $subjects = Subject::whereHas('quizzes')->get();
-        
-        // Basic Stats for Header
         $student = Auth::user();
         $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
         $completedCount = $attempts->unique('quiz_id')->count();
@@ -30,33 +27,78 @@ class StudentQuizController extends Controller
     }
 
     // =========================================================
-    // LEVEL 2: SELECT TOPIC (Subtopic)
+    // LEVEL 2: SELECT DIFFICULTY (Kept as is - Handles Locking)
     // =========================================================
-    public function topics($subject_id)
+    public function difficulties($subject_id)
+    {
+        $subject = Subject::findOrFail($subject_id);
+        $student = Auth::user();
+
+        $allQuizzes = Quiz::where('subject_id', $subject_id)->get();
+        $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
+
+        $allowed = ['Easy'];
+        $stats = [];
+
+        foreach (['Easy', 'Medium', 'Hard'] as $level) {
+            $levelQuizzes = $allQuizzes->where('difficulty', $level);
+            $done = 0;
+            $avg = 0;
+
+            if ($levelQuizzes->count() > 0) {
+                $ids = $levelQuizzes->pluck('id');
+                $userAttempts = $attempts->whereIn('quiz_id', $ids);
+                $bestScores = $userAttempts->groupBy('quiz_id')->map(fn($q) => $q->max('score'));
+                
+                $done = $bestScores->count();
+                $avg = $bestScores->avg() ?? 0;
+            }
+
+            $stats[$level] = [
+                'total' => $levelQuizzes->count(),
+                'done' => $done,
+                'avg' => round($avg)
+            ];
+        }
+
+        if ($stats['Easy']['total'] > 0 && $stats['Easy']['done'] == $stats['Easy']['total'] && $stats['Easy']['avg'] >= 50) {
+            $allowed[] = 'Medium';
+        }
+        if (in_array('Medium', $allowed) && $stats['Medium']['total'] > 0 && $stats['Medium']['done'] == $stats['Medium']['total'] && $stats['Medium']['avg'] >= 50) {
+            $allowed[] = 'Hard';
+        }
+
+        return view('users.quizzes.level2_difficulties', compact('subject', 'allowed', 'stats'));
+    }
+
+    // =========================================================
+    // LEVEL 3: SELECT TOPIC (Added - Bridges Difficulty to Topics)
+    // =========================================================
+    public function topicsByDifficulty($subject_id, $difficulty)
     {
         $subject = Subject::findOrFail($subject_id);
 
-        // Get distinct topics for this subject
-        // If topic is NULL in DB, we label it as 'General' in the view
+        // Get distinct topics specifically for the chosen difficulty level
         $topics = Quiz::where('subject_id', $subject_id)
+                      ->where('difficulty', $difficulty)
                       ->select('topic')
                       ->distinct()
                       ->pluck('topic');
 
-        return view('users.quizzes.level2_topics', compact('subject', 'topics'));
+        return view('users.quizzes.level3_topics', compact('subject', 'difficulty', 'topics'));
     }
 
     // =========================================================
-    // LEVEL 3: SELECT QUIZ (Grouped by Difficulty + Locking Logic)
+    // LEVEL 4: FINAL QUIZ LIST (Updated - Filtered by Difficulty + Topic)
     // =========================================================
-    public function list($subject_id, $topic)
+    public function listByTopic($subject_id, $difficulty, $topic)
     {
         $subject = Subject::findOrFail($subject_id);
+        $topic = urldecode($topic);
         $student = Auth::user();
-        $topic = urldecode($topic); // Handle URL encoding
 
-        // 1. Fetch Quizzes (Handle 'General' case for empty topics)
-        $query = Quiz::where('subject_id', $subject_id);
+        // Query quizzes for specific subject, difficulty, and topic
+        $query = Quiz::where('subject_id', $subject_id)->where('difficulty', $difficulty);
         
         if ($topic === 'General') {
             $query->where(function($q) {
@@ -65,25 +107,8 @@ class StudentQuizController extends Controller
         } else {
             $query->where('topic', $topic);
         }
-        
+
         $quizzes = $query->get();
-
-        // 2. Calculate Subject Average (For Unlock Logic)
-        // We look at ALL quizzes for this subject to determine proficiency
-        $allSubjectQuizIds = Quiz::where('subject_id', $subject_id)->pluck('id');
-        $subjectAttempts = DB::table('quiz_attempts')
-                             ->where('user_id', $student->id)
-                             ->whereIn('quiz_id', $allSubjectQuizIds)
-                             ->get();
-        
-        $avgScore = $subjectAttempts->count() > 0 ? $subjectAttempts->avg('score') : 0;
-
-        // 3. Define Allowed Difficulties based on Average Score
-        $allowed = ['Easy']; // Easy is always unlocked
-        if ($avgScore >= 40) $allowed[] = 'Medium';
-        if ($avgScore >= 80) $allowed[] = 'Hard';
-
-        // 4. Check completion status for each quiz
         $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
 
         foreach ($quizzes as $quiz) {
@@ -92,25 +117,20 @@ class StudentQuizController extends Controller
             $quiz->is_completed = $bestAttempt ? true : false;
         }
 
-        // Group by Difficulty for the Tabs
-        $groupedQuizzes = $quizzes->groupBy('difficulty'); 
-
-        // Pass 'allowed' array to view to disable buttons if needed
-        return view('users.quizzes.level3_list', compact('subject', 'topic', 'groupedQuizzes', 'allowed', 'avgScore'));
+        return view('users.quizzes.level4_list', compact('subject', 'difficulty', 'topic', 'quizzes'));
     }
 
     // =========================================================
-    // LEVEL 4: TAKE QUIZ (Show Questions)
+    // LEVEL 5: TAKE QUIZ (Kept as is)
     // =========================================================
     public function show($id)
     {
-        // Load questions with options
         $quiz = Quiz::with('questions.options')->findOrFail($id);
         return view('users.quizzes.take', compact('quiz'));
     }
 
     // =========================================================
-    // SUBMIT QUIZ (Scoring + Analytics + Telegram)
+    // SUBMIT QUIZ (Kept as is - Includes Scoring, Analytics, Telegram)
     // =========================================================
     public function submit(Request $request, $id)
     {
@@ -121,44 +141,28 @@ class StudentQuizController extends Controller
         $totalQuestions = $quiz->questions->count();
         $input = $request->all();
 
-        // 1. SCORING LOGIC
         foreach ($quiz->questions as $question) {
             $userKey = 'q_' . $question->id;
-            
             if (!isset($input[$userKey])) continue;
-
             $userAnswer = $input[$userKey];
 
-            // A. SINGLE CHOICE
             if ($question->question_type === 'single') {
                 $correctOption = $question->options->where('is_correct', 1)->first();
-                if ($correctOption && $userAnswer == $correctOption->id) {
-                    $score++;
-                }
+                if ($correctOption && $userAnswer == $correctOption->id) $score++;
             }
-            
-            // B. MULTIPLE CHOICE
             elseif ($question->question_type === 'multiple' && is_array($userAnswer)) {
                 $correctOptionIds = $question->options->where('is_correct', 1)->pluck('id')->toArray();
-                sort($userAnswer);
-                sort($correctOptionIds);
-                if ($userAnswer == $correctOptionIds) {
-                    $score++;
-                }
+                sort($userAnswer); sort($correctOptionIds);
+                if ($userAnswer == $correctOptionIds) $score++;
             }
-            
-            // C. TEXT ANSWER
             elseif ($question->question_type === 'text') {
                 $correctOption = $question->options->where('is_correct', 1)->first();
-                if ($correctOption && strtolower(trim($userAnswer)) == strtolower(trim($correctOption->option_text))) {
-                    $score++;
-                }
+                if ($correctOption && strtolower(trim($userAnswer)) == strtolower(trim($correctOption->option_text))) $score++;
             }
         }
 
         $percentage = ($totalQuestions > 0) ? round(($score / $totalQuestions) * 100) : 0;
 
-        // 2. SAVE ATTEMPT
         DB::table('quiz_attempts')->insert([
             'user_id' => $user->id,
             'quiz_id' => $id,
@@ -168,38 +172,19 @@ class StudentQuizController extends Controller
             'updated_at' => now(),
         ]);
 
-        // 3. ANALYTICS (LINEAR REGRESSION SLOPE)
-        $historyScores = DB::table('quiz_attempts')
-                            ->where('user_id', $user->id)
-                            ->orderBy('created_at', 'asc') 
-                            ->pluck('score')
-                            ->toArray();
-
+        $historyScores = DB::table('quiz_attempts')->where('user_id', $user->id)->orderBy('created_at', 'asc')->pluck('score')->toArray();
         $analyticsService = new AnalyticsService();
         $slope = $analyticsService->calculateSlope($historyScores);
         $status = $analyticsService->getInterpretation($slope);
 
-        DB::table('student_analytics')->updateOrInsert(
-            ['user_id' => $user->id],
-            [
-                'current_slope' => $slope,
-                'status' => $status,
-                'last_calculated_at' => now(),
-                'updated_at' => now()
-            ]
-        );
+        DB::table('student_analytics')->updateOrInsert(['user_id' => $user->id], [
+            'current_slope' => $slope, 'status' => $status, 'last_calculated_at' => now(), 'updated_at' => now()
+        ]);
 
-        // 4. TELEGRAM NOTIFICATION
         if ($user->telegram_chat_id) {
             $statusEmoji = $percentage >= 50 ? '✅' : '⚠️';
             $statusText = $percentage >= 50 ? 'Passed' : 'Needs Improvement';
-
-            $msg  = "<b>New Quiz Result!</b> 📝\n\n";
-            $msg .= "📘 <b>Quiz:</b> {$quiz->title}\n";
-            $msg .= "📊 <b>Score:</b> {$percentage}%\n";
-            $msg .= "🏆 <b>Status:</b> {$statusEmoji} {$statusText}\n";
-            $msg .= "📅 <b>Date:</b> " . now()->format('d M Y, h:i A');
-
+            $msg  = "<b>New Quiz Result!</b> 📝\n\n📘 <b>Quiz:</b> {$quiz->title}\n📊 <b>Score:</b> {$percentage}%\n🏆 <b>Status:</b> {$statusEmoji} {$statusText}\n📅 <b>Date:</b> " . now()->format('d M Y, h:i A');
             $telegram = new TelegramService();
             $telegram->sendMessage($user->telegram_chat_id, $msg);
         }

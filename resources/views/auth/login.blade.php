@@ -17,10 +17,10 @@
                         @csrf
 
                         <div class="form-floating mb-3">
-                            <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" 
+                            <input id="email" type="text" class="form-control @error('email') is-invalid @enderror" 
                                 name="email" value="{{ old('email') }}" required autocomplete="email" autofocus 
-                                placeholder="name@example.com">
-                            <label for="email">{{ __('Email Address') }}</label>
+                                placeholder="Email or No. Maktab">
+                            <label for="email">{{ __('Email Address or No. Maktab') }}</label>
                             @error('email')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

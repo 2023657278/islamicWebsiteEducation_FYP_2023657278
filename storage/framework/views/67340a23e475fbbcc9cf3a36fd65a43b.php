@@ -1,6 +1,6 @@
-@extends('users.students')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <style>
     .wa-chat-container { display: flex; flex-direction: column; height: 85vh; background-color: #efeae2; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); border-radius: 16px; overflow: hidden; border: 1px solid #d1d7db; }
     .wa-chat-header { background-color: #f0f2f5; padding: 12px 20px; display: flex; align-items: center; border-bottom: 1px solid #d1d7db; }
@@ -23,57 +23,59 @@
             <div class="wa-chat-container shadow-sm">
                 
                 <div class="wa-chat-header">
-                    <a href="{{ route('student.messages.index') }}" class="wa-back-btn"><i class="fas fa-arrow-left"></i></a>
+                    <a href="<?php echo e(route('student.messages.index')); ?>" class="wa-back-btn"><i class="fas fa-arrow-left"></i></a>
                     
                     <div class="wa-chat-avatar">
-                        @if($teacher->name == 'School Announcements')
+                        <?php if($teacher->name == 'School Announcements'): ?>
                             <i class="fas fa-university" style="color: #c0392b;"></i>
-                        @elseif($teacher->name == 'Class Announcements')
+                        <?php elseif($teacher->name == 'Class Announcements'): ?>
                             <i class="fas fa-bullhorn" style="color: #f39c12;"></i>
-                        @elseif(isset($teacher->profile_image) && $teacher->profile_image)
-                            <img src="{{ asset('storage/profile_images/' . $teacher->profile_image) }}">
-                        @else
-                            {{ strtoupper(substr($teacher->name, 0, 2)) }}
-                        @endif
+                        <?php elseif(isset($teacher->profile_image) && $teacher->profile_image): ?>
+                            <img src="<?php echo e(asset('storage/profile_images/' . $teacher->profile_image)); ?>">
+                        <?php else: ?>
+                            <?php echo e(strtoupper(substr($teacher->name, 0, 2))); ?>
+
+                        <?php endif; ?>
                     </div>
 
                     <div style="flex: 1;">
-                        <div class="fw-bold text-dark" style="font-size: 16px;">{{ $teacher->name }}</div>
+                        <div class="fw-bold text-dark" style="font-size: 16px;"><?php echo e($teacher->name); ?></div>
                         <div class="small text-muted" style="font-size: 12px;">
-                            @if($isBroadcast)
+                            <?php if($isBroadcast): ?>
                                 <i class="fas fa-lock me-1"></i> Read Only Announcement
-                            @else
+                            <?php else: ?>
                                 <i class="fas fa-circle text-success me-1" style="font-size: 8px;"></i> Online
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
                 <div class="wa-messages-area" id="message-box">
-                    @foreach($messages as $message)
-                        <div class="wa-bubble {{ ($message->sender_id == Auth::id()) ? 'wa-sent' : 'wa-received' }}">
-                            @if($isBroadcast && $message->sender_id != Auth::id())
-                                <small class="d-block fw-bold text-primary mb-1">{{ $message->sender->name ?? 'Staff' }}</small>
-                            @endif
-                            {{ $message->message }}
-                            <div class="wa-meta"><span>{{ $message->created_at->format('H:i') }}</span></div>
+                    <?php $__currentLoopData = $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $message): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="wa-bubble <?php echo e(($message->sender_id == Auth::id()) ? 'wa-sent' : 'wa-received'); ?>">
+                            <?php if($isBroadcast && $message->sender_id != Auth::id()): ?>
+                                <small class="d-block fw-bold text-primary mb-1"><?php echo e($message->sender->name ?? 'Staff'); ?></small>
+                            <?php endif; ?>
+                            <?php echo e($message->message); ?>
+
+                            <div class="wa-meta"><span><?php echo e($message->created_at->format('H:i')); ?></span></div>
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
 
-                @if($isBroadcast)
+                <?php if($isBroadcast): ?>
                     <div class="p-3 bg-light text-center border-top">
                         <small class="text-muted fw-bold"><i class="fas fa-info-circle me-1"></i> This is a one-way communication channel.</small>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="wa-input-area">
-                        <form id="chatForm" action="{{ route('student.messages.store', $teacher->id) }}" method="POST" style="flex: 1; display: flex;">
-                            @csrf
+                        <form id="chatForm" action="<?php echo e(route('student.messages.store', $teacher->id)); ?>" method="POST" style="flex: 1; display: flex;">
+                            <?php echo csrf_field(); ?>
                             <input type="text" name="message" class="wa-input-field" placeholder="Type a message..." required autocomplete="off">
                             <button type="submit" class="wa-icon-btn ms-2"><i class="fas fa-paper-plane text-primary"></i></button>
                         </form>
                     </div>
-                @endif
+                <?php endif; ?>
 
             </div>
         </div>
@@ -84,4 +86,5 @@
     const box = document.getElementById('message-box');
     box.scrollTop = box.scrollHeight;
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('users.students', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\islamicWebsiteEducation_FYP_2023657278\resources\views/users/messages/show.blade.php ENDPATH**/ ?>

@@ -18,8 +18,20 @@
                             <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" 
                                 name="name" value="{{ old('name') }}" required autocomplete="name" autofocus 
                                 placeholder="Full Name">
-                            <label for="name">{{ __('Name') }}</label>
+                            <label for="name">{{ __('Full Name') }}</label>
                             @error('name')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input id="no_maktab" type="text" class="form-control @error('no_maktab') is-invalid @enderror" 
+                                name="no_maktab" value="{{ old('no_maktab') }}" required 
+                                placeholder="No. Maktab">
+                            <label for="no_maktab">{{ __('No. Maktab') }}</label>
+                            @error('no_maktab')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
@@ -55,6 +67,9 @@
                                 name="password" required autocomplete="new-password"
                                 placeholder="Password">
                             <label for="password">{{ __('Password') }}</label>
+                            <div class="form-text text-muted small px-2">
+                                * Must be <strong>at least 9 characters</strong>, include <strong>A-Z</strong>, <strong>a-z</strong>, <strong>0-9</strong>, and a <strong>special symbol</strong>.
+                            </div>
                             @error('password')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

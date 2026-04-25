@@ -19,10 +19,12 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'no_maktab',
         'password',
         'role',              // 'student', 'teacher', 'admin'
         'phone_number',
         'telegram_chat_id',  // For Bot Notifications
+        'verification_code', // For Telegram Handshake
         'mrsm_id',           // Optional Student ID
         'group_id',          // Class ID
         'profile_image',

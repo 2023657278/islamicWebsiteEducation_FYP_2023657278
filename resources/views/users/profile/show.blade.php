@@ -69,18 +69,12 @@
                 <div class="info-icon text-white" style="background-color: #008f78;"><i class="fas fa-mosque"></i></div>
                 <div class="w-100">
                     <small class="text-muted d-block mb-1">Prayer Zone (Melaka)</small>
-                    {{-- ✅ EXPANDED MELAKA-ONLY PRAYER ZONES --}}
                     <select id="profilePrayerLoc" class="form-select form-select-sm border-0 p-0 fw-bold text-dark bg-transparent">
                         <option value="2.2775,102.1466">📍 Sg. Udang (MRSM)</option>
-                        <option value="2.1896,102.2501">📍 Melaka City (Bandar Melaka)</option>
+                        <option value="2.1896,102.2501">📍 Melaka City</option>
                         <option value="2.3133,102.4309">📍 Jasin</option>
                         <option value="2.3804,102.2089">📍 Alor Gajah</option>
-                        <option value="2.3500,102.1100">📍 Masjid Tanah</option>
-                        <option value="2.2478,102.2132">📍 Klebang</option>
-                        <option value="2.2736,102.2964">📍 Ayer Keroh</option>
-                        <option value="2.2270,102.3480">📍 Bemban</option>
                         <option value="2.1384,102.3421">📍 Umbai / Merlimau</option>
-                        <option value="2.3020,102.1340">📍 Tanjung Bidara</option>
                     </select>
                 </div>
             </div>
@@ -154,7 +148,7 @@
     </div>
 </div>
 
-{{{-- TELEGRAM MODAL --}}
+{{-- TELEGRAM MODAL --}}
 @if(!$user->telegram_chat_id)
 <div class="modal fade" id="telegramModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -169,7 +163,8 @@
                     and send this code to <strong class="text-dark">Islamic Learning Bot</strong>
                 </p>
                 <div class="bg-light p-3 d-inline-block rounded-3 mb-4">
-                    <h2 class="mb-0 fw-bold text-dark">{{ $telegramCode }}</h2>
+                    {{-- FIXED: Show the code from database/controller --}}
+                    <h2 class="mb-0 fw-bold text-dark">{{ $telegramCode ?? 'WAITING' }}</h2>
                 </div>
                 <form action="{{ route('telegram.verify') }}" method="POST">
                     @csrf
@@ -180,18 +175,4 @@
     </div>
 </div>
 @endif
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const selector = document.getElementById('profilePrayerLoc');
-        const savedLoc = localStorage.getItem('prayerLoc');
-        if(savedLoc) selector.value = savedLoc;
-        
-        selector.addEventListener('change', function() {
-            localStorage.setItem('prayerLoc', this.value);
-            this.style.color = '#008f78';
-            setTimeout(() => this.style.color = '', 500);
-        });
-    });
-</script>
 @endsection

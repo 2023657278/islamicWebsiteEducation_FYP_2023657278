@@ -24,7 +24,8 @@
     <div class="row g-4">
         <?php $__currentLoopData = $subjects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
         <div class="col-md-4 col-lg-3">
-            <a href="<?php echo e(route('student.quizzes.topics', $sub->id)); ?>" class="text-decoration-none">
+            
+            <a href="<?php echo e(route('student.quizzes.difficulties', $sub->id)); ?>" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm rounded-4 hover-scale transition-all">
                     <div class="card-body text-center p-5">
                         <div class="bg-light rounded-circle d-inline-flex p-3 mb-3 text-danger">

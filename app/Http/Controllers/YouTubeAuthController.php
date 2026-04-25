@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
 use App\Models\Resources;
 use App\Models\Subject;
 use App\Models\Group;
@@ -13,8 +14,12 @@ use App\Models\Group;
 class YouTubeAuthController extends Controller
 {
     // 1. Send User to Google
-    public function redirect()
+    public function redirect(Request $request)
     {
+        // 🟢 ADDED: Save the IDs to session so we don't lose them
+        Session::put('sync_group_id', $request->group_id);
+        Session::put('sync_subject_id', $request->subject_id);
+
         /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
         $driver = Socialite::driver('google');
 
@@ -38,6 +43,10 @@ class YouTubeAuthController extends Controller
             $googleUser = Socialite::driver('google')->user();
             $token = $googleUser->token;
 
+            // 🟢 ADDED: Retrieve the IDs from the session
+            $group_id = Session::get('sync_group_id');
+            $subject_id = Session::get('sync_subject_id');
+
             // B. Get User's Channel Details
             $channelResponse = Http::withToken($token)->get('https://www.googleapis.com/youtube/v3/channels', [
                 'part' => 'contentDetails',
@@ -45,8 +54,7 @@ class YouTubeAuthController extends Controller
             ]);
 
             if ($channelResponse->failed()) {
-                // If API is not enabled, show error
-                return redirect()->route('resources.index')->with('error', 'Google API Error: ' . $channelResponse->json()['error']['message'] ?? 'Unknown error');
+                return redirect()->route('resources.index')->with('error', 'Google API Error: ' . ($channelResponse->json()['error']['message'] ?? 'Unknown error'));
             }
 
             $items = $channelResponse->json()['items'] ?? [];
@@ -55,61 +63,35 @@ class YouTubeAuthController extends Controller
                 return redirect()->route('resources.index')->with('error', 'Login successful, but NO YouTube Channel found.');
             }
 
-            // Get the "Uploads" playlist ID
             $uploadsPlaylistId = $items[0]['contentDetails']['relatedPlaylists']['uploads'] ?? null;
-
-            if (!$uploadsPlaylistId) {
-                return redirect()->route('resources.index')->with('error', 'Channel found, but no Uploads Playlist exists.');
-            }
 
             // C. Fetch Videos
             $videoResponse = Http::withToken($token)->get('https://www.googleapis.com/youtube/v3/playlistItems', [
                 'part' => 'snippet',
                 'playlistId' => $uploadsPlaylistId,
-                'maxResults' => 10
+                'maxResults' => 20 // Fetches more so we can filter
             ]);
 
-            $videos = $videoResponse->json()['items'] ?? [];
-            $count = 0;
+            $items = $videoResponse->json()['items'] ?? [];
+            $youtubeVideos = [];
 
-            // D. Save to Database
-            $defaultSubject = Subject::first()->id ?? 1;
-
-            foreach ($videos as $item) {
-                $videoId = $item['snippet']['resourceId']['videoId'];
+            // D. Filter and Format for Selection
+            foreach ($items as $item) {
                 $title = $item['snippet']['title'];
                 $description = $item['snippet']['description'];
 
                 // 🚀 SMART FILTER: CHECK FOR #MRSM
-                if (!preg_match('/#MRSM/i', $title) && !preg_match('/#MRSM/i', $description)) {
-                    continue; 
-                }
-
-                $exists = Resources::where('file_url', $videoId)->exists();
-
-                if (!$exists) {
-                    Resources::create([
+                if (preg_match('/#MRSM/i', $title) || preg_match('/#MRSM/i', $description)) {
+                    $youtubeVideos[] = [
+                        'id' => $item['snippet']['resourceId']['videoId'],
                         'title' => $title,
-                        'file_url' => $videoId,
-                        'type' => 'video',
-                        'teacher_id' => Auth::id(),
-                        
-                        // ✅ FIXED: Set to NULL so ALL classes can see it
-                        'group_id' => null, 
-                        
-                        'subject_id' => $defaultSubject,
-                        'is_public' => 1, 
-                        'description' => $description
-                    ]);
-                    $count++;
+                        'thumbnail' => $item['snippet']['thumbnails']['medium']['url'] ?? '',
+                    ];
                 }
             }
 
-            if ($count == 0) {
-                return redirect()->route('resources.index')->with('error', "Sync connected, but no new videos found with tag #MRSM.");
-            } else {
-                return redirect()->route('resources.index')->with('success', "Success! Imported {$count} videos tagged with #MRSM.");
-            }
+            // 🟢 MODIFIED: Return the selection view instead of auto-saving
+            return view('resources.sync_selection', compact('youtubeVideos', 'group_id', 'subject_id'));
 
         } catch (\Exception $e) {
             return redirect()->route('resources.index')->with('error', 'System Error: ' . $e->getMessage());

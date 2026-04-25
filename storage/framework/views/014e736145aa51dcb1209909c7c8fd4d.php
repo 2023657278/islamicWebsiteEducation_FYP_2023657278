@@ -15,7 +15,7 @@
                         <?php echo csrf_field(); ?>
 
                         <div class="form-floating mb-3">
-                            <input id="email" type="email" class="form-control <?php $__errorArgs = ['email'];
+                            <input id="email" type="text" class="form-control <?php $__errorArgs = ['email'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -24,8 +24,8 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" 
                                 name="email" value="<?php echo e(old('email')); ?>" required autocomplete="email" autofocus 
-                                placeholder="name@example.com">
-                            <label for="email"><?php echo e(__('Email Address')); ?></label>
+                                placeholder="Email or No. Maktab">
+                            <label for="email"><?php echo e(__('Email Address or No. Maktab')); ?></label>
                             <?php $__errorArgs = ['email'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
