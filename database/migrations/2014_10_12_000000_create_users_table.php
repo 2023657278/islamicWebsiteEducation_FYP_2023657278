@@ -17,6 +17,9 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->increments ('id');
             $table->string('name');
+            $table->unsignedInteger('group_id')->nullable();
+            $table->string('telegram_chat_id', 50)->nullable();
+            $table->string('verification_code', 10)->nullable(); // The new code field
             $table->string('phone_number')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();

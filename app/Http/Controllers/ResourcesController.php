@@ -150,12 +150,32 @@ class ResourcesController extends Controller
 
     public function storeSelectedVideos(Request $request)
     {
-        foreach ($request->video_ids as $videoId => $title) {
-            Resources::updateOrCreate(
-                ['file_url' => $videoId, 'teacher_id' => Auth::id()],
-                ['title' => $title, 'type' => 'video', 'subject_id' => $request->subject_id, 'group_id' => $request->group_id, 'is_public' => false]
-            );
-        }
-        return redirect()->route('resources.index')->with('success', 'Sync complete!');
+        // 1. Validation: Ensure we actually have videos and a subject
+    if (!$request->has('video_ids') || empty($request->video_ids)) {
+        return back()->with('error', 'Please select at least one video to import.');
+    }
+
+    if (!$request->subject_id) {
+        return back()->with('error', 'Subject ID is missing. Please restart the sync process.');
+    }
+
+    // 2. The Import Loop
+    foreach ($request->video_ids as $videoId => $title) {
+        Resources::updateOrCreate(
+            // Search criteria: If this teacher already imported this specific video...
+            ['file_url' => $videoId, 'teacher_id' => Auth::id()], 
+            
+            // ...then just update these fields instead of making a duplicate
+            [
+                'title' => $title, 
+                'type' => 'video', 
+                'subject_id' => $request->subject_id, 
+                'group_id' => ($request->group_id == 'null') ? null : $request->group_id, 
+                'is_public' => false
+            ]
+        );
+    }
+
+    return redirect()->route('resources.index')->with('success', 'YouTube sync complete!');
     }
 }

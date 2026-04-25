@@ -12,12 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('flashcards', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('quiz_id')->constrained()->cascadeOnDelete(); // Combine it here!
-    $table->text('question');
-    $table->text('answer');
-    $table->timestamps();
-});
+        $table->increments('id');
+        $table->unsignedInteger('quiz_id')->nullable();
+        $table->unsignedInteger('teacher_id');
+        $table->unsignedInteger('subject_id'); // Add this missing column
+        
+        $table->text('question');
+        $table->text('answer');
+        $table->string('topic')->nullable(); // Change 'topics' to 'topic'
+        
+        $table->timestamps();
+
+        // Foreign Keys
+        $table->foreign('teacher_id')->references('id')->on('users')->onDelete('cascade');
+        $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
+        $table->foreign('quiz_id')->references('id')->on('quizzes')->onDelete('cascade');
+    });
     }
 
     /**

@@ -13,30 +13,27 @@ return new class extends Migration
     {
         Schema::create('resources', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('title')->nullable();
-            
-            // 1. MAIN CONTENT COLUMN
-            // Stores "notes/chapter1.pdf" (for Local) OR "dQw4w9WgXcQ" (for YouTube ID)
-            $table->string('file_path'); 
+        $table->boolean('is_public')->default(false);
+        $table->string('subject_tag')->nullable();
+        $table->string('title')->nullable();
+        $table->text('description')->nullable();
+        
+        // This is the missing column causing your error!
+        $table->string('file_url')->nullable();
+        
+        $table->enum('type', ['note', 'video', 'textbook'])->default('note');
+        $table->string('youtube_video_id', 20)->nullable();
+        
+        $table->unsignedInteger('teacher_id');
+        $table->integer('group_id')->nullable();
+        $table->unsignedInteger('subject_id');
+        
+        $table->timestamps();
 
-            // 2. RESOURCE TYPE
-            // 'note' = PDF/Doc from Local Storage
-            // 'video' = Video from YouTube API
-            $table->enum('type', ['note', 'video'])->default('note');
-
-            // 3. RELATIONSHIPS
-            $table->unsignedInteger('teacher_id');
-            $table->unsignedInteger('group_id');
-            $table->unsignedInteger('subject_id');
-            
-            $table->timestamps();
-
-            // 4. FOREIGN KEYS
-            // Ensure your 'users', 'groups', and 'subjects' tables use increments() or unsignedInteger id
-            $table->foreign('teacher_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
-        });
+        // Foreign Keys
+        $table->foreign('teacher_id')->references('id')->on('users')->onDelete('cascade');
+        $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
+    });
     }
 
     /**
