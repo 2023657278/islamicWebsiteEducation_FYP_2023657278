@@ -39,11 +39,9 @@
                             <div class="col-md-4 mb-4">
                                 <label class="font-weight-bold text-muted small text-uppercase">Difficulty</label>
                                 <select name="difficulty" class="form-control bg-light border-0" required>
-                                    <option value="Very Easy">Very Easy</option>
                                     <option value="Easy">Easy</option>
                                     <option value="Medium" selected>Medium</option>
                                     <option value="Hard">Hard</option>
-                                    <option value="Expert">Expert</option>
                                 </select>
                             </div>
                             <div class="col-md-4 mb-4">

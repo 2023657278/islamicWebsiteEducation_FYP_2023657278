@@ -11,11 +11,9 @@
     
     /* Difficulty Badges */
     .difficulty-badge { padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; position: absolute; top: 25px; right: 25px; }
-    .diff-very-easy { background: #e0f2fe; color: #0277bd; border: 1px solid #b3e5fc; }
     .diff-easy { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
     .diff-medium { background: #fffaf0; color: #dd6b20; border: 1px solid #feebc8; }
     .diff-hard { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
-    .diff-expert { background: #f3e5f5; color: #6b46c1; border: 1px solid #d8b4fe; }
 
     /* Stats Row - Simplified to only Questions and Duration */
     .stats-row { display: flex; justify-content: space-around; text-align: center; border-bottom: 1px solid #edf2f7; padding: 20px 0; margin-bottom: 20px; }
@@ -51,11 +49,9 @@
 
         <select id="difficultyFilter" class="form-control w-auto">
             <option value="">All Difficulties</option>
-            <option value="Very Easy">Very Easy</option>
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>
-            <option value="Expert">Expert</option>
         </select>
     </div>
 

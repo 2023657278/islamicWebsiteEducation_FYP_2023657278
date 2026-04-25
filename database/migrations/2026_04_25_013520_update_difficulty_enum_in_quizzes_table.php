@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('quizzes', function (Blueprint $table) {
-            $table->enum('difficulty', ['Very Easy', 'Easy', 'Medium', 'Hard', 'Expert'])->default('Easy')->change();
+            //
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('quizzes', function (Blueprint $table) {
-            $table->enum('difficulty', ['Easy', 'Medium', 'Hard'])->default('Easy')->change();
+            //
         });
     }
 };
