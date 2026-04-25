@@ -12,10 +12,10 @@
     </div>
 
     <div class="row g-4">
-        <?php $__currentLoopData = ['Very Easy', 'Easy', 'Medium', 'Hard', 'Expert']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $level): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <?php $__currentLoopData = ['Easy', 'Medium', 'Hard']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $level): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <?php 
                 $isAllowed = in_array($level, $allowed); 
-                $color = $level == 'Very Easy' ? 'info' : ($level == 'Easy' ? 'success' : ($level == 'Medium' ? 'warning' : ($level == 'Hard' ? 'danger' : 'dark')));
+                $color = $level == 'Easy' ? 'success' : ($level == 'Medium' ? 'warning' : 'danger');
                 $levelStats = $stats[$level];
             ?>
             
