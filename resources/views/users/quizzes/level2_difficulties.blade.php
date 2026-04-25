@@ -12,10 +12,10 @@
     </div>
 
     <div class="row g-4">
-        @foreach(['Easy', 'Medium', 'Hard'] as $level)
+        @foreach(['Very Easy', 'Easy', 'Medium', 'Hard', 'Expert'] as $level)
             @php 
                 $isAllowed = in_array($level, $allowed); 
-                $color = $level == 'Easy' ? 'success' : ($level == 'Medium' ? 'warning' : 'danger');
+                $color = $level == 'Very Easy' ? 'info' : ($level == 'Easy' ? 'success' : ($level == 'Medium' ? 'warning' : ($level == 'Hard' ? 'danger' : 'dark')));
                 $levelStats = $stats[$level];
             @endphp
             

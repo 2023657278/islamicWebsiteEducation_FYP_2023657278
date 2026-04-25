@@ -37,10 +37,10 @@ class StudentQuizController extends Controller
         $allQuizzes = Quiz::where('subject_id', $subject_id)->get();
         $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
 
-        $allowed = ['Easy'];
+        $allowed = ['Very Easy'];
         $stats = [];
 
-        foreach (['Easy', 'Medium', 'Hard'] as $level) {
+        foreach (['Very Easy', 'Easy', 'Medium', 'Hard', 'Expert'] as $level) {
             $levelQuizzes = $allQuizzes->where('difficulty', $level);
             $done = 0;
             $avg = 0;
@@ -61,11 +61,17 @@ class StudentQuizController extends Controller
             ];
         }
 
-        if ($stats['Easy']['total'] > 0 && $stats['Easy']['done'] == $stats['Easy']['total'] && $stats['Easy']['avg'] >= 50) {
+        if ($stats['Very Easy']['total'] > 0 && $stats['Very Easy']['done'] == $stats['Very Easy']['total'] && $stats['Very Easy']['avg'] >= 50) {
+            $allowed[] = 'Easy';
+        }
+        if (in_array('Easy', $allowed) && $stats['Easy']['total'] > 0 && $stats['Easy']['done'] == $stats['Easy']['total'] && $stats['Easy']['avg'] >= 50) {
             $allowed[] = 'Medium';
         }
         if (in_array('Medium', $allowed) && $stats['Medium']['total'] > 0 && $stats['Medium']['done'] == $stats['Medium']['total'] && $stats['Medium']['avg'] >= 50) {
             $allowed[] = 'Hard';
+        }
+        if (in_array('Hard', $allowed) && $stats['Hard']['total'] > 0 && $stats['Hard']['done'] == $stats['Hard']['total'] && $stats['Hard']['avg'] >= 50) {
+            $allowed[] = 'Expert';
         }
 
         return view('users.quizzes.level2_difficulties', compact('subject', 'allowed', 'stats'));

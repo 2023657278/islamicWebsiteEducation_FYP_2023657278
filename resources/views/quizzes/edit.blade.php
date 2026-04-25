@@ -36,9 +36,11 @@
                             <div class="col-md-4 mb-4">
                                 <label class="font-weight-bold text-muted small text-uppercase">Difficulty Level</label>
                                 <select name="difficulty" class="form-control bg-light border-0" required>
+                                    <option value="Very Easy" {{ $quiz->difficulty == 'Very Easy' ? 'selected' : '' }}>Very Easy</option>
                                     <option value="Easy" {{ $quiz->difficulty == 'Easy' ? 'selected' : '' }}>Easy</option>
                                     <option value="Medium" {{ $quiz->difficulty == 'Medium' ? 'selected' : '' }}>Medium</option>
                                     <option value="Hard" {{ $quiz->difficulty == 'Hard' ? 'selected' : '' }}>Hard</option>
+                                    <option value="Expert" {{ $quiz->difficulty == 'Expert' ? 'selected' : '' }}>Expert</option>
                                 </select>
                             </div>
                             <div class="col-md-4 mb-4">
