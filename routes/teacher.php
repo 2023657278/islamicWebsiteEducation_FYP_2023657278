@@ -13,6 +13,7 @@ use App\Http\Controllers\RepositoryController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\TeacherFlashcardController;
 use App\Http\Controllers\TeacherResultController;
+use App\Http\Controllers\RoomController;
 
 // =========================================================
 // TEACHER & ADMIN DASHBOARD
@@ -52,6 +53,8 @@ Route::middleware(['auth', 'role:teacher,admin'])->group(function () {
     Route::get('/quizzes/{id}/manage', [QuizController::class, 'manage'])->name('quizzes.manage');
     Route::post('/quizzes/{id}/questions', [QuizController::class, 'storeQuestion'])->name('questions.store');
     Route::delete('/questions/{id}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
+    Route::get('/teacher/quizzes/{quiz_id}/create-room', [RoomController::class, 'create'])->name('teacher.quizzes.create_room');
+
 
     // Flashcards (Teacher)
     Route::get('flashcards', [TeacherFlashcardController::class, 'index'])->name('flashcards.index');

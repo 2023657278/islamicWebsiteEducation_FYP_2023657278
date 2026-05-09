@@ -25,14 +25,15 @@
         <?php $__currentLoopData = $subjects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
         <div class="col-md-4 col-lg-3">
             
-            <a href="<?php echo e(route('student.quizzes.difficulties', $sub->id)); ?>" class="text-decoration-none">
+            <a href="<?php echo e(route('student.quizzes.select_mode', $sub->id)); ?>" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm rounded-4 hover-scale transition-all">
                     <div class="card-body text-center p-5">
                         <div class="bg-light rounded-circle d-inline-flex p-3 mb-3 text-danger">
                             <i class="fas fa-book fa-2x"></i> 
                         </div>
                         <h4 class="fw-bold text-dark mb-1"><?php echo e($sub->subject_name); ?></h4>
-                        <small class="text-muted"><?php echo e($sub->quizzes->count()); ?> Quizzes Available</small>
+                        
+<small class="text-muted"><?php echo e($sub->solo_quizzes_count); ?> Quizzes Available</small>
                     </div>
                 </div>
             </a>

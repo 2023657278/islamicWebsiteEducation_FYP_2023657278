@@ -147,38 +147,48 @@ class QuizController extends Controller
     }
 
     public function storeQuestion(Request $request, $quiz_id)
-    {
-        $request->validate([
-            'question_text' => 'required',
-            'question_type' => 'required|in:single,multiple,text',
-            'points' => 'integer|min:1',
-        ]);
+{
+    $request->validate([
+        'question_text' => 'required',
+        'question_type' => 'required|in:single,multiple,text',
+        'points' => 'integer|min:1',
+    ]);
 
-        $quiz = Quiz::findOrFail($quiz_id);
-        $question = $quiz->questions()->create([
-            'question_text' => $request->question_text,
-            'question_type' => $request->question_type,
-            'points' => $request->points ?? 1,
-        ]);
+    $quiz = Quiz::findOrFail($quiz_id);
+    
+    // FIX: Save text_answer into correct_answer_text for FIB questions
+    $questionData = [
+        'question_text' => $request->question_text,
+        'question_type' => $request->question_type,
+        'points' => $request->points ?? 1,
+    ];
 
-        if ($request->question_type === 'text') {
-            $question->options()->create(['option_text' => $request->text_answer, 'is_correct' => true]);
-        } else {
-            if($request->options){
-                foreach ($request->options as $key => $optionText) {
-                    if(trim($optionText) == '') continue;
-                    $isCorrect = false;
-                    if ($request->question_type === 'single') {
-                        if ($request->correct_single == $key) $isCorrect = true;
-                    } elseif ($request->question_type === 'multiple') {
-                        if (isset($request->correct_multiple) && in_array($key, $request->correct_multiple)) $isCorrect = true;
-                    }
-                    $question->options()->create(['option_text' => $optionText, 'is_correct' => $isCorrect]);
+    if ($request->question_type === 'text') {
+        $questionData['correct_answer_text'] = $request->text_answer;
+    }
+
+    $question = $quiz->questions()->create($questionData);
+
+    if ($request->question_type === 'text') {
+        // Keep this for backward compatibility if needed, 
+        // but the logic now relies on correct_answer_text column.
+        $question->options()->create(['option_text' => $request->text_answer, 'is_correct' => true]);
+    } else {
+        if($request->options){
+            foreach ($request->options as $key => $optionText) {
+                if(trim($optionText) == '') continue;
+                $isCorrect = false;
+                if ($request->question_type === 'single') {
+                    if ($request->correct_single == $key) $isCorrect = true;
+                } elseif ($request->question_type === 'multiple') {
+                    if (isset($request->correct_multiple) && in_array($key, $request->correct_multiple)) $isCorrect = true;
                 }
+                $question->options()->create(['option_text' => $optionText, 'is_correct' => $isCorrect]);
             }
         }
-        return back()->with('success', 'Question added successfully!');
     }
+    return back()->with('success', 'Question added successfully!');
+}
 
     public function destroyQuestion($id)
     {

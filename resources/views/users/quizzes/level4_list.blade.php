@@ -64,21 +64,36 @@
                         </div>
 
                         {{-- Right Side: Stats & Action --}}
-                        <div class="col-lg-4">
-                            @if($quiz->is_completed)
-                                <div class="bg-light rounded-4 p-4 text-center mb-3 border">
-                                    <small class="text-uppercase text-muted fw-black d-block mb-1">Score</small>
-                                    <h2 class="display-5 fw-black text-success mb-0">{{ $quiz->my_score }}%</h2>
-                                </div>
-                                <a href="{{ route('student.quizzes.take', $quiz->id) }}" class="btn btn-outline-dark btn-lg w-100 rounded-pill fw-bold transition-all">
-                                    RETAKE
-                                </a>
-                            @else
-                                <a href="{{ route('student.quizzes.take', $quiz->id) }}" class="btn btn-primary btn-lg w-100 rounded-pill fw-black py-3 shadow transition-all scale-hover">
-                                    START QUIZ <i class="fas fa-chevron-right ms-2"></i>
-                                </a>
-                            @endif
-                        </div>
+<div class="col-lg-4">
+    @if(isset($isPvpMode) && $isPvpMode)
+        {{-- ⚔️ PVP LOBBY CREATION --}}
+        <div class="bg-dark rounded-4 p-4 text-center mb-3 border border-warning">
+            <small class="text-uppercase text-warning fw-black d-block mb-1">Status</small>
+            <h5 class="fw-black text-white mb-0">READY TO HOST</h5>
+        </div>
+        <a href="{{ route('teacher.quizzes.create_room', $quiz->id) }}" 
+           class="btn btn-warning btn-lg w-100 rounded-pill fw-black py-3 shadow transition-all scale-hover">
+            <i class="fas fa-plus-circle me-2"></i>HOST PVP ROOM
+        </a>
+    @else
+        {{-- 👤 EXISTING SOLO LOGIC --}}
+        @if($quiz->is_completed)
+            <div class="bg-light rounded-4 p-4 text-center mb-3 border">
+                <small class="text-uppercase text-muted fw-black d-block mb-1">Best Score</small>
+                <h2 class="display-5 fw-black text-success mb-0">{{ $quiz->my_score }}%</h2>
+            </div>
+            <a href="{{ route('student.quizzes.take', $quiz->id) }}" 
+               class="btn btn-outline-dark btn-lg w-100 rounded-pill fw-bold transition-all">
+                RETAKE MISSION
+            </a>
+        @else
+            <a href="{{ route('student.quizzes.take', $quiz->id) }}" 
+               class="btn btn-primary btn-lg w-100 rounded-pill fw-black py-3 shadow transition-all scale-hover">
+                START SOLO MISSION <i class="fas fa-chevron-right ms-2"></i>
+            </a>
+        @endif
+    @endif
+</div>
 
                     </div>
                 </div>

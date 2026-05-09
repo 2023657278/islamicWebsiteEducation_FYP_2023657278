@@ -16,14 +16,31 @@ class StudentQuizController extends Controller
     // LEVEL 1: SELECT SUBJECT (Kept as is)
     // =========================================================
     public function index()
-    {
-        $subjects = Subject::whereHas('quizzes')->get();
-        $student = Auth::user();
-        $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
-        $completedCount = $attempts->unique('quiz_id')->count();
-        $avgScore = $attempts->avg('score') ?? 0;
+{
+    $student = Auth::user();
 
-        return view('users.quizzes.level1_subjects', compact('subjects', 'completedCount', 'avgScore'));
+    // 🟢 FETCH ONLY SOLO DATA: Ignore PvP topics
+    $subjects = Subject::whereHas('quizzes', function($query) {
+            $query->whereNotIn('topic', ['PVP_ARENA_BATTLE', 'Global Battle', 'PVP Battle']);
+        })
+        ->withCount(['quizzes as solo_quizzes_count' => function($query) {
+            $query->whereNotIn('topic', ['PVP_ARENA_BATTLE', 'Global Battle', 'PVP Battle']);
+        }])
+        ->get();
+
+    // Progress stats
+    $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
+    $completedCount = $attempts->unique('quiz_id')->count();
+    $avgScore = $attempts->avg('score') ?? 0;
+
+    return view('users.quizzes.level1_subjects', compact('subjects', 'completedCount', 'avgScore'));
+}
+
+    // Add this method to StudentQuizController
+    public function selectMode($subject_id)
+    {
+        $subject = Subject::findOrFail($subject_id);
+        return view('users.quizzes.mode_selection', compact('subject'));
     }
 
     // =========================================================
@@ -78,12 +95,12 @@ class StudentQuizController extends Controller
     {
         $subject = Subject::findOrFail($subject_id);
 
-        // Get distinct topics specifically for the chosen difficulty level
+        // 🟢 ADD THIS: Exclude PvP-specific topics from the Solo list
         $topics = Quiz::where('subject_id', $subject_id)
-                      ->where('difficulty', $difficulty)
-                      ->select('topic')
-                      ->distinct()
-                      ->pluck('topic');
+        ->where('difficulty', $difficulty)
+        ->whereNotIn('topic', ['PVP_ARENA_BATTLE', 'Global Battle']) 
+        ->distinct()
+        ->pluck('topic');
 
         return view('users.quizzes.level3_topics', compact('subject', 'difficulty', 'topics'));
     }
@@ -94,8 +111,22 @@ class StudentQuizController extends Controller
     public function listByTopic($subject_id, $difficulty, $topic)
     {
         $subject = Subject::findOrFail($subject_id);
+        // 🟢 ADD THIS: Ensure we aren't showing PvP quizzes here
+        $quizzes = Quiz::where('subject_id', $subject_id)
+        ->where('difficulty', $difficulty)
+        ->where('topic', $topic)
+        ->where('topic', '!=', 'PVP_ARENA_BATTLE') 
+        ->get();
         $topic = urldecode($topic);
         $student = Auth::user();
+
+        // Check if we are in PvP mode from the URL
+        $isPvpMode = request('mode') === 'pvp';
+
+        // When fetching solo quizzes, exclude the PvP tag
+        $quizzes = Quiz::where('subject_id', $subject_id)
+               ->where('topic', '!=', 'PVP_ARENA_BATTLE') // 🟢 Keep Solo clean
+               ->get();
 
         // Query quizzes for specific subject, difficulty, and topic
         $query = Quiz::where('subject_id', $subject_id)->where('difficulty', $difficulty);
@@ -117,78 +148,107 @@ class StudentQuizController extends Controller
             $quiz->is_completed = $bestAttempt ? true : false;
         }
 
-        return view('users.quizzes.level4_list', compact('subject', 'difficulty', 'topic', 'quizzes'));
+        return view('users.quizzes.level4_list', compact('subject', 'difficulty', 'topic', 'quizzes', 'isPvpMode'));
     }
 
     // =========================================================
     // LEVEL 5: TAKE QUIZ (Kept as is)
     // =========================================================
-    public function show($id)
-    {
-        $quiz = Quiz::with('questions.options')->findOrFail($id);
-        return view('users.quizzes.take', compact('quiz'));
-    }
+   public function show($id)
+{
+    // Load quiz with its questions and options
+    $quiz = Quiz::with('questions.options')->findOrFail($id);
+    
+    // ⚔️ DEFINE BATTLE VARIABLES
+    $boss_hp = 100; 
+    $user_hp = Auth::user()->hp;
+
+    // FIX: Match the name here with the name in compact()
+    // We use the first question for the initial "Battle Card" display
+    $question = $quiz->questions->first(); 
+
+    // 🚀 RETURN THE ARENA VIEW
+    // The navigation bubbles will use $quiz->questions automatically
+    return view('users.quizzes.arena', compact('quiz', 'boss_hp', 'user_hp', 'question'));
+}
 
     // =========================================================
     // SUBMIT QUIZ (Kept as is - Includes Scoring, Analytics, Telegram)
     // =========================================================
     public function submit(Request $request, $id)
-    {
-        $user = Auth::user();
-        $quiz = Quiz::with(['questions.options'])->findOrFail($id);
-        
-        $score = 0;
-        $totalQuestions = $quiz->questions->count();
-        $input = $request->all();
+{
+    $user = Auth::user();
+    $quiz = Quiz::with(['questions.options'])->findOrFail($id);
+    
+    $earnedPoints = 0;
+    $totalPossiblePoints = $quiz->questions->sum('points');
 
-        foreach ($quiz->questions as $question) {
-            $userKey = 'q_' . $question->id;
-            if (!isset($input[$userKey])) continue;
-            $userAnswer = $input[$userKey];
+    foreach ($quiz->questions as $question) {
+    $userAnswer = $request->input('q_' . $question->id); 
+    $type = $question->question_type;
 
-            if ($question->question_type === 'single') {
-                $correctOption = $question->options->where('is_correct', 1)->first();
-                if ($correctOption && $userAnswer == $correctOption->id) $score++;
-            }
-            elseif ($question->question_type === 'multiple' && is_array($userAnswer)) {
-                $correctOptionIds = $question->options->where('is_correct', 1)->pluck('id')->toArray();
-                sort($userAnswer); sort($correctOptionIds);
-                if ($userAnswer == $correctOptionIds) $score++;
-            }
-            elseif ($question->question_type === 'text') {
-                $correctOption = $question->options->where('is_correct', 1)->first();
-                if ($correctOption && strtolower(trim($userAnswer)) == strtolower(trim($correctOption->option_text))) $score++;
-            }
+    // Standardizing types: handles 'single', 'single_choice', 'text', etc.
+    if (in_array($type, ['single', 'single_choice'])) {
+        $correctOption = $question->options->where('is_correct', 1)->first();
+        if ($correctOption && $userAnswer == $correctOption->id) {
+            $earnedPoints += $question->points;
         }
-
-        $percentage = ($totalQuestions > 0) ? round(($score / $totalQuestions) * 100) : 0;
-
-        DB::table('quiz_attempts')->insert([
-            'user_id' => $user->id,
-            'quiz_id' => $id,
-            'score' => $percentage,
-            'total_questions' => $totalQuestions,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $historyScores = DB::table('quiz_attempts')->where('user_id', $user->id)->orderBy('created_at', 'asc')->pluck('score')->toArray();
-        $analyticsService = new AnalyticsService();
-        $slope = $analyticsService->calculateSlope($historyScores);
-        $status = $analyticsService->getInterpretation($slope);
-
-        DB::table('student_analytics')->updateOrInsert(['user_id' => $user->id], [
-            'current_slope' => $slope, 'status' => $status, 'last_calculated_at' => now(), 'updated_at' => now()
-        ]);
-
-        if ($user->telegram_chat_id) {
-            $statusEmoji = $percentage >= 50 ? '✅' : '⚠️';
-            $statusText = $percentage >= 50 ? 'Passed' : 'Needs Improvement';
-            $msg  = "<b>New Quiz Result!</b> 📝\n\n📘 <b>Quiz:</b> {$quiz->title}\n📊 <b>Score:</b> {$percentage}%\n🏆 <b>Status:</b> {$statusEmoji} {$statusText}\n📅 <b>Date:</b> " . now()->format('d M Y, h:i A');
-            $telegram = new TelegramService();
-            $telegram->sendMessage($user->telegram_chat_id, $msg);
-        }
-
-        return view('users.quizzes.result', compact('quiz', 'score', 'totalQuestions', 'percentage'));
+    } 
+    elseif (in_array($type, ['multiple', 'multiple_choice']) && is_array($userAnswer)) {
+        $correctOptionIds = $question->options->where('is_correct', 1)->pluck('id')->toArray();
+        sort($userAnswer); sort($correctOptionIds);
+        if ($userAnswer == $correctOptionIds) { $earnedPoints += $question->points; }
+    } 
+    // Inside StudentQuizController@submit loop:
+elseif (in_array($type, ['text', 'fill_in_the_blank'])) {
+    // We trim and lowercase both sides for a fair match
+    $actualCorrectAnswer = trim($question->correct_answer_text);
+    
+    if (strtolower(trim($userAnswer)) === strtolower($actualCorrectAnswer)) {
+        $earnedPoints += $question->points;
     }
+}
+}
+
+    $percentage = ($totalPossiblePoints > 0) ? round(($earnedPoints / $totalPossiblePoints) * 100) : 0;
+
+    // Warrior Stats Update
+    if ($percentage < 50) {
+        $user->decrement('hp', 10); 
+    } else {
+        $user->increment('xp', 20);
+        if ($user->xp >= ($user->level * 100)) { $user->increment('level'); }
+    }
+
+    // Save Attempt
+    DB::table('quiz_attempts')->insert([
+        'user_id' => $user->id,
+        'quiz_id' => $id,
+        'score' => $percentage, // Percentage for analytics
+        'total_questions' => $quiz->questions->count(), // Total count for "X out of Y"
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Analytics (Kept as is)
+    $historyScores = DB::table('quiz_attempts')->where('user_id', $user->id)->orderBy('created_at', 'asc')->pluck('score')->toArray();
+    $analyticsService = new AnalyticsService();
+    $slope = $analyticsService->calculateSlope($historyScores);
+    $status = $analyticsService->getInterpretation($slope);
+    DB::table('student_analytics')->updateOrInsert(['user_id' => $user->id], [
+        'current_slope' => $slope, 'status' => $status, 'last_calculated_at' => now(), 'updated_at' => now()
+    ]);
+
+    // Telegram Logic (Kept as is)
+    if ($user->telegram_chat_id) {
+        $telegram = new TelegramService();
+        $telegram->sendMessage($user->telegram_chat_id, "New Quiz Result: {$percentage}%");
+    }
+
+    // MAP TO VIEW
+    $score = $earnedPoints; 
+    $totalQuestions = $quiz->questions->count();
+
+    return view('users.quizzes.result', compact('quiz', 'score', 'totalQuestions', 'percentage'));
+}
 }
