@@ -6,28 +6,88 @@ use App\Models\Quiz;
 use App\Models\QuizRoom;
 use App\Models\RoomParticipant;
 use App\Models\Subject;
-use App\Models\Question; // Add this import
+use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-
-
 class RoomController extends Controller
 {
-    // Teacher creates a room
-    public function create($quiz_id)
+    /**
+     * Display a list of public lobbies for a subject.
+     */
+    public function browse($subject_id)
     {
-        $room = QuizRoom::create([
-            'quiz_id' => $quiz_id,
-            'room_code' => strtoupper(Str::random(6)), // e.g., BT-X921
-            'status' => 'waiting'
-        ]);
+        $rooms = QuizRoom::where('status', 'waiting')
+            ->where('is_public', true)
+            ->whereHas('quiz', function($q) use ($subject_id) {
+                $q->where('subject_id', $subject_id);
+            })
+            ->withCount('participants')
+            ->get();
 
-        return redirect()->route('student.quizzes.lobby', $room->room_code);
+        $subject = Subject::findOrFail($subject_id);
+        return view('users.quizzes.lobby_browser', compact('rooms', 'subject'));
     }
 
-    // Student joins a room
+    /**
+     * Create a new PvP Mission from the difficulty selection.
+     */
+   public function createFromDifficulty(Request $request, $subject_id, $difficulty)
+{
+    // 1. Fetch questions first to make sure they exist
+    // Use trim() to ensure there are no hidden spaces in the difficulty name
+    $questions = Question::where('subject_id', $subject_id)
+        ->where('difficulty', trim($difficulty))
+        ->inRandomOrder()
+        ->limit(10)
+        ->get();
+
+    // 🛑 If this triggers, it means your SQLyog search has 0 results.
+    // Check if Al-Quran ID is really $subject_id and difficulty is exactly $difficulty
+    if ($questions->isEmpty()) {
+        return back()->with('error', "Database Error: No questions found for $difficulty level in this subject.");
+    }
+
+    // 2. Create the Quiz Session
+    $quiz = Quiz::create([
+        'title' => "PVP: " . strtoupper($difficulty),
+        'subject_id' => $subject_id,
+        'difficulty' => $difficulty,
+        'topic' => 'PVP_ARENA_BATTLE',
+        'teacher_id' => Auth::id(), 
+    ]);
+
+    // 3. Link Questions (Using your 'Working' loop method)
+    foreach ($questions as $q) {
+        $quiz->questions()->attach($q->id);
+    }
+
+    // 4. Create the Room
+    // Ensure 'current_question_index' is in your $fillable in QuizRoom model!
+    $room = QuizRoom::create([
+        'quiz_id' => $quiz->id,
+        'host_id' => Auth::id(),
+        'room_code' => strtoupper(Str::random(6)),
+        'is_public' => $request->query('is_public', 1),
+        'status' => 'waiting',
+        'current_question_index' => -1, 
+    ]);
+
+    RoomParticipant::create([
+        'room_id' => $room->id, 
+        'user_id' => Auth::id(), 
+        'hp' => 100, 
+        'mp' => 50,
+        'status' => 'waiting' // 🟢 Set initial status
+    ]);
+
+    return redirect()->route('student.quizzes.lobby', $room->room_code);
+}
+
+    /**
+     * Handle joining a room via code.
+     */
     public function join(Request $request)
     {
         $room = QuizRoom::where('room_code', $request->room_code)
@@ -35,150 +95,128 @@ class RoomController extends Controller
                         ->first();
 
         if (!$room) {
-            return back()->with('error', 'Room not found or already started!');
+            return back()->with('error', 'Mission not found or already deployed!');
         }
+        $userPts = Auth::user()->pvp_points;
+        $diff = strtolower($room->quiz->difficulty);
 
-        // Add student to the room
-        RoomParticipant::firstOrCreate([
-            'room_id' => $room->id,
-            'user_id' => Auth::id()
-        ]);
+    // 🔒 BACKEND GATE
+    if ($diff === 'medium' && $userPts < 100) {
+        return back()->with('error', 'You need Silver Rank (100 PTS) to join Medium missions.');
+    }
+    if ($diff === 'hard' && $userPts < 300) {
+        return back()->with('error', 'You need Gold Rank (300 PTS) to join Hard missions.');
+    }
+
+        RoomParticipant::firstOrCreate(
+            ['room_id' => $room->id, 'user_id' => Auth::id()],
+            ['hp' => 100, 'mp' => 50, 'status' => 'waiting']
+        );
 
         return redirect()->route('student.quizzes.lobby', $room->room_code);
     }
 
-    // The Lobby View
+    /**
+     * The Lobby View.
+     */
     public function lobby($code)
     {
         $room = QuizRoom::where('room_code', $code)->firstOrFail();
         $participants = RoomParticipant::where('room_id', $room->id)->with('user')->get();
-        
         return view('users.quizzes.lobby', compact('room', 'participants'));
     }
 
-    public function browse($subject_id)
-{
-    $rooms = QuizRoom::where('status', 'waiting')
-        ->where('is_public', true) // 🟢 Only show public rooms
-        ->whereHas('quiz', function($q) use ($subject_id) {
-            $q->where('subject_id', $subject_id);
-        })
-        ->withCount('participants')
-        ->get();
+    /**
+     * Polling endpoint to update participants list and game status.
+     */
+    public function getParticipants($code)
+    {
+        $room = QuizRoom::where('room_code', $code)->first();
+        if (!$room) return response()->json(['status' => 'dismissed']);
 
-    $subject = Subject::findOrFail($subject_id);
-    return view('users.quizzes.lobby_browser', compact('rooms', 'subject'));
-}
-
-public function createFromDifficulty(Request $request, $subject_id, $difficulty)
-{
-    // 1. Create a "Template" Quiz for this Battle
-    $quiz = Quiz::create([
-        'title' => "PVP Arena: $difficulty",
-        'subject_id' => $subject_id,
-        'difficulty' => $difficulty,
-        'topic' => 'PVP_ARENA_BATTLE', // Keep this tag for isolation
-        'teacher_id' => Auth::id(), 
-    ]);
-
-    // 🟢 2. THE FIX: Attach 10 random questions to this quiz
-    $questions = Question::where('subject_id', $subject_id)
-        ->where('difficulty', $difficulty)
-        ->inRandomOrder()
-        ->limit(10)
-        ->get();
-
-    // Attach them to the pivot table (standard Laravel many-to-many)
-    foreach ($questions as $q) {
-        $quiz->questions()->attach($q->id);
+        $participants = RoomParticipant::where('room_id', $room->id)->with('user')->get();
+        return response()->json(['participants' => $participants, 'status' => $room->status]);
     }
 
-    // 3. Create the Room with visibility
-    $room = QuizRoom::create([
-        'quiz_id' => $quiz->id,
-        'host_id' => Auth::id(),
-        'room_code' => strtoupper(Str::random(6)),
-        'is_public' => $request->query('is_public', 1), // 1 = Public, 0 = Private
-        'status' => 'waiting',
-    ]);
-
-    // 4. Host joins as first participant
-    RoomParticipant::create([
-        'room_id' => $room->id,
-        'user_id' => Auth::id(),
-        'hp' => 100,
-        'mp' => 50
-    ]);
-
-    return redirect()->route('student.quizzes.lobby', $room->room_code);
-}
-
-// 🟢 START MISSION: Host only
-public function start($code)
+    /**
+     * Host starts the mission.
+     */
+    public function start($code)
 {
     $room = QuizRoom::where('room_code', $code)->first();
-    if ($room && $room->host_id == Auth::id()) {
-        $room->update(['status' => 'active']); // 👈 MUST be 'active'
+    if ($room && (int)$room->host_id === (int)Auth::id()) {
+        $participants = RoomParticipant::where('room_id', $room->id)->get();
+        $count = $participants->count();
+
+        // 🛑 NEW: BLOCK START IF ALONE
+        if ($count < 2) {
+            return response()->json([
+                'error' => 'Waiting for more warriors... You need at least 2 players to start a battle!'
+            ], 400); // Return 400 Bad Request
+        }
+        
+        // 🟢 HP SCALING: 50 HP per warrior (Min 100)
+        $startHp = $count * 50;
+
+        foreach ($participants as $p) {
+            $p->update([
+                'status' => 'active',
+                'hp' => $startHp,
+                'mp' => 50,
+                'skills_locked_turns' => 0, // Reset drawbacks
+                'is_shielded' => false,
+                'active_boost' => false
+            ]);
+        }
+
+        $room->update(['status' => 'active', 'updated_at' => now()]);
         return response()->json(['success' => true]);
     }
     return response()->json(['error' => 'Unauthorized'], 403);
 }
 
-// 🟢 DISMISS LOBBY: Host only
-public function dismiss($code)
-{
-    $room = QuizRoom::where('room_code', $code)->first();
-
-    if (!$room) {
-        return response()->json(['message' => 'Lobby not found'], 404);
+    /**
+     * Host dismisses the lobby before starting.
+     */
+    public function dismiss($code)
+    {
+        $room = QuizRoom::where('room_code', $code)->first();
+        if ($room && (int)$room->host_id === (int)Auth::id()) {
+            $room->delete(); // Deleting ensures polling sees 'dismissed'
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
 
-    // Ensure only the host can pull the plug
-    if ((int)$room->host_id === (int)Auth::id()) {
-        
-        // 🟢 HARD DELETE: Removes the room and its participants completely from DB
-        $room->delete(); 
-        
-        return response()->json(['success' => true]);
+    /**
+     * Player leaves the lobby or surrenders during battle.
+     */
+    public function leaveLobby($code)
+    {
+        $room = QuizRoom::where('room_code', $code)->first();
+        if ($room) {
+            RoomParticipant::where('room_id', $room->id)->where('user_id', Auth::id())->delete();
+            if ((int)$room->host_id === (int)Auth::id()) {
+                $room->delete();
+            }
+        }
+        return redirect()->route('student.quizzes.index');
     }
 
-    return response()->json(['message' => 'Unauthorized Access'], 403);
-}
-
-public function battleArena($code)
+    /**
+     * The Battle Arena View.
+     */
+   public function battleArena($code)
 {
-    $room = QuizRoom::with(['quiz.questions.options', 'participants.user'])->where('room_code', $code)->firstOrFail();
-    $me = RoomParticipant::where('room_id', $room->id)->where('user_id', auth()->id())->first();
+    // 🟢 EAGER LOAD the questions and options
+    $room = QuizRoom::with(['quiz.questions.options', 'participants.user'])
+                    ->where('room_code', $code)
+                    ->firstOrFail();
+    
+    $me = RoomParticipant::where('room_id', $room->id)
+                         ->where('user_id', Auth::id())
+                         ->firstOrFail();
 
     return view('users.quizzes.pvp_arena', compact('room', 'me'));
 }
-
-// AJAX: Checks if all 20 players are done or if time is up
-public function checkRoundStatus($code)
-{
-    $room = QuizRoom::where('room_code', $code)->first();
-    $participants = RoomParticipant::where('room_id', $room->id)->with('user')->get();
-    
-    // We will build the logic here to see who has submitted for the current question
-    return response()->json([
-        'status' => $room->status,
-        'current_index' => $room->current_question_index,
-        'participants' => $participants
-    ]);
-}
-
-    // AJAX Endpoint: Get list of participants
-    public function getParticipants($code)
-    {
-        $room = QuizRoom::where('room_code', $code)->first();
-        $participants = RoomParticipant::where('room_id', $room->id)
-                                        ->with('user')
-                                        ->get();
-
-        return response()->json([
-            'participants' => $participants,
-            'status' => $room->status
-        ]);
-    }
-
 }

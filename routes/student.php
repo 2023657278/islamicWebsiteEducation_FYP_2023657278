@@ -13,6 +13,7 @@ use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\StudentProgressController; // Added missing import
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\PvpController; // Added missing import
+use App\Http\Controllers\RankingController;
 use App\Models\Subject;
 
 // =========================================================
@@ -57,55 +58,41 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::get('/student/progress', [StudentProgressController::class, 'index'])->name('student.progress.index');
 
     // =========================================================
-    // 🎓 HIERARCHICAL QUIZ CENTER (RE-STRUCTURED FOR PROGRESSION)
-    // =========================================================
-    Route::group(['prefix' => 'student/quizzes', 'as' => 'student.quizzes.'], function () {
+// 🎓 HIERARCHICAL QUIZ CENTER (CLEANED VERSION)
+// =========================================================
+Route::group(['prefix' => 'student/quizzes', 'as' => 'student.quizzes.'], function () {
+    
+    // 1. Core Navigation
+    Route::get('/', [StudentQuizController::class, 'index'])->name('index');
+    Route::get('/subject/{subject_id}/mode', [StudentQuizController::class, 'selectMode'])->name('select_mode');
+    Route::get('/subject/{subject_id}', [StudentQuizController::class, 'difficulties'])->name('difficulties');
+    Route::get('/subject/{subject_id}/level/{difficulty}', [StudentQuizController::class, 'topicsByDifficulty'])->name('topics_diff');
+    Route::get('/subject/{subject_id}/level/{difficulty}/topic/{topic}', [StudentQuizController::class, 'listByTopic'])->name('list');
 
-        Route::get('/subject/{subject_id}/difficulty/{difficulty}/create-pvp', [RoomController::class, 'createFromDifficulty'])->name('create_pvp');
-        Route::get('/subject/{subject_id}/browse', [RoomController::class, 'browse'])->name('browse');
-        Route::post('/lobby/{code}/start', [RoomController::class, 'start'])->name('lobby.start');
-        Route::post('/lobby/{code}/dismiss', [RoomController::class, 'dismiss'])->name('lobby.dismiss');
-        Route::get('/pvp/{code}', [PvpController::class, 'arena'])->name('pvp.arena');
-        Route::get('/create_pvp/{subject_id}/{difficulty}', [RoomController::class, 'createFromDifficulty'])->name('student.quizzes.create_pvp');
-        
-        
-        // Level 1: Subject Selection
-        Route::get('/', [StudentQuizController::class, 'index'])->name('index');
+    // 2. PvP Creation & Lobby
+    // URL: /student/quizzes/create_pvp/...
+    Route::get('/create_pvp/{subject_id}/{difficulty}', [RoomController::class, 'createFromDifficulty'])->name('create_pvp');
+    Route::get('/subject/{subject_id}/browse', [RoomController::class, 'browse'])->name('browse');
+    Route::get('/lobby/{code}', [RoomController::class, 'lobby'])->name('lobby');
+    Route::get('/lobby/{code}/participants', [RoomController::class, 'getParticipants'])->name('participants');
+    Route::post('/lobby/{code}/start', [RoomController::class, 'start'])->name('lobby.start');
+    Route::post('/lobby/{code}/dismiss', [RoomController::class, 'dismiss'])->name('lobby.dismiss');
+    Route::get('/lobby/{code}/leave', [RoomController::class, 'leaveLobby'])->name('lobby.leave');
+    Route::post('/join', [RoomController::class, 'join'])->name('join');
 
-        // NEW Level 1.5: Mode Selection
-        Route::get('/subject/{subject_id}/mode', [StudentQuizController::class, 'selectMode'])->name('select_mode');
+    // 3. Battle Arena (Using RoomController for the View, PvpController for Logic)
+    Route::get('/pvp/{code}', [RoomController::class, 'battleArena'])->name('pvp.arena');
+    Route::get('/pvp/{code}/status', [PvpController::class, 'getStatus'])->name('pvp.status');
+    Route::post('/pvp/{code}/strike', [PvpController::class, 'submitStrike'])->name('pvp.strike');
+    Route::post('/pvp/{code}/next', [PvpController::class, 'nextRound'])->name('pvp.next');
+    Route::get('/pvp/{code}/surrender', [RoomController::class, 'leaveLobby'])->name('pvp.surrender');
+    Route::post('/pvp/{code}/power', [PvpController::class, 'usePower'])->name('pvp.power');
+    Route::get('/pvp/{code}/results', [PvpController::class, 'results'])->name('pvp.results');
 
-        // Level 2: Difficulty Selection (Easy, Medium, Hard)
-        // This replaces the old 'topics' route
-        Route::get('/subject/{subject_id}', [StudentQuizController::class, 'difficulties'])->name('difficulties');
-
-        // Level 3: Topic Selection (Filtered by the chosen difficulty)
-        Route::get('/subject/{subject_id}/level/{difficulty}', [StudentQuizController::class, 'topicsByDifficulty'])->name('topics_diff');
-
-        // Level 4: Final Quiz List (Filtered by Difficulty AND Topic)
-        Route::get('/subject/{subject_id}/level/{difficulty}/topic/{topic}', [StudentQuizController::class, 'listByTopic'])->name('list');
-
-        // Level 5: Take Quiz & Submit (Unchanged)
-        Route::get('/{id}/take', [StudentQuizController::class, 'show'])->name('take');
-        Route::post('/{id}/submit', [StudentQuizController::class, 'submit'])->name('submit');
-
-        // ... (Existing Level 1 - 5 Routes)
-        Route::get('/{id}/take', [StudentQuizController::class, 'show'])->name('take');
-        Route::post('/{id}/submit', [StudentQuizController::class, 'submit'])->name('submit');
-
-        // 2. ADD THESE PVP LOBBY ROUTES HERE
-        Route::get('/lobby/{code}', [RoomController::class, 'lobby'])->name('lobby');
-        Route::get('/lobby/{code}/participants', [RoomController::class, 'getParticipants'])->name('participants');
-        Route::post('/pvp/{code}/surrender', [RoomController::class, 'surrender'])->name('student.quizzes.pvp.surrender');
-        Route::post('/join', [RoomController::class, 'join'])->name('join');
-
-        Route::get('/pvp/{code}', [PvpController::class, 'arena'])->name('pvp.arena');
-        Route::get('/pvp/{code}/status', [PvpController::class, 'getStatus'])->name('pvp.status');
-        Route::post('/pvp/{code}/strike', [PvpController::class, 'submitStrike'])->name('pvp.strike');
-        Route::post('/pvp/{code}/next', [PvpController::class, 'nextRound'])->name('pvp.next');
-        
-
-    });
+    // 4. Solo Quiz Logic
+    Route::get('/{id}/take', [StudentQuizController::class, 'show'])->name('take');
+    Route::post('/{id}/submit', [StudentQuizController::class, 'submit'])->name('submit');
+});
 
     // 10. FLASHCARDS
     Route::get('/student/flashcards', [StudentFlashcardController::class, 'index'])->name('student.flashcards.index');
@@ -121,4 +108,7 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     // 12. TEXTBOOK READER
     Route::get('/student/textbooks/{id}/read', [StudentResourceController::class, 'read'])->name('student.textbooks.read');
     Route::post('/student/textbooks/progress', [StudentResourceController::class, 'saveProgress'])->name('student.textbooks.save_progress');
+
+    // 13. RANKING
+    Route::get('/ranking', [RankingController::class, 'index'])->name('student.ranking');
 });

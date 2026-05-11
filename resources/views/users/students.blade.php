@@ -75,6 +75,7 @@
             <a class="nav-link {{ Route::is('student.dashboard') ? 'active' : '' }}" href="{{ route('student.dashboard') }}"><i class="fas fa-th-large"></i> Dashboard</a>
             <a class="nav-link {{ Route::is('student.quizzes.index') ? 'active' : '' }}" href="{{ route('student.quizzes.index') }}"><i class="fas fa-brain"></i> Quiz</a>
             <a class="nav-link {{ Route::is('student.textbooks.index') ? 'active' : '' }}" href="{{ route('student.textbooks.index') }}"><i class="fas fa-book"></i> Textbooks</a>
+            <a class="nav-link {{ Route::is('student.ranking') ? 'active' : '' }}" href="{{ route('student.ranking') }}"><i class="fas fa-crown"></i> Leaderboard</a>
         </nav>
         
         <div class="sidebar-footer">

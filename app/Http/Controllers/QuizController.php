@@ -155,24 +155,36 @@ class QuizController extends Controller
     ]);
 
     $quiz = Quiz::findOrFail($quiz_id);
-    
-    // FIX: Save text_answer into correct_answer_text for FIB questions
+
+    // 1. Prepare Question Data
+    // We pull the subject_id and difficulty from the Quiz automatically
     $questionData = [
         'question_text' => $request->question_text,
         'question_type' => $request->question_type,
         'points' => $request->points ?? 1,
+        'subject_id' => $quiz->subject_id, 
+        'difficulty' => $quiz->difficulty,
     ];
 
     if ($request->question_type === 'text') {
         $questionData['correct_answer_text'] = $request->text_answer;
     }
 
-    $question = $quiz->questions()->create($questionData);
+    // 2. Create the Question directly using the Model
+    // We manually set quiz_id here to satisfy your current database requirement
+    $questionData['quiz_id'] = $quiz->id; 
+    $question = \App\Models\Question::create($questionData);
 
+    // 3. 🟢 THE MOST IMPORTANT PART: Attach to the Pivot Table
+    // This makes the question available for PvP shuffling!
+    $quiz->questions()->attach($question->id);
+
+    // 4. Create Options
     if ($request->question_type === 'text') {
-        // Keep this for backward compatibility if needed, 
-        // but the logic now relies on correct_answer_text column.
-        $question->options()->create(['option_text' => $request->text_answer, 'is_correct' => true]);
+        $question->options()->create([
+            'option_text' => $request->text_answer, 
+            'is_correct' => true
+        ]);
     } else {
         if($request->options){
             foreach ($request->options as $key => $optionText) {
@@ -183,11 +195,15 @@ class QuizController extends Controller
                 } elseif ($request->question_type === 'multiple') {
                     if (isset($request->correct_multiple) && in_array($key, $request->correct_multiple)) $isCorrect = true;
                 }
-                $question->options()->create(['option_text' => $optionText, 'is_correct' => $isCorrect]);
+                $question->options()->create([
+                    'option_text' => $optionText, 
+                    'is_correct' => $isCorrect
+                ]);
             }
         }
     }
-    return back()->with('success', 'Question added successfully!');
+
+    return back()->with('success', 'Question added and linked to Arena successfully!');
 }
 
     public function destroyQuestion($id)

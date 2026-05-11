@@ -28,6 +28,7 @@ class User extends Authenticatable
         'mrsm_id',           // Optional Student ID
         'group_id',          // Class ID
         'profile_image',
+        'pvp_points',
         'last_login_at',     // For Analytics
     ];
 

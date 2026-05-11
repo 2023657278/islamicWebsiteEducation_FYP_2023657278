@@ -75,6 +75,7 @@
             <a class="nav-link <?php echo e(Route::is('student.dashboard') ? 'active' : ''); ?>" href="<?php echo e(route('student.dashboard')); ?>"><i class="fas fa-th-large"></i> Dashboard</a>
             <a class="nav-link <?php echo e(Route::is('student.quizzes.index') ? 'active' : ''); ?>" href="<?php echo e(route('student.quizzes.index')); ?>"><i class="fas fa-brain"></i> Quiz</a>
             <a class="nav-link <?php echo e(Route::is('student.textbooks.index') ? 'active' : ''); ?>" href="<?php echo e(route('student.textbooks.index')); ?>"><i class="fas fa-book"></i> Textbooks</a>
+            <a class="nav-link <?php echo e(Route::is('student.ranking') ? 'active' : ''); ?>" href="<?php echo e(route('student.ranking')); ?>"><i class="fas fa-crown"></i> Leaderboard</a>
         </nav>
         
         <div class="sidebar-footer">

@@ -20,6 +20,11 @@ class Question extends Model
         ];
 
     // Relationships
-    public function quiz() { return $this->belongsTo(Quiz::class); }
-    public function options() { return $this->hasMany(Option::class); }
+    public function quizzes() { 
+    return $this->belongsToMany(Quiz::class, 'quiz_question'); 
+}
+
+public function options() { 
+    return $this->hasMany(Option::class); 
+}
 }
