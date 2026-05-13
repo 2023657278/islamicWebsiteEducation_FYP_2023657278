@@ -40,6 +40,8 @@ Route::middleware(['auth', 'role:teacher,admin'])->group(function () {
     Route::get('/resources/sync/auth', [ResourcesController::class, 'redirectToYouTube'])->name('resources.sync.auth');
     Route::get('/auth/youtube/callback', [ResourcesController::class, 'handleYouTubeCallback'])->name('resources.sync.callback');
     Route::post('/resources/sync/store', [ResourcesController::class, 'storeSelectedVideos'])->name('resources.sync.store_selected');
+    Route::get('/resources/youtube/search', [App\Http\Controllers\ResourcesController::class, 'youtubeSearch'])->name('resources.youtube.search');
+    Route::get('/youtube/fetch-data', [ResourcesController::class, 'fetchYoutubeData'])->name('youtube.fetch');
 
     // Notes Management (Repository)
     Route::prefix('manage')->group(function () {

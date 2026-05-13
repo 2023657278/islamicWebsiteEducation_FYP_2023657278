@@ -9,7 +9,7 @@ class RoomParticipant extends Model
     // 🟢 Added status, shielded, frozen, boost, and frozen_until to fillable
     protected $fillable = [
     'room_id', 'user_id', 'hp', 'mp', 'last_rank', 'is_ready', 
-    'status', 'is_shielded', 'is_frozen', 'active_boost', 'frozen_until',
+    'status','rank', 'is_shielded', 'is_frozen', 'active_boost', 'frozen_until',
     'skills_locked_turns', 'strike_locked_until' // 🟢 Added these two
     ];
 
