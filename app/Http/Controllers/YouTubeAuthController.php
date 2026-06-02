@@ -16,7 +16,6 @@ class YouTubeAuthController extends Controller
     // 1. Send User to Google
     public function redirect(Request $request)
     {
-        // 🟢 ADDED: Save the IDs to session so we don't lose them
         Session::put('sync_group_id', $request->group_id);
         Session::put('sync_subject_id', $request->subject_id);
 
@@ -30,6 +29,8 @@ class YouTubeAuthController extends Controller
                 'profile',
                 'email'
             ])
+            // Force the redirect URL here:
+            ->redirectUrl('https://islamic-lms.online/login/google/callback')
             ->with(['access_type' => 'offline', 'prompt' => 'consent'])
             ->redirect();
     }
@@ -97,4 +98,6 @@ class YouTubeAuthController extends Controller
             return redirect()->route('resources.index')->with('error', 'System Error: ' . $e->getMessage());
         }
     }
+
+    
 }
