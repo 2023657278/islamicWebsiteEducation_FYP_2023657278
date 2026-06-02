@@ -35,14 +35,26 @@
                         <?php echo e($student->group->group_name ?? 'No Group'); ?> (<?php echo e($student->group->year->year ?? '-'); ?>)
                     </span>
                     
-                    <div class="d-flex justify-content-between text-start bg-light p-3 rounded-3 small">
-                        <div>
-                            <p class="mb-1"><strong>ID:</strong> #<?php echo e($student->id); ?></p>
-                            <p class="mb-0"><strong>Email:</strong> <?php echo e($student->email); ?></p>
-                        </div>
-                        <div class="text-end">
-                            <p class="mb-1"><strong>Phone:</strong> <?php echo e($student->phone_number ?? '-'); ?></p>
-                            <p class="mb-0"><strong>Joined:</strong> <?php echo e($student->created_at->format('M Y')); ?></p>
+                    
+                    <div class="bg-light p-3 rounded-3 small text-start">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <p class="mb-1 text-muted-dark"><strong>System ID:</strong></p>
+                                <p class="mb-2 text-dark font-weight-bold">#<?php echo e($student->id); ?></p>
+                                
+                                <p class="mb-1 text-muted-dark"><strong>No. Maktab:</strong></p>
+                                <p class="mb-2 text-primary font-weight-bold"><?php echo e($student->no_maktab ?? 'N/A'); ?></p>
+                                
+                                <p class="mb-1 text-muted-dark"><strong>Email Address:</strong></p>
+                                <p class="mb-0 text-dark text-truncate" title="<?php echo e($student->email); ?>"><?php echo e($student->email); ?></p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p class="mb-1 text-muted-dark"><strong>Phone Class:</strong></p>
+                                <p class="mb-2 text-dark font-weight-bold"><?php echo e($student->phone_number ?? '-'); ?></p>
+                                
+                                <p class="mb-1 text-muted-dark"><strong>Enrolled Matrix:</strong></p>
+                                <p class="mb-2 text-dark font-weight-bold"><?php echo e($student->created_at->format('M Y')); ?></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -127,12 +139,10 @@
 <script>
     const ctx = document.getElementById('trendChart').getContext('2d');
     
-    // PHP Data injection
     const labels = <?php echo json_encode($dates, 15, 512) ?>;
     const actualScores = <?php echo json_encode($scores, 15, 512) ?>;
     const trendScores = <?php echo json_encode($trendPoints, 15, 512) ?>;
 
-    // Add Prediction Point
     labels.push('Next (Predicted)');
     trendScores.push(<?php echo e($predictedNextScore); ?>);
 
@@ -144,7 +154,7 @@
                 {
                     label: 'Actual Score',
                     data: actualScores,
-                    borderColor: '#4f46e5', // Indigo
+                    borderColor: '#4f46e5',
                     backgroundColor: 'rgba(79, 70, 229, 0.1)',
                     borderWidth: 3,
                     pointRadius: 5,
@@ -157,7 +167,7 @@
                 {
                     label: 'Trend Prediction',
                     data: trendScores,
-                    borderColor: '#f59e0b', // Amber
+                    borderColor: '#f59e0b',
                     borderWidth: 2,
                     borderDash: [5, 5],
                     pointRadius: 4,

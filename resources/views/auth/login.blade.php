@@ -40,6 +40,7 @@
                             @enderror
                         </div>
 
+                        <!--
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
@@ -53,6 +54,7 @@
                                 </a>
                             @endif
                         </div>
+                        -->
 
                         <div class="d-grid mb-3">
                             <button type="submit" class="btn btn-primary btn-lg">

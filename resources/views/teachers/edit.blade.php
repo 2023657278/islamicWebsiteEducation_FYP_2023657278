@@ -1,5 +1,4 @@
-@extends('admin.adminhome')
-
+@extends(auth()->user()->role === 'admin' ? 'adminreal.master' : 'admin.adminhome')
 @section('content')
 <div class="container-fluid">
     <div class="row justify-content-center">

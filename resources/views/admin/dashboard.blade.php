@@ -103,23 +103,24 @@
                         <i class="fas fa-mosque mr-2 text-warning"></i> Waktu Solat
                     </h4>
                     
-                    <select id="location-select" class="form-control form-control-sm border-0 bg-light" style="width: auto; font-weight: 600; color: #5b1a1a; cursor: pointer;">
-                        <optgroup label="Zon Melaka 1 (Jasin & Merlimau)">
-                            <option value="2.3133,102.4309" selected>📍 Jasin (Bandar)</option>
-                            <option value="2.1460,102.4250">📍 Merlimau</option>
-                            <option value="2.2700,102.3800">📍 Bemban</option>
-                            <option value="2.2230,102.4540">📍 Nyalas</option>
-                        </optgroup>
-                        <optgroup label="Zon Melaka 2 (Melaka Tengah)">
-                            <option value="2.1896,102.2501">📍 Bandar Melaka</option>
-                            <option value="2.2775,102.1466">📍 Sungai Udang (MRSM Terendak)</option>
-                            <option value="2.2738,102.2858">📍 Ayer Keroh</option>
-                            <option value="2.2470,102.2870">📍 Batu Berendam</option>
-                        </optgroup>
-                        <optgroup label="Zon Melaka 3 (Alor Gajah)">
-                            <option value="2.3804,102.2089">📍 Alor Gajah (Bandar)</option>
-                            <option value="2.3500,102.1100">📍 Masjid Tanah</option>
-                        </optgroup>
+                    <select id="location-select" class="form-control form-control-sm border-0 bg-light" style="width: auto; min-width: 200px; font-weight: 600; color: #5b1a1a; cursor: pointer;">
+                        <option value="2.3133,102.4309">📍 Jasin, Melaka (Default)</option>
+                        <hr>
+                        <option value="3.1319,101.6841">📍 Kuala Lumpur / Putrajaya</option>
+                        <option value="1.4927,103.7414">📍 Johor (Johor Bahru)</option>
+                        <option value="6.1184,100.3686">📍 Kedah (Alor Setar)</option>
+                        <option value="6.1254,102.2386">📍 Kelantan (Kota Bharu)</option>
+                        <option value="2.1896,102.2501">📍 Melaka (Bandar Melaka)</option>
+                        <option value="2.7258,101.9424">📍 Negeri Sembilan (Seremban)</option>
+                        <option value="3.8126,103.3256">📍 Pahang (Kuantan)</option>
+                        <option value="4.5921,101.0901">📍 Perak (Ipoh)</option>
+                        <option value="6.4449,100.2048">📍 Perlis (Kangar)</option>
+                        <option value="5.4141,100.3288">📍 Pulau Pinang (George Town)</option>
+                        <option value="1.5533,110.3592">📍 Sarawak (Kuching)</option>
+                        <option value="5.9788,116.0753">📍 Sabah (Kota Kinabalu)</option>
+                        <option value="3.0738,101.5183">📍 Selangor (Shah Alam)</option>
+                        <option value="5.3302,103.1408">📍 Terengganu (Kuala Terengganu)</option>
+                        <option value="5.2831,115.2443">📍 Labuan</option>
                     </select>
                 </div>
                 <div class="small text-muted font-weight-bold">JAKIM Malaysia Calibration</div>
@@ -128,9 +129,8 @@
             <div class="card-body">
                 <div class="text-left py-4" id="prayer-loading">
                     <div class="spinner-border text-secondary" role="status"></div>
-                    <p class="mt-2 text-muted">Loading accurate JAKIM times...</p>
+                    <p class="mt-2 text-muted">Updating regional prayer times...</p>
                 </div>
-                {{-- Row for cards, left aligned --}}
                 <div class="row text-left d-none" id="prayer-cards"></div>
             </div>
         </div>

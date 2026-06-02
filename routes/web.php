@@ -35,6 +35,7 @@ Route::get('/auth/youtube/callback', [YouTubeAuthController::class, 'callback'])
 // =========================================================
 //  LOAD SEPARATE ROUTE FILES
 // =========================================================
+require __DIR__.'/adminreal.php';
 require __DIR__.'/teacher.php';
 require __DIR__.'/student.php';
 require __DIR__.'/shared.php';

@@ -66,6 +66,7 @@ endif;
 unset($__errorArgs, $__bag); ?>
                         </div>
 
+                        <!--
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="remember" id="remember" <?php echo e(old('remember') ? 'checked' : ''); ?>>
@@ -81,6 +82,7 @@ unset($__errorArgs, $__bag); ?>
                                 </a>
                             <?php endif; ?>
                         </div>
+                        -->
 
                         <div class="d-grid mb-3">
                             <button type="submit" class="btn btn-primary btn-lg">

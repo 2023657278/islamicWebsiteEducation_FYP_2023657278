@@ -18,7 +18,7 @@
         <div class="col-md-10 col-lg-8">
             <div class="wa-list-container shadow-sm">
                 <div class="wa-header">
-                    <h5 class="mb-0 fw-bold">WhatsApp PAI</h5>
+                    <h5 class="mb-0 fw-bold">Messages PAI</h5>
                 </div>
                 
                 <div style="overflow-y: auto; flex: 1;">

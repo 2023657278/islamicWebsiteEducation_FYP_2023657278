@@ -14,10 +14,16 @@
                         @csrf
 
                         <div class="row">
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-8 mb-3">
                                 <label class="small font-weight-bold">Full Name</label>
                                 <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" placeholder="Enter student name" value="{{ old('name') }}" required>
                                 @error('name') <span class="text-danger small">{{ $message }}</span> @enderror
+                            </div>
+                            {{-- ADDED: No. Maktab Field --}}
+                            <div class="col-md-4 mb-3">
+                                <label class="small font-weight-bold">No. Maktab</label>
+                                <input type="text" name="no_maktab" class="form-control @error('no_maktab') is-invalid @enderror" placeholder="e.g. TB12345" value="{{ old('no_maktab') }}" required>
+                                @error('no_maktab') <span class="text-danger small">{{ $message }}</span> @enderror
                             </div>
                         </div>
 

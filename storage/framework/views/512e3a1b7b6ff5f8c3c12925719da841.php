@@ -14,7 +14,7 @@
                         <?php echo csrf_field(); ?>
 
                         <div class="row">
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-8 mb-3">
                                 <label class="small font-weight-bold">Full Name</label>
                                 <input type="text" name="name" class="form-control <?php $__errorArgs = ['name'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -25,6 +25,26 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="Enter student name" value="<?php echo e(old('name')); ?>" required>
                                 <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-danger small"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="small font-weight-bold">No. Maktab</label>
+                                <input type="text" name="no_maktab" class="form-control <?php $__errorArgs = ['no_maktab'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" placeholder="e.g. TB12345" value="<?php echo e(old('no_maktab')); ?>" required>
+                                <?php $__errorArgs = ['no_maktab'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }

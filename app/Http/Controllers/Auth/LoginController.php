@@ -54,15 +54,20 @@ class LoginController extends Controller
     {
         $user = Auth::user(); 
 
-        // 1. If Teacher or Admin -> Go to Admin Panel
-        if ($user->role === 'teacher' || $user->role === 'admin') {
-            return route('admin.dashboard'); 
-        } 
-        
-        // 2. If Student -> Go to Student Homepage
-        elseif ($user->role === 'student') {
-            return route('student.homepage'); 
-        } 
+        // 1. If Super Admin -> Go to Real Admin Panel
+    if ($user->role === 'admin') {
+        return route('adminreal.dashboard'); 
+    }
+
+    // 2. If Teacher -> Go to Teacher Management Panel
+    if ($user->role === 'teacher') {
+        return route('admin.dashboard'); 
+    } 
+    
+    // 3. If Student -> Go to Student Homepage
+    if ($user->role === 'student') {
+        return route('student.homepage'); 
+    }
         
         // 3. Fallback
         return '/laravel'; 
@@ -79,4 +84,12 @@ class LoginController extends Controller
 
         return redirect('/login');
     }
+
+    protected function authenticated(Request $request, $user)
+{
+    $user->update([
+        'last_login_at' => now()
+    ]);
+}
+
 }

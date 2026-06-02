@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Group;
-use App\Models\QuizAttempt; // ✅ FIX: Use the correct model
+use App\Models\QuizAttempt;
 use App\Models\Subject; 
-use App\Services\AnalyticsService; // Optional if you want to use the service
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
@@ -155,20 +154,26 @@ class StudentController extends Controller
     }
 
     public function store(Request $request) {
+        // ✅ FIXED: Added validation rules for no_maktab
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'no_maktab' => 'required|string|unique:users,no_maktab', 
             'password' => 'required|min:6',
             'group_id' => 'required|exists:groups,id',
         ]);
+
+        // ✅ FIXED: Explicitly mapping no_maktab to database payload
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'no_maktab' => $request->no_maktab, 
             'password' => Hash::make($request->password),
             'group_id' => $request->group_id,
             'phone_number' => $request->phone_number,
             'role' => 'student',
         ]);
+
         return redirect()->route('students.index')->with('success', 'Student registered successfully!');
     }
 
@@ -178,16 +183,22 @@ class StudentController extends Controller
     }
 
     public function update(Request $request, User $student) {
+        // ✅ FIXED: Added unique validation rule that skips the current user's entry
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $student->id,
+            'no_maktab' => 'required|string|unique:users,no_maktab,' . $student->id, 
             'group_id' => 'required|exists:groups,id',
             'password' => 'nullable|min:6|confirmed',
         ]);
-        $data = $request->only(['name', 'email', 'group_id', 'phone_number']);
+
+        // ✅ FIXED: Added 'no_maktab' into request filter data whitelist
+        $data = $request->only(['name', 'email', 'no_maktab', 'group_id', 'phone_number']);
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
+
         $student->update($data);
         return redirect()->route('students.index')->with('success', 'Student updated successfully.');
     }

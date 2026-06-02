@@ -9,21 +9,21 @@
         <p class="text-muted">Welcome back! Here is your learning overview.</p>
     </div>
 
-    {{-- ✅ NEXT PRAYER HIGHLIGHT CARD --}}
+    {{-- ✅ CALIBRATED LIVE SYSTEM CLOCK CARD --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
         <div class="card-body p-4 text-white position-relative text-start">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashNextLabel">Upcoming Prayer</p>
-                    <h1 class="fw-bold mb-2" id="dashNextTime" style="font-size: 3.5rem;">--:--</h1>
+                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashTimeLabel">Current System Time</p>
+                    <h1 class="fw-bold mb-2" id="dashCurrentTime" style="font-size: 3.5rem; font-family: 'Inter', sans-serif; tracking-wide">00:00:00</h1>
                     
                     <div class="d-inline-flex align-items-center bg-white bg-opacity-25 rounded-pill px-3 py-1">
-                        <i class="far fa-clock me-2"></i>
-                        <span class="fw-bold small" id="dashCountdown">Calculating...</span>
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <span class="fw-bold small" id="activeZoneDisplay">Synchronizing Location...</span>
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block opacity-25">
-                    <i class="fas fa-mosque fa-7x"></i>
+                    <i class="far fa-clock fa-7x"></i>
                 </div>
             </div>
         </div>
@@ -163,7 +163,7 @@
         </div>
         <div class="card-body p-4">
             <div style="width: 100%; height: 600px; overflow: hidden; border-radius: 12px; border: 1px solid #eee;">
-                <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FKuala_Lumpur&src=ZW4ubWFsYXlzaWEjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%230B8043&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&mode=AGENDA" 
+                <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FKuala_Lumpur&src=ZW4ubWFsYXlzaWEjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%230B8043&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0" 
                     style="border:0" width="100%" height="600" frameborder="0" scrolling="no">
                 </iframe>
             </div>
@@ -176,7 +176,7 @@
 <div class="prayer-widget-container no-print">
     <div id="prayerList" class="card border-0 shadow mb-3 d-none prayer-list-card">
         <div class="card-body p-3 text-start">
-            <h6 class="fw-bold text-center border-bottom pb-2 mb-2">Waktu Solat (JAKIM)</h6>
+            <h6 class="fw-bold text-center border-bottom pb-2 mb-2" id="widgetZoneHeader">Waktu Solat (JAKIM)</h6>
             <div class="d-flex justify-content-between small mb-1"><span>Subuh</span> <span id="time-Fajr" class="fw-bold">--:--</span></div>
             <div class="d-flex justify-content-between small mb-1"><span>Zohor</span> <span id="time-Dhuhr" class="fw-bold">--:--</span></div>
             <div class="d-flex justify-content-between small mb-1"><span>Asar</span> <span id="time-Asr" class="fw-bold">--:--</span></div>
@@ -231,11 +231,48 @@
         }
     });
 
-    // ✅ PRAYER LOGIC (DASHBOARD + FLOATING)
+    // ✅ Map coordinates to friendly location labels to match profile view names
+    const zoneLabels = {
+        '2.2775,102.1466': 'Melaka (Sg. Udang MRSM)',
+        '3.1319,101.6841': 'Kuala Lumpur / Putrajaya',
+        '1.4927,103.7414': 'Johor (Johor Bahru)',
+        '6.1184,100.3686': 'Kedah (Alor Setar)',
+        '6.1254,102.2386': 'Kelantan (Kota Bharu)',
+        '2.7258,101.9424': 'Negeri Sembilan (Seremban)',
+        '3.8126,103.3256': 'Pahang (Kuantan)',
+        '4.5921,101.0901': 'Perak (Ipoh)',
+        '6.4449,100.2048': 'Perlis (Kangar)',
+        '5.4141,100.3288': 'Pulau Pinang (George Town)',
+        '1.5533,110.3592': 'Sarawak (Kuching)',
+        '5.9788,116.0753': 'Sabah (Kota Kinabalu)',
+        '3.0738,101.5183': 'Selangor (Shah Alam)',
+        '5.3302,103.1408': 'Terengganu (Kuala Terengganu)',
+        '5.2831,115.2443': 'Labuan'
+    };
+
+    // ✅ LIVE DASHBOARD CLOCK ENGINES
+    function initLiveClock() {
+        function updateClock() {
+            const timeString = moment().format('HH:mm:ss');
+            const element = document.getElementById('dashCurrentTime');
+            if (element) element.innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    }
+
+    // ✅ CALIBRATED PRAYER WIDGET FETCH ENGINES (SYNCED TO PROFILE LOCALSTORAGE)
     function fetchPrayerTimes() {
-        const savedLoc = localStorage.getItem('prayerLoc') || '2.3133,102.4309';
+        const savedLoc = localStorage.getItem('prayerLoc') || '2.2775,102.1466';
         const [lat, long] = savedLoc.split(',');
-        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=3`;
+        
+        // Dynamic location naming verification check
+        const locationName = zoneLabels[savedLoc] || 'Melaka (Sg. Udang MRSM)';
+        document.getElementById('activeZoneDisplay').innerText = locationName;
+        document.getElementById('widgetZoneHeader').innerText = `Solat: ${locationName.split(' ')[0]}`;
+
+        // JAKIM Calibrated Query Params API pipeline mapping
+        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=3&fajrAngle=20&ishaAngle=18&tune=0,3,0,0,0,0,0,0,0`;
 
         fetch(apiUrl).then(res => res.json()).then(data => {
             const t = data.data.timings;
@@ -247,7 +284,7 @@
                 "Isyak": t.Isha
             };
 
-            // Update Floating Widget
+            // Inject current active timetable indices to floating cards
             document.getElementById('time-Fajr').innerText = t.Fajr;
             document.getElementById('time-Dhuhr').innerText = t.Dhuhr;
             document.getElementById('time-Asr').innerText = t.Asr;
@@ -255,8 +292,10 @@
             document.getElementById('time-Isha').innerText = t.Isha;
 
             updateNextPrayer(prayers);
-            setInterval(() => updateNextPrayer(prayers), 1000);
-        });
+            
+            if (window.dashboardPrayerInterval) clearInterval(window.dashboardPrayerInterval);
+            window.dashboardPrayerInterval = setInterval(() => updateNextPrayer(prayers), 1000);
+        }).catch(err => console.error("Error reading regional JAKIM timeline coordinates:", err));
     }
 
     function updateNextPrayer(prayers) {
@@ -278,21 +317,15 @@
             nextTime = moment(prayers["Subuh"], "HH:mm").add(1, 'days');
         }
 
-        // Update Dashboard Card
-        document.getElementById('dashNextLabel').innerText = "Next: " + nextName;
-        document.getElementById('dashNextTime').innerText = nextTime.format("HH:mm");
-        
-        // Update Floating Widget
+        // Update floating overlay action button components
         document.getElementById('nextPrayerName').innerText = nextName;
         document.getElementById('nextPrayerTime').innerText = nextTime.format("HH:mm");
-
-        // Countdown Logic
-        const diff = moment.duration(nextTime.diff(now));
-        document.getElementById('dashCountdown').innerText = 
-            `${Math.floor(diff.asHours())}h ${diff.minutes()}m ${diff.seconds()}s remaining`;
     }
 
+    // Trigger engine startup execution components
+    initLiveClock();
     fetchPrayerTimes();
+    
     function togglePrayerList() { document.getElementById('prayerList').classList.toggle('d-none'); }
 </script>
 @endsection

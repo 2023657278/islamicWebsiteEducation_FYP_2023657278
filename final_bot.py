@@ -30,6 +30,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔗 [Visit Website Dashboard](http://127.0.0.1:8000/homepage)\n\n"
         "Please select a Subject below to start revision:"
     )
+    context.user_data.clear() # Clear state matrices safely on reset
     await update.message.reply_text(msg, parse_mode='Markdown')
     await show_subjects(update, context)
 
@@ -47,8 +48,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def prayer_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        tid = update.effective_user.id
-        loc = "Jasin" # Default
+        loc = "Jasin" 
         url = f"https://api.aladhan.com/v1/timingsByCity?city={loc}&country=Malaysia&method=11"
         response = requests.get(url).json()
         t = response['data']['timings']
@@ -141,15 +141,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text, state = update.message.text, context.user_data.get('state')
     chat_id = update.effective_user.id
 
-    # 1. CHECK FOR VERIFICATION CODE (Handshake Logic)
-    # This checks if the message is exactly 6 uppercase letters/numbers
+    if text == "🔙 Main Menu" or text == "🔙 Quit Quiz": 
+        await start(update, context)
+        return
+    
+    # 1. CHECK FOR VERIFICATION HANDSHAKE CODE
     if len(text) == 6 and text.isupper():
         try:
-            conn = get_db()
-            cursor = conn.cursor(dictionary=True)
-            
-            # Find the user with this verification code in your database
-            # Ensure your table has a column named 'telegram_code' or similar
+            conn = get_db(); cursor = conn.cursor(dictionary=True)
             query = "UPDATE users SET telegram_chat_id = %s WHERE verification_code = %s"
             cursor.execute(query, (chat_id, text))
             conn.commit()
@@ -158,32 +157,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f"✅ *Success!* Your account is now linked.\nGo back to the website and click 'I Have Sent The Code'.")
                 conn.close()
                 return
-            else:
-                # If no user found with that code, we don't return so quiz logic can try
-                conn.close()
+            conn.close()
         except Exception as e:
             logging.error(f"Link Error: {str(e)}")
 
-    # 2. EXISTING QUIZ/MENU LOGIC
-    if text == "🔙 Main Menu" or text == "🔙 Quit Quiz": 
-        await start(update, context)
-        return
-    
+    # 2. RUN STEP CONTROLLERS
     if state == 'SELECT_SUBJECT': 
         await handle_subject_selection(update, context, text)
     elif state == 'SELECT_QUIZ': 
         await handle_quiz_selection(update, context, text)
     elif state == 'IN_QUIZ': 
         await handle_quiz_answer(update, context, text)
+    else:
+        await update.message.reply_text("❓ Sila gunakan arahan menu atau taip /start untuk memulakan.")
 
-    
 async def handle_subject_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
     name = text.replace("📘 ", "")
     conn = get_db(); cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT id FROM subjects WHERE subject_name = %s", (name,))
     sub = cursor.fetchone()
     if sub:
-        cursor.execute("SELECT title FROM quizzes WHERE subject_id = %s", (sub['id'],))
+        cursor.execute("SELECT title FROM quizzes WHERE subject_id = %s AND topic != 'PVP_ARENA_BATTLE'", (sub['id'],))
         qs = cursor.fetchall(); conn.close()
         btns = [[KeyboardButton(f"📝 {q['title']}")] for q in qs]
         await update.message.reply_text(f"📂 *Topik: {name}*", reply_markup=ReplyKeyboardMarkup(btns + [[KeyboardButton("🔙 Main Menu")]], resize_keyboard=True), parse_mode='Markdown')
@@ -213,7 +207,7 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
                            (u['id'], context.user_data['qid'], pct, total))
             conn.commit()
         conn.close()
-        await update.message.reply_text(f"🏁 *Kuiz Selesai.*\n✅ Skor: {score}/{total} ({pct}%)\n💾 *Keputusan disimpan.*"); 
+        await update.message.reply_text(f"🏁 *Kuiz Selesai.*\n✅ Skor: {score}/{total} ({pct}%)\n💾 *Keputusan disimpan otomatis.*") 
         await start(update, context); return
 
     q = qs[idx]
@@ -221,10 +215,9 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cursor.execute("SELECT * FROM options WHERE question_id = %s", (q['id'],))
     opts = cursor.fetchall(); conn.close()
     
-    context.user_data.update({'current_q_type': q['question_type'], 'current_options': opts})
+    context.user_data.update({'current_q': q, 'current_q_type': q['question_type'], 'current_options': opts})
     
-    # 🔥 FIXED: Do not show answer options if the type is fill-in-the-blank
-    if q['question_type'] in ['text', 'fill']:
+    if q['question_type'] in ['text', 'fill', 'fill_in_the_blank']:
         btns = [[KeyboardButton("🔙 Quit Quiz")]]
     else:
         btns = [[KeyboardButton(o['option_text'])] for o in opts]
@@ -233,24 +226,32 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"📊 *Question {idx+1} of {total}*\n\n❓ *{q['question_text']}*", reply_markup=ReplyKeyboardMarkup(btns, resize_keyboard=True), parse_mode='Markdown')
 
 async def handle_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
+    q = context.user_data['current_q']
     q_type = context.user_data['current_q_type']
     opts = context.user_data['current_options']
+    
     if q_type == 'multiple' and text != "✅ Hantar Jawapan":
         sel = context.user_data.get('multi_selection', [])
         if text in sel: sel.remove(text); await update.message.reply_text(f"➖ Dialih: {text}")
         else: sel.append(text); await update.message.reply_text(f"➕ Ditambah: {text}")
         context.user_data['multi_selection'] = sel; return
     
-    corrects = {o['option_text'] for o in opts if o['is_correct']}
-    is_correct = set(context.user_data.get('multi_selection', [])) == corrects if q_type == 'multiple' else text in corrects
+    # SYSTEM FILED ACCURATE ANSWER EXTRACTION VECTORS
+    if q_type in ['text', 'fill', 'fill_in_the_blank']:
+        actual_correct = q['correct_answer_text'].strip().lower()
+        is_correct = text.strip().lower() == actual_correct
+    else:
+        corrects = {o['option_text'] for o in opts if o['is_correct']}
+        is_correct = set(context.user_data.get('multi_selection', [])) == corrects if q_type == 'multiple' else text in corrects
+    
     context.user_data['multi_selection'] = [] 
 
     if is_correct: 
         context.user_data['score'] += 1
         await update.message.reply_text("✅ Betul!")
     else: 
-        if q_type in ['text', 'fill']:
-            await update.message.reply_text("❌ Salah.")
+        if q_type in ['text', 'fill', 'fill_in_the_blank']:
+            await update.message.reply_text(f"❌ Salah. Jawapan tepat: {q['correct_answer_text']}")
         else:
             await update.message.reply_text(f"❌ Salah. Jawapan tepat: {', '.join(corrects)}")
     

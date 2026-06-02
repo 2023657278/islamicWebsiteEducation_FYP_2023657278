@@ -154,22 +154,25 @@ class StudentQuizController extends Controller
     // =========================================================
     // LEVEL 5: TAKE QUIZ (Kept as is)
     // =========================================================
-   public function show($id)
+   public function show(Request $request, $id)
 {
-    // Load quiz with its questions and options
+    // 1. Load quiz with its questions and options for both modes
     $quiz = Quiz::with('questions.options')->findOrFail($id);
     
-    // ⚔️ DEFINE BATTLE VARIABLES
-    $boss_hp = 100; 
-    $user_hp = Auth::user()->hp;
+    // 2. Check if the URL is trying to access PvP mode (e.g., ?mode=pvp)
+    // Or check if your topic is flagged as a PvP battle row
+    if ($request->query('mode') === 'pvp' || $quiz->topic === 'PVP_ARENA_BATTLE') {
+        
+        // ⚔️ RUNS PVP MODE (Loads Arena layout)
+        $boss_hp = 100; 
+        $user_hp = Auth::user()->hp;
+        $question = $quiz->questions->first(); 
 
-    // FIX: Match the name here with the name in compact()
-    // We use the first question for the initial "Battle Card" display
-    $question = $quiz->questions->first(); 
+        return view('users.quizzes.arena', compact('quiz', 'boss_hp', 'user_hp', 'question'));
+    }
 
-    // 🚀 RETURN THE ARENA VIEW
-    // The navigation bubbles will use $quiz->questions automatically
-    return view('users.quizzes.arena', compact('quiz', 'boss_hp', 'user_hp', 'question'));
+    // 👤 DEFAULT: RUNS SOLO MISSION (Loads full-screen standalone layout)
+    return view('users.quizzes.take', compact('quiz'));
 }
 
     // =========================================================

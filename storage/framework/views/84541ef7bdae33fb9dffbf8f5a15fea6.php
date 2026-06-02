@@ -336,6 +336,7 @@
             }
         } catch (e) {}
     }
+    
 
     setInterval(sync, 1500); 
     renderQ();

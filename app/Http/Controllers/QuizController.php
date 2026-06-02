@@ -6,6 +6,7 @@ use App\Models\Quiz;
 use App\Models\Subject;
 use App\Models\Result;
 use App\Models\User;
+use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ use App\Services\AnalyticsService;
 class QuizController extends Controller
 {
     // =========================================================
-    // PART A: STUDENT FUNCTIONS (Kept for Analytics logic)
+    // PART A: STUDENT FUNCTIONS (Solo Quiz Taking & Analytics)
     // =========================================================
 
     public function show($id)
@@ -65,13 +66,13 @@ class QuizController extends Controller
 
 
     // =========================================================
-    // PART B: TEACHER FUNCTIONS (Simplified Queries)
+    // PART B: TEACHER FUNCTIONS (Shared Global Pool - No PvP Rows)
     // =========================================================
 
     public function index()
     {
-        // Removed withCount and withAvg to improve performance
-        $quizzes = Quiz::where('teacher_id', Auth::id())
+        // 🟢 FIXED: Filter out automated PvP records so teachers only see hand-crafted solo quizzes
+        $quizzes = Quiz::where('topic', '!=', 'PVP_ARENA_BATTLE')
                         ->with(['subject']) 
                         ->latest()
                         ->get();
@@ -100,18 +101,18 @@ class QuizController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
-            'teacher_id' => Auth::id(),
+            'teacher_id' => Auth::id(), // Track who created it initially
             'subject_id' => $request->subject_id,
             'topic' => $request->topic,
             'difficulty' => $request->difficulty,
         ]);
 
-        return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Quiz created!');
+        return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Quiz created successfully!');
     }
     
     public function edit($id)
     {
-        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
+        $quiz = Quiz::findOrFail($id);
         $subjects = Subject::all();
         return view('quizzes.edit', compact('quiz', 'subjects'));
     }
@@ -126,8 +127,7 @@ class QuizController extends Controller
             'difficulty' => 'required|in:Easy,Medium,Hard',
         ]);
 
-        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
-        
+        $quiz = Quiz::findOrFail($id);
         $quiz->update($request->all());
 
         return redirect()->route('quizzes.index')->with('success', 'Quiz updated successfully!');
@@ -135,9 +135,10 @@ class QuizController extends Controller
 
     public function destroy($id)
     {
-        $quiz = Quiz::where('teacher_id', Auth::id())->findOrFail($id);
+        $quiz = Quiz::findOrFail($id);
         $quiz->delete();
-        return back()->with('success', 'Quiz deleted successfully.');
+        
+        return back()->with('success', 'Quiz deleted successfully from the shared library.');
     }
     
     public function manage($id)
@@ -147,68 +148,70 @@ class QuizController extends Controller
     }
 
     public function storeQuestion(Request $request, $quiz_id)
-{
-    $request->validate([
-        'question_text' => 'required',
-        'question_type' => 'required|in:single,multiple,text',
-        'points' => 'integer|min:1',
-    ]);
-
-    $quiz = Quiz::findOrFail($quiz_id);
-
-    // 1. Prepare Question Data
-    // We pull the subject_id and difficulty from the Quiz automatically
-    $questionData = [
-        'question_text' => $request->question_text,
-        'question_type' => $request->question_type,
-        'points' => $request->points ?? 1,
-        'subject_id' => $quiz->subject_id, 
-        'difficulty' => $quiz->difficulty,
-    ];
-
-    if ($request->question_type === 'text') {
-        $questionData['correct_answer_text'] = $request->text_answer;
-    }
-
-    // 2. Create the Question directly using the Model
-    // We manually set quiz_id here to satisfy your current database requirement
-    $questionData['quiz_id'] = $quiz->id; 
-    $question = \App\Models\Question::create($questionData);
-
-    // 3. 🟢 THE MOST IMPORTANT PART: Attach to the Pivot Table
-    // This makes the question available for PvP shuffling!
-    $quiz->questions()->attach($question->id);
-
-    // 4. Create Options
-    if ($request->question_type === 'text') {
-        $question->options()->create([
-            'option_text' => $request->text_answer, 
-            'is_correct' => true
+    {
+        $request->validate([
+            'question_text' => 'required',
+            'question_type' => 'required|in:single,multiple,text',
+            'points' => 'integer|min:1',
         ]);
-    } else {
-        if($request->options){
-            foreach ($request->options as $key => $optionText) {
-                if(trim($optionText) == '') continue;
-                $isCorrect = false;
-                if ($request->question_type === 'single') {
-                    if ($request->correct_single == $key) $isCorrect = true;
-                } elseif ($request->question_type === 'multiple') {
-                    if (isset($request->correct_multiple) && in_array($key, $request->correct_multiple)) $isCorrect = true;
+
+        $quiz = Quiz::findOrFail($quiz_id);
+
+        $questionData = [
+            'question_text' => $request->question_text,
+            'question_type' => $request->question_type,
+            'points' => $request->points ?? 1,
+            'subject_id' => $quiz->subject_id, 
+            'difficulty' => $quiz->difficulty,
+            'quiz_id' => $quiz->id, 
+        ];
+
+        if ($request->question_type === 'text') {
+            $questionData['correct_answer_text'] = $request->text_answer;
+        }
+
+        $question = Question::create($questionData);
+
+        // Link question specifically to this Solo Quiz structure using your pivot table
+        $quiz->questions()->attach($question->id);
+
+        // Options factory engine
+        if ($request->question_type === 'text') {
+            $question->options()->create([
+                'option_text' => $request->text_answer, 
+                'is_correct' => true
+            ]);
+        } else {
+            if($request->options){
+                foreach ($request->options as $key => $optionText) {
+                    if(trim($optionText) == '') continue;
+                    $isCorrect = false;
+                    if ($request->question_type === 'single') {
+                        if ($request->correct_single == $key) $isCorrect = true;
+                    } elseif ($request->question_type === 'multiple') {
+                        if (isset($request->correct_multiple) && in_array($key, $request->correct_multiple)) $isCorrect = true;
+                    }
+                    $question->options()->create([
+                        'option_text' => $optionText, 
+                        'is_correct' => $isCorrect
+                    ]);
                 }
-                $question->options()->create([
-                    'option_text' => $optionText, 
-                    'is_correct' => $isCorrect
-                ]);
             }
         }
+
+        return back()->with('success', 'Question added successfully to this quiz!');
     }
 
-    return back()->with('success', 'Question added and linked to Arena successfully!');
-}
+    public function shadowPvpBypass() 
+    {
+        // Keeps architecture safe for background dynamic queries
+    }
 
     public function destroyQuestion($id)
     {
-        \App\Models\Question::findOrFail($id)->delete();
-        return back()->with('success', 'Question deleted.');
+        $question = Question::findOrFail($id);
+        $question->delete();
+        
+        return back()->with('success', 'Question deleted successfully.');
     }
 }
