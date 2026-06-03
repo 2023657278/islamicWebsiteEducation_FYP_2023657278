@@ -140,7 +140,8 @@ class StudentResourceController extends Controller
     // 4. OPEN READER VIEW
     public function read($id)
     {
-        $book = Resources::findOrFail($id);
+        // 🟢 FIX 1: Force find the resource mapping to ensure it doesn't fail silently
+        $book = Resources::where('id', $id)->where('type', 'textbook')->firstOrFail();
         $student = Auth::user();
 
         // Get existing progress or start at page 1
@@ -150,6 +151,10 @@ class StudentResourceController extends Controller
                       ->first();
 
         $startPage = $progress ? $progress->current_page : 1;
+
+        // 🟢 FIX 2: Ensure file URL context isn't broken or missing leading separators
+        // This strips out any accidental double slashes before sending it to the view
+        $book->file_url = ltrim($book->file_url, '/');
 
         return view('users.resources.read', compact('book', 'startPage'));
     }

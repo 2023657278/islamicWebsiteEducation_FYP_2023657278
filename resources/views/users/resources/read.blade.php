@@ -125,7 +125,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const url = "/storage/{{ $book->file_url }}";
+        const url = "{{ asset('storage/' . $book->file_url) }}";
         const resourceId = {{ $book->id }};
         let pdfDoc = null;
         let pageNum = {{ $startPage }};
