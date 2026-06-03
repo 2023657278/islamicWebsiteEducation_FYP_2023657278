@@ -80,8 +80,8 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <a href="{{ route('resources.preview', $note->id) }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">View</a>
-                                    <a href="{{ route('resources.download', $note->id) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">Download</a>
+                                    <a href="{{ route('student.resources.preview', $note->id) }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">View</a>
+                                    <a href="{{ route('student.resources.download', $note->id) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">Download</a>
                                 </div>
                             </div>
                         </div>

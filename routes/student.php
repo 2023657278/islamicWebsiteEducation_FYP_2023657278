@@ -59,6 +59,14 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     // 8. STUDENT PROGRESS & ANALYTICS
     Route::get('/student/progress', [StudentProgressController::class, 'index'])->name('student.progress.index');
 
+    // 12. TEXTBOOK READER / PRIVATE NOTES ACCESS
+    Route::get('/student/textbooks/{id}/read', [StudentResourceController::class, 'read'])->name('student.textbooks.read');
+    Route::post('/student/textbooks/progress', [StudentResourceController::class, 'saveProgress'])->name('student.textbooks.save_progress');
+    
+    // Student streaming paths bypassing teacher middleware restrictions
+    Route::get('/resources/{id}/preview', [\App\Http\Controllers\ResourcesController::class, 'preview'])->name('student.resources.preview');
+    Route::get('/resources/{id}/download', [\App\Http\Controllers\ResourcesController::class, 'download'])->name('student.resources.download');
+
     // =========================================================
 // 🎓 HIERARCHICAL QUIZ CENTER (CLEANED VERSION)
 // =========================================================
