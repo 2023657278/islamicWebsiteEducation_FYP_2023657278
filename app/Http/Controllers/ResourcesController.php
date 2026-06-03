@@ -194,39 +194,45 @@ class ResourcesController extends Controller
     /**
      * Final step: Save selected videos to DB.
      */
+    /**
+     * Final step: Save selected videos to DB.
+     */
     public function storeSelectedVideos(Request $request)
-{
-    // 1. Check if any videos were actually ticked
-    if (!$request->has('video_ids') || empty($request->video_ids)) {
-        return back()->with('error', 'Please select at least one video to import.');
+    {
+        // 1. Check if any videos were actually ticked
+        if (!$request->has('video_ids') || empty($request->video_ids)) {
+            return back()->with('error', 'Please select at least one video to import.');
+        }
+
+        // Pull backup fallback parameters out of the persistent session if request drops them
+        $subject_id = $request->subject_id ?? session('sync_subject_id');
+        $group_id = ($request->group_id && $request->group_id !== 'null') 
+                    ? $request->group_id 
+                    : session('sync_group_id');
+
+        if (!$subject_id) {
+            return redirect()->route('resources.index')->with('error', 'Subject ID is missing. Please try again.');
+        }
+
+        // 2. The Import Loop
+        foreach ($request->video_ids as $videoId => $title) {
+            // Using your exact Model name 'Resources' to match your setup
+            Resources::updateOrCreate(
+                ['file_url' => $videoId, 'teacher_id' => Auth::id()], 
+                [
+                    'title' => $title, 
+                    'type' => 'video', 
+                    'subject_id' => $subject_id, 
+                    'group_id' => $group_id, 
+                    'is_public' => false
+                ]
+            );
+        }
+
+        // 🟢 THE FIX: Clear out the temporary context tracking sessions once storage is successful
+        Session::forget(['sync_group_id', 'sync_subject_id', 'youtube_access_token']);
+
+        // Redirect completely out of the wizard back to the main resource index tab
+        return redirect()->route('resources.index')->with('success', 'YouTube videos successfully added to your library!');
     }
-
-    // 🟢 THE SAFETY NET: 
-    // If the form didn't send subject_id, we grab it from the session we saved earlier.
-    $subject_id = $request->subject_id ?? session('sync_subject_id');
-    $group_id = ($request->group_id && $request->group_id !== 'null') 
-                ? $request->group_id 
-                : session('sync_group_id');
-
-    // 🛑 If we STILL don't have it, stop the error before it hits the Database
-    if (!$subject_id) {
-        return back()->with('error', 'Subject ID is missing. Please try searching again.');
-    }
-
-    // 2. The Import Loop
-    foreach ($request->video_ids as $videoId => $title) {
-        Resources::updateOrCreate(
-            ['file_url' => $videoId, 'teacher_id' => Auth::id()], 
-            [
-                'title' => $title, 
-                'type' => 'video', 
-                'subject_id' => $subject_id, 
-                'group_id' => $group_id, 
-                'is_public' => false
-            ]
-        );
-    }
-
-    return redirect()->route('resources.index')->with('success', 'YouTube videos successfully added to your library!');
-}
 }
