@@ -46,7 +46,7 @@
                                  class="img-fluid rounded-circle profile-img-edit" 
                                  alt="Profile Image"
                                  id="profileImagePreview"
-                                 style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #2b6cb0;">
+                                 style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #2b6cb0; cursor: pointer;">
                             <div class="mt-3">
                                 <form action="{{ route('profile.deleteImage') }}" method="POST" class="d-inline">
                                     @csrf
@@ -54,7 +54,7 @@
                                     <button type="submit" 
                                             class="btn btn-sm btn-danger"
                                             onclick="return confirm('Are you sure you want to remove your profile image?')">
-                                            <i class="fas fa-trash mr-1"></i> Remove Current Image
+                                        <i class="fas fa-trash mr-1"></i> Remove Current Image
                                     </button>
                                 </form>
                             </div>
@@ -72,10 +72,9 @@
                         @csrf
                         @method('PUT')
                         
-                        {{-- Image Input --}}
+                        {{-- Image Input (Hidden from view physically, triggered by clicking the avatar) --}}
                         <div class="form-group">
                             <label for="profile_image" class="font-weight-bold">Profile Image</label>
-                            
                             <input type="file" 
                                    name="profile_image" 
                                    id="profile_image" 
@@ -189,7 +188,9 @@
         </div>
     </div>
 </div>
+@endsection
 
+@section('scripts')
 <script>
 $(document).ready(function() {
     
@@ -208,7 +209,7 @@ $(document).ready(function() {
         $('.file-error-message').hide().text('');
     }
     
-    // File Selection
+    // File Selection Validation
     $('#profile_image').change(function() {
         const file = this.files[0];
         const fileInput = $(this);
@@ -242,12 +243,12 @@ $(document).ready(function() {
         }
     });
     
-    // Click avatar to trigger upload
-    $('.profile-img-edit, .avatar-circle-lg').css('cursor', 'pointer').click(function() {
+    // Click avatar preview image or initial circle to trigger the hidden file input click
+    $('.profile-img-edit, #avatarPreview').css('cursor', 'pointer').click(function() {
         $('#profile_image').click();
     });
     
-    // Form submit
+    // Form submit layout animation
     $('#profileUpdateForm').submit(function(e) {
         $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i> Updating...');
     });
@@ -262,6 +263,10 @@ $(document).ready(function() {
 }
 .profile-img-edit, .avatar-circle-lg {
     cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.profile-img-edit:hover, .avatar-circle-lg:hover {
+    transform: scale(1.03);
 }
 </style>
 @endsection
