@@ -12,17 +12,14 @@ class YouTubeAuthController extends Controller
     private const CALLBACK_URL = 'https://islamic-lms.online/login/google/callback';
 
     /**
-     * 1. Send User to Google OAuth
+     * 1. Send User to Google
      */
     public function redirect(Request $request)
     {
-        // Explicitly capture values right before navigating away
+        // Explicitly force context retention in persistent session storage
         Session::put('sync_group_id', $request->group_id);
         Session::put('sync_subject_id', $request->subject_id);
-        Session::put('sync_type', 'mine'); // Lock step targeting custom upload tab
-
-        // Force save changes to handle immediate redirect cleanly
-        Session::save();
+        Session::save(); // Force absolute save commitment to storage driver
 
         return Socialite::driver('google')
             ->scopes([
@@ -51,27 +48,24 @@ class YouTubeAuthController extends Controller
                 throw new \Exception("Could not retrieve access token from Google.");
             }
 
-            // Save credentials natively where your views expect them
+            // Save credentials where your AJAX handler expects it
             Session::put('youtube_access_token', $token);
 
-            // Pull stored tracking variables out of state memory
+            // 🟢 THE FIX: Explicitly pull saved context parameters back out of session memory
             $groupId = Session::get('sync_group_id');
             $subjectId = Session::get('sync_subject_id');
-            $type = Session::get('sync_type', 'mine');
 
-            // Force save session adjustments manually 
             Session::save();
 
-            // 🟢 REDIRECT FIX: Explicitly append properties back into the URL parameters 
-            // so ResourcesController receives them securely regardless of session engine drops
+            // 🟢 FORCE INJECTION: Re-append group_id and subject_id directly into the URL path!
+            // This guarantees that the final selection page receives the parameters on the very first landing.
             return redirect()->route('resources.youtube.search', [
                 'group_id' => $groupId,
                 'subject_id' => $subjectId,
-                'type' => $type
+                'type' => 'mine'
             ]);
             
         } catch (\Exception $e) {
-            // If anything structural breaks, it gracefully defaults to index with notification
             return redirect()->route('resources.index')
                 ->with('error', 'Authentication failed: ' . $e->getMessage());
         }
