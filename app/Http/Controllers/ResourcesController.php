@@ -239,10 +239,9 @@ class ResourcesController extends Controller
         Artisan::call('cache:clear');
 
         // 5. Return redirect equipped with cache headers to block local browser memory retention
-        // 🟢 New return line with hash fragment targeting the Videos tab automatically:
-    return redirect()
-    ->to(route('resources.index') . '#sub-videos')
-    ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-    ->with('success', 'YouTube videos successfully added to your library!');
+        return redirect()
+            ->route('resources.index')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->with('success', 'YouTube videos successfully added to your library!');
     }
 }
