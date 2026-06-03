@@ -212,13 +212,10 @@
 <script>
     // ✅ MODAL MANAGEMENT: Append to body to prevent layering issues
     document.addEventListener("DOMContentLoaded", function() {
-    if (window.location.hash === '#sub-videos') {
-        // Find the video tab pill and simulate a user click on it
-        const videoTab = document.querySelector('a[href="#sub-videos"]');
-        if (videoTab) {
-            videoTab.click();
-        }
-    }
+        const uploadModal = document.getElementById('uploadModal');
+        const syncModal = document.getElementById('syncModal');
+        document.body.appendChild(uploadModal);
+        document.body.appendChild(syncModal);
     });
 
     // Toggle class selection based on material type
