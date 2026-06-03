@@ -9,7 +9,7 @@
     </a>
 
     {{-- HEADER PROFILE --}}
-    <div class="d-flex align-items-center mb-5">
+    <div class="d-flex align-items-center mb-5 text-start">
         <div class="me-4" style="width: 80px; height: 80px; border-radius: 50%; background: #fff; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center;">
             @if($teacher->profile_image)
                 <img src="{{ asset('storage/' . $teacher->profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -28,12 +28,14 @@
         <div class="card-header bg-white border-bottom pt-3">
             <ul class="nav nav-tabs card-header-tabs border-0" id="myTab" role="tablist">
                 <li class="nav-item me-4" role="presentation">
-                    <button class="nav-link active border-0 bg-transparent fw-bold text-danger border-bottom border-3 border-danger pb-3" id="videos-tab" data-bs-toggle="tab" data-bs-target="#videos" type="button" role="tab">
+                    <button class="nav-link active border-0 bg-transparent fw-bold text-danger border-bottom border-3 border-danger pb-3" 
+                            id="videos-tab" data-bs-toggle="tab" data-bs-target="#videos" type="button" role="tab" aria-controls="videos" aria-selected="true">
                         <i class="fas fa-video me-2"></i> Videos ({{ $videos->count() }})
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link border-0 bg-transparent fw-bold text-muted pb-3" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">
+                    <button class="nav-link border-0 bg-transparent fw-bold text-muted pb-3" 
+                            id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab" aria-controls="notes" aria-selected="false">
                         <i class="fas fa-file-alt me-2"></i> Notes ({{ $notes->count() }})
                     </button>
                 </li>
@@ -44,13 +46,16 @@
             <div class="tab-content" id="myTabContent">
                 
                 {{-- VIDEOS TAB --}}
-                <div class="tab-pane fade show active" id="videos" role="tabpanel">
-                    <div class="row g-4">
+                <div class="tab-pane fade show active" id="videos" role="tabpanel" aria-labelledby="videos-tab">
+                    <div class="row g-4 text-start">
                         @forelse($videos as $video)
                         <div class="col-md-6 col-lg-4">
                             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
                                 <div class="ratio ratio-16x9">
-                                    <iframe src="https://www.youtube.com/embed/{{ $video->file_url }}" allowfullscreen></iframe>
+                                    {{-- 🟢 PRIVACY-ENHANCED EMBED TO BYPASS TRACKING BLOCKERS --}}
+                                    <iframe src="https://www.youtube.com/embed/{{ $video->file_url }}?modestbranding=1&rel=0" 
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                            allowfullscreen></iframe>
                                 </div>
                                 <div class="card-body">
                                     <h6 class="fw-bold text-dark mb-2">{{ $video->title }}</h6>
@@ -65,8 +70,8 @@
                 </div>
 
                 {{-- NOTES TAB --}}
-                <div class="tab-pane fade" id="notes" role="tabpanel">
-                    <div class="list-group list-group-flush">
+                <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                    <div class="list-group list-group-flush text-start">
                         @forelse($notes as $note)
                         <div class="list-group-item border-0 border-bottom py-3 px-0">
                             <div class="d-flex justify-content-between align-items-center">
@@ -96,4 +101,26 @@
     </div>
 
 </div>
+
+{{-- 🟢 TAB UI INTERACTION FIX --}}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var triggerTabList = [].slice.call(document.querySelectorAll('#myTab button'))
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl)
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+                
+                // Toggle active CSS tab classes cleanly
+                triggerTabList.forEach(btn => {
+                    btn.classList.remove('text-danger', 'border-bottom', 'border-3', 'border-danger');
+                    btn.classList.add('text-muted');
+                });
+                this.classList.remove('text-muted');
+                this.classList.add('text-danger', 'border-bottom', 'border-3', 'border-danger');
+            })
+        })
+    });
+</script>
 @endsection
