@@ -15,9 +15,17 @@ class TelegramController extends Controller
      */
     public function connect()
     {
-        return view('users.telegram.connect'); 
-    }
+        // 🟢 FIX: Fetch the authenticated student user instance
+        $user = Auth::user();
 
+        // 🟢 FIX: Generate or fetch a unique sync code parameter for the student
+        // If your database doesn't have a 'telegram_code' column, we can use their 'no_maktab' 
+        // or uniquely hash their ID so the Python bot can identify them instantly.
+        $code = $user->no_maktab ?? ('PAI-' . ($user->id + 1000));
+
+        // Pass both variables cleanly to the view layout template parameters
+        return view('users.telegram.connect', compact('user', 'code')); 
+    }
     /**
      * 2. The Handshake (Verify)
      * This checks if the Python bot has updated the chat_id in the database.
