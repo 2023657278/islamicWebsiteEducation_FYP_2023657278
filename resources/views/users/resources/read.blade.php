@@ -124,9 +124,10 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const url = "/resources/" + resourceId + "/preview";
+        // --- 🟢 CONFIGURATION (MOVED TO THE ABSOLUTE TOP TO FIX INITIALIZATION CRASH) ---
         const resourceId = {{ $book->id }};
+        const url = "/resources/" + resourceId + "/preview";
+        
         let pdfDoc = null;
         let pageNum = {{ $startPage }};
         let scale = 1.0; 
@@ -149,7 +150,7 @@
             console.error("PDF setup failed: ", error);
         });
 
-        // --- 🟢 MASTER SEQUENCED RENDER CONTROLLER ---
+        // --- MASTER SEQUENCED RENDER CONTROLLER ---
         function render() {
             if (pageRendering) {
                 pageNumPending = pageNum;
@@ -158,9 +159,9 @@
 
             pageRendering = true;
 
-            // Step A: Load and render the primary left-hand side canvas page layout
+            // Step A: Load and render the primary left-hand side canvas
             renderPage(pageNum, canvasLeft, ctxLeft).then(() => {
-                // Step B: Once complete, check if double page view model parameters are active
+                // Step B: Once complete, handle the secondary right-hand canvas
                 if (isDoublePage && pageNum < pdfDoc.numPages) {
                     canvasRight.style.display = 'block';
                     return renderPage(pageNum + 1, canvasRight, ctxRight);
@@ -169,7 +170,7 @@
                     return Promise.resolve();
                 }
             }).then(() => {
-                // Step C: Release thread locking parameters smoothly
+                // Step C: Release lock and update interface updates
                 pageRendering = false;
                 updateUI();
 
@@ -184,7 +185,6 @@
             });
         }
 
-        // Returns a verifiable promise mapping instance
         function renderPage(num, canvas, ctx) {
             return pdfDoc.getPage(num).then(function(page) {
                 const viewport = page.getViewport({ scale: scale });
@@ -192,7 +192,7 @@
                 canvas.width = viewport.width;
 
                 const renderContext = { canvasContext: ctx, viewport: viewport };
-                return renderTask = page.render(renderContext).promise;
+                return page.render(renderContext).promise;
             });
         }
 
@@ -205,6 +205,7 @@
             saveProgress();
         }
 
+        // Standard sequence tracking checks
         function nextPage() {
             if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
             pageNum += (isDoublePage ? 2 : 1);
@@ -222,6 +223,7 @@
         }
 
         // --- VIEW MODES ---
+        // Handles toggling single page vs double book view bindings cleanly
         function setViewMode(mode) {
             isDoublePage = (mode === 'double');
             
@@ -243,7 +245,6 @@
 
         function fitToScreen() {
             const containerWidth = document.getElementById('readerContainer').clientWidth;
-            // Provide custom scaling layout bounds based on double page structure layouts
             if (isDoublePage) {
                 scale = containerWidth > 1200 ? 0.75 : 0.55;
             } else {
@@ -302,7 +303,6 @@
             });
         }
 
-        // Handle auto resizing dynamics natively
         window.addEventListener('resize', () => {
             if (pdfDoc) {
                 fitToScreen();
