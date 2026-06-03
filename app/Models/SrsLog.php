@@ -21,8 +21,9 @@ class SrsLog extends Model
         'next_review_date'  // The calculated date
     ];
 
+    
     protected $casts = [
-        'next_review_date' => 'date', // Allows Carbon date comparison
+    'next_review_date' => 'datetime', // Changed from 'date' to 'datetime'
     ];
 
     public function flashcard()
