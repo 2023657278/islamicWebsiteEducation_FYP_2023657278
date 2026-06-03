@@ -58,9 +58,29 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔹 `/progress` — Render real-time learning metrics bar chart\n"
         "🔹 `/timetable` — Export physical graphic of your weekly classes\n"
         "🔹 `/prayer` — Fetch production API real-time prayer schedule\n"
+        "🔹 `/disconnect` — Sign out / Unlink your profile from the platform\n"
         "🔹 `/help` — Display this documentation module"
     )
     await update.message.reply_text(msg, parse_mode='Markdown')
+
+async def disconnect_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_user.id
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cursor:
+                # Find whatever account holds this active Telegram ID and clear it
+                query = "UPDATE users SET telegram_chat_id = NULL WHERE telegram_chat_id = %s"
+                cursor.execute(query, (chat_id,))
+                conn.commit()
+                
+                if cursor.rowcount > 0:
+                    msg = "✔ *Account disconnected successfully!*\nYour Telegram profile is no longer linked to the platform. You can now link a fresh account."
+                else:
+                    msg = "❌ *No active link found.*\nYour Telegram profile wasn't connected to any student accounts."
+                    
+        await update.message.reply_text(msg, parse_mode='Markdown')
+    except Exception as e:
+        await update.message.reply_text(f"⚠️ Error during disconnection: {str(e)}")
 
 async def prayer_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -104,7 +124,6 @@ async def timetable_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not schedule:
             await update.message.reply_text("📅 Tiada jadual kelas dijumpai untuk akaun anda."); return
 
-        # Chart Visual Enhancements
         fig, ax = plt.subplots(figsize=(9, 5))
         ax.axis('off')
         
@@ -120,7 +139,7 @@ async def timetable_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for (row, col), cell in table.get_celld().items():
             if row == 0:
                 cell.set_text_props(weight='bold', color='white')
-                cell.set_facecolor('#008f78') # Corporate Teal theme color matching the profile banner
+                cell.set_facecolor('#008f78') 
             else:
                 cell.set_facecolor('#F8FAFC' if row % 2 == 0 else '#FFFFFF')
                 cell.set_text_props(color='#1E293B')
@@ -161,7 +180,6 @@ async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         subjects = [d['subject_name'] for d in data]
         scores = [int(d['avg_score']) for d in data]
         
-        # High-Fidelity Chart Design
         plt.figure(figsize=(9, 4.5))
         bars = plt.bar(subjects, scores, color='#008f78', width=0.45, edgecolor='#004D40', linewidth=1.2)
         plt.title(f"Analisis Prestasi: {user['name']}", fontsize=12, fontweight='bold', pad=15, color='#1E293B')
@@ -169,7 +187,6 @@ async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         plt.ylabel("Purata Skor (%)", fontsize=10, fontweight='bold')
         plt.grid(axis='y', linestyle='--', alpha=0.5)
         
-        # Insert value labels above bars
         for bar in bars:
             height = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2., height + 2, f'{int(height)}%', ha='center', va='bottom', fontweight='bold', color='#334155')
@@ -232,16 +249,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await timetable_command(update, context)
         return
 
-    # 🟢 STEP 1 FIX: HANDSHAKE SYSTEM USING FLEXIBLE DYNAMIC PATTERNS FOR STUDENTS
+    # FLEXIBLE DYNAMIC HANDSHAKE SYSTEM PARAMETERS FOR STUDENTS
     if text.isdigit() and (7 <= len(text) <= 12):
         try:
-            # Clean input data
             user_code = ''.join(filter(str.isdigit, text))
             short_match = user_code[-6:] if len(user_code) >= 6 else user_code
             
             with get_db() as conn:
                 with conn.cursor(dictionary=True) as cursor:
-                    # SQL targeted lookup pattern isolated strictly to students
                     query = """
                         SELECT id FROM users 
                         WHERE telegram_chat_id IS NULL 
@@ -269,7 +284,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logging.error(f"Handshake Link System Failure: {str(e)}")
 
-    # 2. RUN CONTROLLER MANAGEMENT ROUTERS
     if state == 'SELECT_SUBJECT': 
         await handle_subject_selection(update, context, text)
     elif state == 'SELECT_QUIZ': 
@@ -400,6 +414,7 @@ if __name__ == '__main__':
     # Register Commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("disconnect", disconnect_command))
     app.add_handler(CommandHandler("progress", progress_command))
     app.add_handler(CommandHandler("timetable", timetable_command))
     app.add_handler(CommandHandler("prayer", prayer_command))
