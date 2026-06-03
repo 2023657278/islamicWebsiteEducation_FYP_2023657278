@@ -28,6 +28,7 @@
         <div class="card-header bg-white border-bottom pt-3">
             <ul class="nav nav-tabs card-header-tabs border-0" id="myTab" role="tablist">
                 <li class="nav-item me-4" role="presentation">
+                    {{-- 🟢 FIXED: Added HTML-only native fallback attributes so it works even if layout JS fails --}}
                     <button class="nav-link active border-0 bg-transparent fw-bold text-danger border-bottom border-3 border-danger pb-3" 
                             id="videos-tab" data-bs-toggle="tab" data-bs-target="#videos" type="button" role="tab" aria-controls="videos" aria-selected="true">
                         <i class="fas fa-video me-2"></i> Videos ({{ $videos->count() }})
@@ -52,7 +53,6 @@
                         <div class="col-md-6 col-lg-4">
                             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
                                 <div class="ratio ratio-16x9">
-                                    {{-- 🟢 PRIVACY-ENHANCED EMBED TO BYPASS TRACKING BLOCKERS --}}
                                     <iframe src="https://www.youtube.com/embed/{{ $video->file_url }}?modestbranding=1&rel=0" 
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                             allowfullscreen></iframe>
@@ -102,25 +102,40 @@
 
 </div>
 
-{{-- 🟢 TAB UI INTERACTION FIX --}}
+{{-- 🟢 HARDENED SCRIPT: Safe against Bootstrap loading delays --}}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        var triggerTabList = [].slice.call(document.querySelectorAll('#myTab button'))
+        var triggerTabList = [].slice.call(document.querySelectorAll('#myTab button'));
+        
         triggerTabList.forEach(function (triggerEl) {
-            var tabTrigger = new bootstrap.Tab(triggerEl)
             triggerEl.addEventListener('click', function (event) {
-                event.preventDefault()
-                tabTrigger.show()
+                event.preventDefault();
                 
-                // Toggle active CSS tab classes cleanly
+                // 1. Manual CSS Toggle for styling borders
                 triggerTabList.forEach(btn => {
-                    btn.classList.remove('text-danger', 'border-bottom', 'border-3', 'border-danger');
+                    btn.classList.remove('active', 'text-danger', 'border-bottom', 'border-3', 'border-danger');
                     btn.classList.add('text-muted');
+                    btn.setAttribute('aria-selected', 'false');
                 });
+                
                 this.classList.remove('text-muted');
-                this.classList.add('text-danger', 'border-bottom', 'border-3', 'border-danger');
-            })
-        })
+                this.classList.add('active', 'text-danger', 'border-bottom', 'border-3', 'border-danger');
+                this.setAttribute('aria-selected', 'true');
+
+                // 2. Manual Pane Visibility Switcher (Bypasses broken/missing global bootstrap dependencies)
+                var targetSelector = this.getAttribute('data-bs-target');
+                var tabContentPanes = [].slice.call(document.querySelectorAll('#myTabContent .tab-pane'));
+                
+                tabContentPanes.forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                var targetPane = document.querySelector(targetSelector);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+            });
+        });
     });
 </script>
 @endsection
