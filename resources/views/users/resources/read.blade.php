@@ -30,7 +30,7 @@
         /* View Mode Toggle (Single/Double) */
         .view-toggle { display: flex; background: #f1f3f4; border-radius: 8px; padding: 2px; }
         .view-toggle button { width: 32px; height: 32px; border: none; background: transparent; border-radius: 6px; color: #666; }
-        .view-toggle button.active { background: white; shadow: 0 1px 3px rgba(0,0,0,0.1); color: #000; font-weight: bold; }
+        .view-toggle button.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #000; font-weight: bold; }
 
         /* --- SIDEBAR --- */
         .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; position: absolute; top: 64px; bottom: 50px; left: 0; transform: translateX(-100%); transition: transform 0.3s ease; z-index: 15; display: flex; flex-direction: column; }
@@ -59,7 +59,6 @@
         .progress-track { flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; margin: 0 15px; position: relative; cursor: pointer; }
         .progress-fill { height: 100%; background: #dc3545; border-radius: 3px; width: 0%; transition: width 0.3s; }
         .page-info { font-size: 0.85rem; color: #666; font-weight: 600; min-width: 100px; text-align: right; }
-
     </style>
 </head>
 <body>
@@ -98,7 +97,7 @@
             <li class="chapter-item" onclick="goToPage(10)">Chapter 2</li>
             <li class="chapter-item" onclick="goToPage(20)">Chapter 3</li>
             <li class="chapter-item" onclick="goToPage(30)">Chapter 4</li>
-            </ul>
+        </ul>
     </div>
 
     {{-- READER AREA --}}
@@ -126,12 +125,13 @@
 
     <script>
         // --- CONFIGURATION ---
-        const url = "{{ asset('storage/' . $book->file_url) }}";
+        // Uses the direct asset storage path to avoid base URL protocol issues
+        const url = "/storage/{{ $book->file_url }}";
         const resourceId = {{ $book->id }};
         let pdfDoc = null;
         let pageNum = {{ $startPage }};
-        let scale = 1.0; // Zoom 100%
-        let isDoublePage = true; // Default to Book View
+        let scale = 1.0; 
+        let isDoublePage = true; 
         let pageRendering = false;
         let pageNumPending = null;
 
@@ -145,20 +145,20 @@
             pdfDoc = pdfDoc_;
             document.getElementById('pageTotal').textContent = pdfDoc.numPages;
             
-            // Adjust Zoom to fit screen initially
             fitToScreen();
-            
             render();
+        }).catch(function(error) {
+            console.error("PDF.js error: ", error);
         });
 
         // --- RENDER LOGIC ---
         function render() {
-            // If Double Page, ensure we start on odd number (1, 3, 5) or even-odd pairs depending on preference
-            // Standard Book: Cover is 1 (Single), then 2-3, 4-5.
-            
+            if (pageNum < 1) pageNum = 1;
+            if (pdfDoc && pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
+
             renderPage(pageNum, canvasLeft, ctxLeft);
 
-            if (isDoublePage && pageNum < pdfDoc.numPages) {
+            if (isDoublePage && pdfDoc && pageNum < pdfDoc.numPages) {
                 canvasRight.style.display = 'block';
                 renderPage(pageNum + 1, canvasRight, ctxRight);
             } else {
@@ -181,7 +181,7 @@
                 renderTask.promise.then(function() {
                     pageRendering = false;
                     if (pageNumPending !== null) {
-                        render(pageNumPending);
+                        goToPage(pageNumPending);
                         pageNumPending = null;
                     }
                 });
@@ -190,23 +190,33 @@
 
         // --- NAVIGATION ---
         function prevPage() {
+            if (pageRendering) {
+                pageNumPending = pageNum - (isDoublePage ? 2 : 1);
+                return;
+            }
             let step = isDoublePage ? 2 : 1;
             if (pageNum <= 1) return;
             pageNum -= step;
-            if(pageNum < 1) pageNum = 1;
+            if (pageNum < 1) pageNum = 1;
             render();
             saveProgress();
         }
 
         function nextPage() {
+            if (pageRendering) {
+                pageNumPending = pageNum + (isDoublePage ? 2 : 1);
+                return;
+            }
             let step = isDoublePage ? 2 : 1;
-            if (pageNum >= pdfDoc.numPages) return;
+            if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
             pageNum += step;
             render();
             saveProgress();
         }
 
         function goToPage(num) {
+            if (num < 1) num = 1;
+            if (pdfDoc && num > pdfDoc.numPages) num = pdfDoc.numPages;
             pageNum = num;
             render();
             saveProgress();
@@ -216,39 +226,35 @@
         function setViewMode(mode) {
             isDoublePage = (mode === 'double');
             
-            // Toggle Buttons
             document.getElementById('btnSingle').classList.toggle('active', !isDoublePage);
             document.getElementById('btnDouble').classList.toggle('active', isDoublePage);
 
-            // Adjust sizing
             fitToScreen();
             render();
         }
 
         function changeZoom(delta) {
             scale += delta;
-            if(scale < 0.5) scale = 0.5;
-            if(scale > 3.0) scale = 3.0;
+            if (scale < 0.5) scale = 0.5;
+            if (scale > 3.0) scale = 3.0;
             
             document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
             render();
         }
 
         function fitToScreen() {
-            // Simple logic: if double, zoom out a bit. If single, zoom in.
-            if(isDoublePage) scale = 0.8; 
+            if (isDoublePage) scale = 0.8; 
             else scale = 1.2;
             document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
         }
 
         // --- UI UPDATES ---
         function updateUI() {
-            // Update Page Count Text
+            if (!pdfDoc) return;
             let displayNum = pageNum;
-            if(isDoublePage && pageNum < pdfDoc.numPages) displayNum = pageNum + "-" + (pageNum + 1);
+            if (isDoublePage && pageNum < pdfDoc.numPages) displayNum = pageNum + "-" + (pageNum + 1);
             document.getElementById('pageCurrent').textContent = displayNum;
 
-            // Update Progress Bar
             let percent = (pageNum / pdfDoc.numPages) * 100;
             document.getElementById('progressBar').style.width = percent + '%';
         }
@@ -267,16 +273,17 @@
         }
 
         function scrub(e) {
+            if (!pdfDoc) return;
             let rect = e.target.closest('.progress-track').getBoundingClientRect();
             let clickX = e.clientX - rect.left;
             let width = rect.width;
             let percent = clickX / width;
             let newPage = Math.round(percent * pdfDoc.numPages);
-            if(newPage < 1) newPage = 1;
             goToPage(newPage);
         }
 
         function saveProgress() {
+            if (!pdfDoc) return;
             fetch("{{ route('student.textbooks.save_progress') }}", {
                 method: "POST",
                 headers: {
