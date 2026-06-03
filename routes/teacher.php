@@ -37,11 +37,12 @@ Route::middleware(['auth', 'role:teacher,admin'])->group(function () {
     Route::delete('/resources/{id}', [ResourcesController::class, 'destroy'])->name('resources.destroy');
 
     // YouTube OAuth Sync Routes
-    Route::get('/resources/sync/auth', [ResourcesController::class, 'redirectToYouTube'])->name('resources.sync.auth');
-    Route::get('/auth/youtube/callback', [ResourcesController::class, 'handleYouTubeCallback'])->name('resources.sync.callback');
-    Route::post('/resources/sync/store', [ResourcesController::class, 'storeSelectedVideos'])->name('resources.sync.store_selected');
-    Route::get('/resources/youtube/search', [App\Http\Controllers\ResourcesController::class, 'youtubeSearch'])->name('resources.youtube.search');
-    Route::get('/youtube/fetch-data', [ResourcesController::class, 'fetchYoutubeData'])->name('youtube.fetch');
+// YouTube OAuth Sync Routes
+Route::get('/resources/sync/auth', [App\Http\Controllers\YouTubeAuthController::class, 'redirect'])->name('resources.sync.auth');
+Route::get('/login/google/callback', [App\Http\Controllers\YouTubeAuthController::class, 'callback'])->name('login.google.callback');
+Route::post('/resources/sync/store', [App\Http\Controllers\ResourcesController::class, 'storeSelectedVideos'])->name('resources.sync.store_selected');
+Route::get('/resources/youtube/search', [App\Http\Controllers\ResourcesController::class, 'youtubeSearch'])->name('resources.youtube.search');
+Route::get('/youtube/fetch-data', [App\Http\Controllers\ResourcesController::class, 'fetchYoutubeData'])->name('youtube.fetch');
 
     // Notes Management (Repository)
     Route::prefix('manage')->group(function () {

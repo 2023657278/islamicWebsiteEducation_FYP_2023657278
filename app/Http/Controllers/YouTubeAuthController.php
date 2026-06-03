@@ -9,14 +9,20 @@ use Illuminate\Support\Facades\Session;
 
 class YouTubeAuthController extends Controller
 {
+    private const CALLBACK_URL = 'https://islamic-lms.online/login/google/callback';
+
     /**
-     * 1. Send User to Google
+     * 1. Send User to Google OAuth
      */
     public function redirect(Request $request)
     {
-        // Save the class and subject IDs to session so we don't lose them during the OAuth flight
+        // Explicitly capture values right before navigating away
         Session::put('sync_group_id', $request->group_id);
         Session::put('sync_subject_id', $request->subject_id);
+        Session::put('sync_type', 'mine'); // Lock step targeting custom upload tab
+
+        // Force save changes to handle immediate redirect cleanly
+        Session::save();
 
         return Socialite::driver('google')
             ->scopes([
@@ -33,37 +39,39 @@ class YouTubeAuthController extends Controller
     }
 
     /**
-     * 2. Handle the Return from Google
+     * 2. Handle the Return payload from Google
      */
     public function callback()
     {
         try {
-            // Get the authorized user details back from Google Socialite
             $googleUser = Socialite::driver('google')->user();
-
-            // Extract token safely
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
 
             if (!$token) {
-                throw new \Exception("Could not retrieve access token from Google response.");
+                throw new \Exception("Could not retrieve access token from Google.");
             }
 
-            // 🟢 CRITICAL STEP 1: Save the token into the exact session key your resources system expects
+            // Save credentials natively where your views expect them
             Session::put('youtube_access_token', $token);
 
-            // 🟢 CRITICAL STEP 2: Pull out the saved context IDs from earlier
+            // Pull stored tracking variables out of state memory
             $groupId = Session::get('sync_group_id');
             $subjectId = Session::get('sync_subject_id');
+            $type = Session::get('sync_type', 'mine');
 
-            // 🟢 CRITICAL STEP 3: Redirect back to your YouTube Lesson Finder view instead of index!
-            // This forces the page to reload the search window with the "My Channel" tab ready.
+            // Force save session adjustments manually 
+            Session::save();
+
+            // 🟢 REDIRECT FIX: Explicitly append properties back into the URL parameters 
+            // so ResourcesController receives them securely regardless of session engine drops
             return redirect()->route('resources.youtube.search', [
                 'group_id' => $groupId,
                 'subject_id' => $subjectId,
-                'type' => 'mine'
+                'type' => $type
             ]);
             
         } catch (\Exception $e) {
+            // If anything structural breaks, it gracefully defaults to index with notification
             return redirect()->route('resources.index')
                 ->with('error', 'Authentication failed: ' . $e->getMessage());
         }
