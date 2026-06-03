@@ -10,154 +10,135 @@ use Illuminate\Support\Facades\Auth;
 
 class StudentFlashcardController extends Controller
 {
-    /**
-     * 1. DASHBOARD INDEX
-     * Shows only cards that are truly overdue in the database.
-     */
+    // 1. DASHBOARD (Deck List)
     public function index()
     {
         $user = Auth::user();
         $subjects = Subject::all();
 
+        // Icon & Color Mapping for UI
         $styles = [
-            'Al-Quran' => ['icon' => 'fa-quran', 'color' => 'primary'],
-            'Hadith'   => ['icon' => 'fa-book-open', 'color' => 'success'],
-            'Akidah'   => ['icon' => 'fa-star-and-crescent', 'color' => 'info'],
-            'Fiqh'     => ['icon' => 'fa-scale-balanced', 'color' => 'warning'],
-            'Sirah'    => ['icon' => 'fa-landmark', 'color' => 'danger'],
-            'Akhlak'   => ['icon' => 'fa-heart', 'color' => 'secondary'],
+            'Al-Quran' => ['icon' => 'fa-quran', 'color' => 'primary'], // Blue
+            'Hadith'   => ['icon' => 'fa-book-open', 'color' => 'success'], // Green
+            'Akidah'   => ['icon' => 'fa-star-and-crescent', 'color' => 'info'], // Light Blue
+            'Fiqh'     => ['icon' => 'fa-scale-balanced', 'color' => 'warning'], // Yellow
+            'Sirah'    => ['icon' => 'fa-landmark', 'color' => 'danger'], // Red
+            'Akhlak'   => ['icon' => 'fa-heart', 'color' => 'secondary'], // Grey
         ];
 
         foreach($subjects as $subject) {
+            // Get Cards
             $allCardIds = Flashcard::where('subject_id', $subject->id)->pluck('id');
             
-            // Strictly count cards where the next review time has passed
+            // 1. Due Cards (Review Date <= Today)
             $dueCount = SrsLog::where('user_id', $user->id)
                               ->whereIn('flashcard_id', $allCardIds)
-                              ->where('next_review_date', '<=', now())
+                              ->whereDate('next_review_date', '<=', now())
                               ->count();
 
-            $subject->due_cards = $dueCount;
+            // 2. New Cards (Never studied)
+            $studiedIds = SrsLog::where('user_id', $user->id)->pluck('flashcard_id');
+            $newCount = Flashcard::where('subject_id', $subject->id)
+                                 ->whereNotIn('id', $studiedIds)
+                                 ->count();
+
+            $subject->due_cards = $dueCount + $newCount;
             
-            $key = $subject->subject_name;
+            // Assign Style
+            $key = $subject->subject_name; // Ensure DB name matches keys or fallback
             $subject->style = $styles[$key] ?? ['icon' => 'fa-layer-group', 'color' => 'primary'];
         }
 
         return view('users.flashcards.index', compact('subjects'));
     }
 
-    /**
-     * 2. STUDY ENGINE
-     * Manages the full deck flip session before activating review timers.
-     */
-    public function study(Request $request, $subjectId)
+    // 2. STUDY MODE (SRS Engine)
+    public function study($subjectId)
     {
         $user = Auth::user();
-        $allCardIds = Flashcard::where('subject_id', $subjectId)->pluck('id');
-        
-        $sessionKey = 'srs_session_active_' . $subjectId;
-        $completedKey = 'srs_completed_cards_' . $subjectId;
-        $isSessionActive = session()->get($sessionKey, false);
 
-        // If no session is active, only pull due cards. If active, pull all to finish deck.
-        if (!$isSessionActive) {
-            $dueCardIds = SrsLog::where('user_id', $user->id)
-                                ->whereIn('flashcard_id', $allCardIds)
-                                ->where('next_review_date', '<=', now())
-                                ->pluck('flashcard_id');
-        } else {
-            $dueCardIds = SrsLog::where('user_id', $user->id)
-                                ->whereIn('flashcard_id', $allCardIds)
-                                ->pluck('flashcard_id');
-        }
+        // A. Get Due Cards (Log exists & date passed)
+        $dueCardIds = SrsLog::where('user_id', $user->id)
+                            ->whereDate('next_review_date', '<=', now())
+                            ->pluck('flashcard_id');
 
+        // B. Get New Cards (No Log)
+        $studiedIds = SrsLog::where('user_id', $user->id)->pluck('flashcard_id');
         $newCardIds = Flashcard::where('subject_id', $subjectId)
-                               ->whereNotIn('id', function($query) use ($user) {
-                                   $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
-                               })
+                               ->whereNotIn('id', $studiedIds)
                                ->pluck('id');
 
-        $studyPool = $dueCardIds->concat($newCardIds);
-        $completedInSession = session()->get($completedKey, []);
-        
-        // Filter out cards already answered in this specific session run
-        $finalPool = $studyPool->reject(fn($id) => in_array($id, $completedInSession))->unique()->values();
+        // Merge pools
+        $studyPool = $dueCardIds->merge($newCardIds);
 
-        if ($finalPool->isNotEmpty() && !$isSessionActive) {
-            session()->put($sessionKey, true);
+        if ($studyPool->isEmpty()) {
+            return redirect()->route('student.flashcards.index')->with('success', 'Great job! No cards due for this subject.');
         }
 
-        // Fix for infinite looping: Explicitly clear session and save before redirect
-        if ($finalPool->isEmpty()) {
-            session()->forget([$sessionKey, $completedKey]);
-            session()->save(); 
+        // Get the first card from the pool
+        $card = Flashcard::find($studyPool->first());
+        $remaining = $studyPool->count();
 
-            return redirect()->route('student.flashcards.index')
-                             ->with('success', 'All cards reviewed! Check back after 1 minute.');
-        }
-
-        $card = Flashcard::findOrFail($finalPool->first());
-        $remaining = $finalPool->count();
         return view('users.flashcards.study', compact('card', 'subjectId', 'remaining'));
     }
 
-    /**
-     * 3. UPDATE SRS LOG
-     * Records feedback and sets the 1-minute timer for "Again" ratings.
-     */
+    // 3. UPDATE SRS LOGIC (SM-2 Algorithm Fixed)
     public function updateLog(Request $request)
     {
         $user = Auth::user();
+        $cardId = $request->card_id;
+        $rating = $request->rating; // 1=Again, 2=Hard, 3=Good, 4=Easy
+
         $log = SrsLog::firstOrNew([
-            'user_id' => $user->id, 
-            'flashcard_id' => $request->card_id
+            'user_id' => $user->id,
+            'flashcard_id' => $cardId
         ]);
 
+        // Set Defaults for New Cards
         if (!$log->exists) {
-            $log->fill([
-                'ease_factor' => 2.5, 
-                'repetition_count' => 0, 
-                'interval' => 0,
-                'box_number' => 1
-            ]);
-        }
-
-        $rating = (int)$request->rating;
-        if ($rating == 1) { // AGAIN
+            $log->ease_factor = 2.5; // Standard starting ease
             $log->repetition_count = 0;
             $log->interval = 0;
-            $log->ease_factor = max(1.3, $log->ease_factor - 0.20);
-            $log->next_review_date = now()->addMinute(); // Timer starts now
+        }
+
+        // --- ALGORITHM ---
+        if ($rating == 1) { // Forgot
+            $log->repetition_count = 0;
+            $log->interval = 1; // Show again tomorrow
         } else {
-            // Standard SM-2 Spaced Repetition Math
-            $log->ease_factor = max(1.3, $log->ease_factor + (0.1 - (5 - $rating) * (0.08 + (5 - $rating) * 0.02)));
+            // Update Ease Factor (Standard Formula)
+            // rating 1-4 mapped to quality 3-5 roughly
+            $log->ease_factor = $log->ease_factor + (0.1 - (5 - $rating) * (0.08 + (5 - $rating) * 0.02));
+            if ($log->ease_factor < 1.3) $log->ease_factor = 1.3; // Min cap
+
             $log->repetition_count++;
-            
+
+            // Calculate Interval
             if ($log->repetition_count == 1) {
-                $log->interval = ($rating == 4) ? 4 : 1; 
+                $log->interval = 1;
             } elseif ($log->repetition_count == 2) {
                 $log->interval = 6;
             } else {
                 $log->interval = round($log->interval * $log->ease_factor);
             }
-            $log->next_review_date = now()->addDays($log->interval);
         }
 
+        // Bonus: Easy button boosts interval slightly more
+        if($rating == 4) $log->interval += 1;
+
+        $log->next_review_date = now()->addDays($log->interval);
         $log->save();
-        
-        // Track progress within the current session
-        session()->push('srs_completed_cards_' . $request->subject_id, $request->card_id);
-        
+
         return redirect()->route('student.flashcards.study', $request->subject_id);
     }
 
-    /**
-     * 4. MANUAL MODE
-     */
+    // 4. MANUAL BROWSING (No SRS)
     public function manual($subjectId)
     {
         $subject = Subject::findOrFail($subjectId);
         $cards = Flashcard::where('subject_id', $subjectId)->simplePaginate(1);
+        
+        // Progress bar calculation
         $total = Flashcard::where('subject_id', $subjectId)->count();
         $current = $cards->currentPage();
         $progress = $total > 0 ? ($current / $total) * 100 : 0;
