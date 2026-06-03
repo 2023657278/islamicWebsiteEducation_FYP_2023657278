@@ -32,14 +32,16 @@ class StudentFlashcardController extends Controller
         foreach($subjects as $subject) {
             $allCardIds = Flashcard::where('subject_id', $subject->id)->pluck('id');
             
-            // 🟢 FIX: Clamping conditions inside a localized subquery avoids logic leakage
             $dueCount = SrsLog::where('user_id', $user->id)
                               ->whereIn('flashcard_id', $allCardIds)
-                              ->where(function($query) {
-                                  $query->where('next_review_date', '<=', now())
-                                        ->orWhere('interval', 0);
-                              })
+                              ->where('next_review_date', '<=', now())
                               ->count();
+
+            // 🟢 Include the session check directly into the dashboard button render
+            $sessionCardId = session()->get('srs_again_card_' . $subject->id);
+            if ($sessionCardId && $allCardIds->contains($sessionCardId)) {
+                $dueCount = max(1, $dueCount);
+            }
 
             $newCount = Flashcard::where('subject_id', $subject->id)
                                  ->whereNotIn('id', function($query) use ($user) {
@@ -57,29 +59,38 @@ class StudentFlashcardController extends Controller
     }
 
     // 2. STUDY ENGINE
-    public function study($subjectId)
+   public function study(Request $request, $subjectId)
     {
         $user = Auth::user();
         $allCardIds = Flashcard::where('subject_id', $subjectId)->pluck('id');
 
-        // 🟢 FIX: Match the exact same clamped closure constraint here
+        // Check if there's an active "Again" card hanging in the session memory
+        $againCardId = session()->get('srs_again_card_' . $subjectId);
+
+        // Pull true overdue cards from the database
         $dueCardIds = SrsLog::where('user_id', $user->id)
                             ->whereIn('flashcard_id', $allCardIds)
-                            ->where(function($query) {
-                                $query->where('next_review_date', '<=', now())
-                                      ->orWhere('interval', 0);
-                            })
+                            ->where('next_review_date', '<=', now())
                             ->pluck('flashcard_id');
 
+        // Pull completely unstudied cards
         $newCardIds = Flashcard::where('subject_id', $subjectId)
                                ->whereNotIn('id', function($query) use ($user) {
                                    $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
                                })
                                ->pluck('id');
 
+        // Combine them into a single collection pool
         $studyPool = $dueCardIds->concat($newCardIds);
 
+        // If an "Again" card exists, push it back to the absolute front of the pile!
+        if ($againCardId && $allCardIds->contains($againCardId)) {
+            $studyPool = collect([$againCardId])->concat($studyPool)->unique();
+        }
+
         if ($studyPool->isEmpty()) {
+            // Clean up session memory once finished
+            session()->forget('srs_again_card_' . $subjectId);
             return redirect()->route('student.flashcards.index')->with('success', 'All caught up!');
         }
 
@@ -89,14 +100,13 @@ class StudentFlashcardController extends Controller
         return view('users.flashcards.study', compact('card', 'subjectId', 'remaining'));
     }
 
-    /**
-     * 3. SRS UPDATE LOGIC: Updates progress using the SM-2 algorithm.
-     */
+    // 3. FIXED UPDATE SRS ENGINE
     public function updateLog(Request $request)
     {
         $user = Auth::user();
         $cardId = $request->card_id;
-        $rating = (int)$request->rating; // 1=Again, 2=Hard, 3=Good, 4=Easy
+        $rating = (int)$request->rating; 
+        $subjectId = $request->subject_id;
 
         $log = SrsLog::firstOrNew([
             'user_id' => $user->id,
@@ -109,21 +119,25 @@ class StudentFlashcardController extends Controller
             $log->interval = 0;
         }
 
-        // --- THE "AGAIN" FIX ---
         if ($rating == 1) { 
+            // 🔴 THE BULLETPROOF FIX: Store this card ID directly in the user session flash storage
+            session()->put('srs_again_card_' . $subjectId, $cardId);
+
             $log->repetition_count = 0;
-            $log->interval = 0; // Keeping it at 0 ensures it stays in the current session loop
+            $log->interval = 0; 
             $log->ease_factor = max(1.3, $log->ease_factor - 0.20); 
-            // Setting the date to 1 minute ago guarantees it appears as 'due' immediately
-            $log->next_review_date = now()->subMinutes(1); 
+            $log->next_review_date = now(); 
         } else {
-            // Update Ease Factor
+            // Clear this specific card from the active "Again" session queue if they pass it
+            if (session()->get('srs_again_card_' . $subjectId) == $cardId) {
+                session()->forget('srs_again_card_' . $subjectId);
+            }
+
             $log->ease_factor = $log->ease_factor + (0.1 - (5 - $rating) * (0.08 + (5 - $rating) * 0.02));
             if ($log->ease_factor < 1.3) $log->ease_factor = 1.3;
 
             $log->repetition_count++;
 
-            // Calculate next interval
             if ($log->repetition_count == 1) {
                 $log->interval = ($rating == 4) ? 4 : 1; 
             } elseif ($log->repetition_count == 2) {
@@ -137,7 +151,7 @@ class StudentFlashcardController extends Controller
 
         $log->save();
 
-        return redirect()->route('student.flashcards.study', $request->subject_id);
+        return redirect()->route('student.flashcards.study', $subjectId);
     }
 
     /**
