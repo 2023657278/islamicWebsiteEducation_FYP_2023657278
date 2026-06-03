@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 
 class ResourcesController extends Controller
 {
@@ -204,35 +206,42 @@ class ResourcesController extends Controller
             return back()->with('error', 'Please select at least one video to import.');
         }
 
-        // Pull backup fallback parameters out of the persistent session if request drops them
         $subject_id = $request->subject_id ?? session('sync_subject_id');
         $group_id = ($request->group_id && $request->group_id !== 'null') 
                     ? $request->group_id 
                     : session('sync_group_id');
 
         if (!$subject_id) {
-            return redirect()->route('resources.index')->with('error', 'Subject ID is missing. Please try again.');
+            return redirect()->route('resources.index')->with('error', 'Subject ID context missing.');
         }
 
-        // 2. The Import Loop
-        foreach ($request->video_ids as $videoId => $title) {
-            // Using your exact Model name 'Resources' to match your setup
-            Resources::updateOrCreate(
-                ['file_url' => $videoId, 'teacher_id' => Auth::id()], 
-                [
-                    'title' => $title, 
-                    'type' => 'video', 
-                    'subject_id' => $subject_id, 
-                    'group_id' => $group_id, 
-                    'is_public' => false
-                ]
-            );
-        }
+        // 2. Wrap execution in a database transaction to force instant sequential processing
+        DB::transaction(function () use ($request, $subject_id, $group_id) {
+            foreach ($request->video_ids as $videoId => $title) {
+                Resources::updateOrCreate(
+                    ['file_url' => $videoId, 'teacher_id' => Auth::id()], 
+                    [
+                        'title' => $title, 
+                        'type' => 'video', 
+                        'subject_id' => $subject_id, 
+                        'group_id' => $group_id, 
+                        'is_public' => false
+                    ]
+                );
+            }
+        });
 
-        // 🟢 THE FIX: Clear out the temporary context tracking sessions once storage is successful
-        Session::forget(['sync_group_id', 'sync_subject_id', 'youtube_access_token']);
+        // 3. Clear temporary state and flush current session storage immediately
+        Session::forget(['sync_group_id', 'sync_subject_id', 'youtube_access_token', 'sync_type']);
+        Session::save();
 
-        // Redirect completely out of the wizard back to the main resource index tab
-        return redirect()->route('resources.index')->with('success', 'YouTube videos successfully added to your library!');
+        // 4. Force a fresh backend sweep by dumping Laravel data caches
+        Artisan::call('cache:clear');
+
+        // 5. Return redirect equipped with cache headers to block local browser memory retention
+        return redirect()
+            ->route('resources.index')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->with('success', 'YouTube videos successfully added to your library!');
     }
 }
