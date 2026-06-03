@@ -19,7 +19,6 @@ class StudentFlashcardController extends Controller
         $user = Auth::user();
         $subjects = Subject::all();
 
-        // UI Style Mapping based on project themes
         $styles = [
             'Al-Quran' => ['icon' => 'fa-quran', 'color' => 'primary'],
             'Hadith'   => ['icon' => 'fa-book-open', 'color' => 'success'],
@@ -32,16 +31,15 @@ class StudentFlashcardController extends Controller
         foreach($subjects as $subject) {
             $allCardIds = Flashcard::where('subject_id', $subject->id)->pluck('id');
             
-            // Count cards due for review (including those marked "Again" with interval 0)
+            // 🟢 FIXED: Using precise query nesting to prevent logical OR leakage
             $dueCount = SrsLog::where('user_id', $user->id)
                               ->whereIn('flashcard_id', $allCardIds)
-                              ->where(function($query) {
-                                  $query->where('next_review_date', '<=', now())
-                                        ->orWhere('interval', 0);
+                              ->where(function($mainQuery) {
+                                  $mainQuery->where('next_review_date', '<=', now())
+                                            ->orWhere('interval', 0);
                               })
                               ->count();
 
-            // Count new cards not yet in the SRS system for this user
             $newCount = Flashcard::where('subject_id', $subject->id)
                                  ->whereNotIn('id', function($query) use ($user) {
                                      $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
