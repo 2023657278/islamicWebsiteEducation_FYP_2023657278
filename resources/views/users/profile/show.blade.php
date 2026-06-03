@@ -129,9 +129,9 @@
             @if($user->telegram_chat_id)
                 <form action="{{ route('telegram.unlink') }}" method="POST">@csrf<button type="submit" class="btn btn-outline-danger rounded-pill px-4 fw-bold">Disconnect Link</button></form>
             @else
-                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#telegramModal">
-                    <i class="fas fa-link me-2"></i> Connect Telegram
-                </button>
+                <a href="{{ route('telegram.connect') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fab fa-telegram-plane me-2"></i> Connect Telegram
+                </a>
             @endif
         </div>
     </div>
