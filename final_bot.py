@@ -11,7 +11,11 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 # 🔥 CONFIGURATION
 TOKEN = "8036575496:AAFtaYbG65gKDAFPV7BBcDNs9vmeFrB4nk0"
 db_config = {
-    'user': 'root', 'password': '', 'host': '127.0.0.1', 'database': 'islamicwebsite', 'raise_on_warnings': True
+    'user': 'adminuser', 
+    'password': 'Password123!', 
+    'host': '127.0.0.1', 
+    'database': 'islamicwebsite', 
+    'raise_on_warnings': True
 }
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -25,143 +29,247 @@ def get_db():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
-        "👋 *Assalamu'alaikum!*\n"
-        "Welcome to the MRSM Terendak PAI Learning Bot.\n\n"
-        "🔗 [Visit Website Dashboard](http://127.0.0.1:8000/homepage)\n\n"
-        "Please select a Subject below to start revision:"
+        "✨ *Assalamu'alaikum W.R.T!* ✨\n\n"
+        "Welcome to the *MRSM Terendak PAI Platform Portal*.\n"
+        "Your synchronized companion for quiz analytics and notifications.\n\n"
+        "🌐 *Web Portal:* [Click to Visit Dashboard](https://islamic-lms.online)\n\n"
+        "Select an action from the keyboard below or use /help to begin."
     )
-    context.user_data.clear() # Clear state matrices safely on reset
-    await update.message.reply_text(msg, parse_mode='Markdown')
-    await show_subjects(update, context)
+    context.user_data.clear() 
+    
+    # Navigation Dashboard Keyboard Layout
+    dashboard_buttons = [
+        [KeyboardButton("📘 Start Quiz Revision")],
+        [KeyboardButton("📊 View My Progress Analytics")],
+        [KeyboardButton("🕌 Check Prayer Times"), KeyboardButton("📅 Weekly Timetable")]
+    ]
+    
+    await update.message.reply_text(
+        msg, 
+        parse_mode='Markdown', 
+        reply_markup=ReplyKeyboardMarkup(dashboard_buttons, resize_keyboard=True)
+    )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
-        "📖 *MRSM PAI Bot Guide:*\n\n"
-        "🔹 /start - Restart bot & see main menu\n"
-        "🔹 /quiz - Start a PAI quiz session\n"
-        "🔹 /progress - View your performance graph\n"
-        "🔹 /timetable - View your weekly class schedule\n"
-        "🔹 /prayer - Get JAKIM-aligned prayer times\n"
-        "🔹 /help - View this guide"
+        "📖 *MRSM PAI System Command Guide:*\n\n"
+        "🔹 `/start` — Reset interface layout and go back to home system\n"
+        "🔹 `/quiz` — Pull dynamic subjects available from system module\n"
+        "🔹 `/progress` — Render real-time learning metrics bar chart\n"
+        "🔹 `/timetable` — Export physical graphic of your weekly classes\n"
+        "🔹 `/prayer` — Fetch production API real-time prayer schedule\n"
+        "🔹 `/help` — Display this documentation module"
     )
     await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def prayer_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        loc = "Jasin" 
+        loc = "Melaka" 
         url = f"https://api.aladhan.com/v1/timingsByCity?city={loc}&country=Malaysia&method=11"
-        response = requests.get(url).json()
+        response = requests.get(url, timeout=10).json()
         t = response['data']['timings']
-        msg = (f"🕌 *Waktu Solat JAKIM ({loc})*\n\n"
-               f"🌅 Subuh: 06:14\n☀️ Zohor: 13:25\n🌤 Asar: 16:47\n"
-               f"🌙 Maghrib: 19:25\n🌌 Isyak: 20:37\n\n"
-               f"🔔 _Aligned with Official JAKIM 2026 Schedule._")
+        
+        msg = (
+            f"🕌 *Waktu Solat Rasmi Melaka ({datetime.now().strftime('%d %B %Y')})*\n"
+            f"⚡ _JAKIM Aligned Coordinate System Parameters_\n\n"
+            f"🌅 *Imsak:* {t['Imsak']} | *Subuh:* {t['Fajr']}\n"
+            f"☀️ *Syuruk:* {t['Sunrise']}\n"
+            f"🕛 *Zohor:* {t['Dhuhr']}\n"
+            f"🌤 *Asar:* {t['Asr']}\n"
+            f"🌆 *Maghrib:* {t['Maghrib']}\n"
+            f"🌌 *Isyak:* {t['Isha']}\n\n"
+            f"🔔 _\"Sesungguhnya solat itu adalah kewajipan yang ditentukan waktunya bagi orang yang beriman.\"_"
+        )
         await update.message.reply_text(msg, parse_mode='Markdown')
     except Exception as e:
-        await update.message.reply_text("⚠️ Gagal mengambil waktu solat.")
+        await update.message.reply_text("⚠️ Gagal mengambil waktu solat semasa dari API gateway.")
 
 async def timetable_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         tid = update.effective_user.id
-        conn = get_db(); cursor = conn.cursor(dictionary=True)
-        query = """
-            SELECT d.day_name, s.subject_name, t.time_from, t.time_to
-            FROM timetables t
-            JOIN users u ON u.group_id = t.group_id
-            JOIN days d ON t.day_id = d.id
-            JOIN subjects s ON t.subject_id = s.id
-            WHERE u.telegram_chat_id = %s
-            ORDER BY FIELD(d.day_name, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.time_from
-        """
-        cursor.execute(query, (tid,))
-        schedule = cursor.fetchall(); conn.close()
-        if not schedule:
-            await update.message.reply_text("📅 Tiada jadual dijumpai."); return
+        with get_db() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                query = """
+                    SELECT d.day_name, s.subject_name, t.time_from, t.time_to
+                    FROM timetables t
+                    JOIN users u ON u.group_id = t.group_id
+                    JOIN days d ON t.day_id = d.id
+                    JOIN subjects s ON t.subject_id = s.id
+                    WHERE u.telegram_chat_id = %s
+                    ORDER BY FIELD(d.day_name, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.time_from
+                """
+                cursor.execute(query, (tid,))
+                schedule = cursor.fetchall()
 
-        fig, ax = plt.subplots(figsize=(10, 6)); ax.axis('off')
-        table_data = [["Day", "Subject", "Time"]]
+        if not schedule:
+            await update.message.reply_text("📅 Tiada jadual kelas dijumpai untuk akaun anda."); return
+
+        # Chart Visual Enhancements
+        fig, ax = plt.subplots(figsize=(9, 5))
+        ax.axis('off')
+        
+        table_data = [["Hari", "Mata Pelajaran (Subject)", "Masa / Tempoh Kelas"]]
         for item in schedule:
             table_data.append([item['day_name'], item['subject_name'], f"{item['time_from']} - {item['time_to']}"])
-        table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=[0.2, 0.4, 0.4])
-        table.auto_set_font_size(False); table.set_fontsize(11); table.scale(1.2, 2.5)
+            
+        table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=[0.18, 0.42, 0.40])
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(1.2, 2.2)
+        
         for (row, col), cell in table.get_celld().items():
-            if row == 0: cell.set_text_props(weight='bold', color='white'); cell.set_facecolor('#8B1E24')
-            else: cell.set_facecolor('#FFF9F2' if row % 2 == 0 else '#FFFFFF')
-        buf = io.BytesIO(); plt.savefig(buf, format='png', bbox_inches='tight', dpi=150); buf.seek(0); plt.close()
-        await update.message.reply_photo(photo=buf, caption="📅 *Jadual Mingguan PAI*")
+            if row == 0:
+                cell.set_text_props(weight='bold', color='white')
+                cell.set_facecolor('#008f78') # Corporate Teal theme color matching the profile banner
+            else:
+                cell.set_facecolor('#F8FAFC' if row % 2 == 0 else '#FFFFFF')
+                cell.set_text_props(color='#1E293B')
+                
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=180)
+        buf.seek(0)
+        plt.close()
+        
+        await update.message.reply_photo(photo=buf, caption="📅 *Jadual Mingguan PAI Kelas Anda*")
     except Exception as e:
         await update.message.reply_text(f"⚠️ Error Jadual: {str(e)}")
 
 async def progress_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         tid = update.effective_user.id
-        conn = get_db(); cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id, name FROM users WHERE telegram_chat_id = %s", (tid,))
-        user = cursor.fetchone()
-        if not user:
-            await update.message.reply_text("⚠️ Akaun tidak dipautkan."); conn.close(); return
-        query = """
-            SELECT s.subject_name, AVG(qa.score) as avg_score, COUNT(qa.id) as attempts
-            FROM quiz_attempts qa
-            JOIN quizzes q ON qa.quiz_id = q.id
-            JOIN subjects s ON q.subject_id = s.id
-            WHERE qa.user_id = %s
-            GROUP BY s.subject_name
-        """
-        cursor.execute(query, (user['id'],))
-        data = cursor.fetchall(); conn.close()
+        with get_db() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT id, name FROM users WHERE telegram_chat_id = %s", (tid,))
+                user = cursor.fetchone()
+                if not user:
+                    await update.message.reply_text("⚠️ Akaun tidak dipautkan. Sila semak profil portal anda."); return
+                
+                query = """
+                    SELECT s.subject_name, AVG(qa.score) as avg_score, COUNT(qa.id) as attempts
+                    FROM quiz_attempts qa
+                    JOIN quizzes q ON qa.quiz_id = q.id
+                    JOIN subjects s ON q.subject_id = s.id
+                    WHERE qa.user_id = %s
+                    GROUP BY s.subject_name
+                """
+                cursor.execute(query, (user['id'],))
+                data = cursor.fetchall()
+
         if not data:
-            await update.message.reply_text("📉 Tiada data kuiz dijumpai."); return
-        plt.figure(figsize=(10, 5))
+            await update.message.reply_text("📉 Tiada rekod kuiz dijumpai dalam pangkalan data."); return
+            
         subjects = [d['subject_name'] for d in data]
         scores = [int(d['avg_score']) for d in data]
-        plt.bar(subjects, scores, color='#8B1E24')
-        plt.title(f"Prestasi Subjek: {user['name']}"); plt.ylim(0, 105)
-        buf = io.BytesIO(); plt.savefig(buf, format='png'); buf.seek(0); plt.close()
-        summary = f"📈 *Learning Analytics: {user['name']}*\n\n"
+        
+        # High-Fidelity Chart Design
+        plt.figure(figsize=(9, 4.5))
+        bars = plt.bar(subjects, scores, color='#008f78', width=0.45, edgecolor='#004D40', linewidth=1.2)
+        plt.title(f"Analisis Prestasi: {user['name']}", fontsize=12, fontweight='bold', pad=15, color='#1E293B')
+        plt.ylim(0, 110)
+        plt.ylabel("Purata Skor (%)", fontsize=10, fontweight='bold')
+        plt.grid(axis='y', linestyle='--', alpha=0.5)
+        
+        # Insert value labels above bars
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2., height + 2, f'{int(height)}%', ha='center', va='bottom', fontweight='bold', color='#334155')
+            
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+        buf.seek(0)
+        plt.close()
+        
+        summary = f"📊 *Learning Analytics Dashboard*\n👤 *Pelajar:* {user['name']}\n\n"
         for d in data:
-            summary += f"• *{d['subject_name']}:* {int(d['avg_score'])}% ({d['attempts']} kuiz)\n"
+            summary += f"• *{d['subject_name']}:* `{int(d['avg_score'])}%` _({d['attempts']} kali cubaan)_\n"
+            
         await update.message.reply_photo(photo=buf, caption=summary, parse_mode='Markdown')
     except Exception as e:
-        await update.message.reply_text(f"⚠️ Error: {str(e)}")
+        await update.message.reply_text(f"⚠️ Error Analytics Matrix: {str(e)}")
 
 # ==============================================================================
 # 2. QUIZ LOGIC
 # ==============================================================================
 
 async def show_subjects(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    conn = get_db(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT subject_name FROM subjects")
-    subjects = cursor.fetchall(); conn.close()
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT subject_name FROM subjects")
+            subjects = cursor.fetchall()
+            
     buttons = [[KeyboardButton(f"📘 {s['subject_name']}")] for s in subjects]
-    await update.message.reply_text("📚 *Sila pilih subjek:*", reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True), parse_mode='Markdown')
+    buttons.append([KeyboardButton("🔙 Main Menu")])
+    
+    await update.message.reply_text(
+        "📚 *Sila Pilih Subjek Pembelajaran:*", 
+        reply_markup=ReplyKeyboardMarkup(buttons, resize_keyboard=True), 
+        parse_mode='Markdown'
+    )
     context.user_data['state'] = 'SELECT_SUBJECT'
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text, state = update.message.text, context.user_data.get('state')
+    text = update.message.text.strip()
+    state = context.user_data.get('state')
     chat_id = update.effective_user.id
 
-    if text == "🔙 Main Menu" or text == "🔙 Quit Quiz": 
+    if text in ["🔙 Main Menu", "🔙 Quit Quiz"]: 
         await start(update, context)
         return
-    
-    # 1. CHECK FOR VERIFICATION HANDSHAKE CODE
-    if len(text) == 6 and text.isupper():
+        
+    if text == "📘 Start Quiz Revision":
+        await show_subjects(update, context)
+        return
+        
+    if text == "📊 View My Progress Analytics":
+        await progress_command(update, context)
+        return
+        
+    if text == "🕌 Check Prayer Times":
+        await prayer_command(update, context)
+        return
+        
+    if text == "📅 Weekly Timetable":
+        await timetable_command(update, context)
+        return
+
+    # 🟢 STEP 1 FIX: HANDSHAKE SYSTEM USING FLEXIBLE DYNAMIC PATTERNS FOR STUDENTS
+    if text.isdigit() and (7 <= len(text) <= 12):
         try:
-            conn = get_db(); cursor = conn.cursor(dictionary=True)
-            query = "UPDATE users SET telegram_chat_id = %s WHERE verification_code = %s"
-            cursor.execute(query, (chat_id, text))
-            conn.commit()
+            # Clean input data
+            user_code = ''.join(filter(str.isdigit, text))
+            short_match = user_code[-6:] if len(user_code) >= 6 else user_code
+            
+            with get_db() as conn:
+                with conn.cursor(dictionary=True) as cursor:
+                    # SQL targeted lookup pattern isolated strictly to students
+                    query = """
+                        SELECT id FROM users 
+                        WHERE telegram_chat_id IS NULL 
+                        AND no_maktab IS NOT NULL
+                        AND (
+                            no_maktab LIKE %s 
+                            OR %s LIKE CONCAT('%', no_maktab)
+                        )
+                    """
+                    search_pattern = f"%{short_match}"
+                    cursor.execute(query, (search_pattern, user_code))
+                    student = cursor.fetchone()
 
-            if cursor.rowcount > 0:
-                await update.message.reply_text(f"✅ *Success!* Your account is now linked.\nGo back to the website and click 'I Have Sent The Code'.")
-                conn.close()
-                return
-            conn.close()
+                    if student:
+                        update_query = "UPDATE users SET telegram_chat_id = %s WHERE id = %s"
+                        cursor.execute(update_query, (chat_id, student['id']))
+                        conn.commit()
+                        
+                        await update.message.reply_text(
+                            f"✅ *Success!* Your account tracking profile parameters are linked.\n\n"
+                            f"Go back to the layout website page and click the *'I Have Sent The Code'* confirmation button.",
+                            parse_mode='Markdown'
+                        )
+                        return
         except Exception as e:
-            logging.error(f"Link Error: {str(e)}")
+            logging.error(f"Handshake Link System Failure: {str(e)}")
 
-    # 2. RUN STEP CONTROLLERS
+    # 2. RUN CONTROLLER MANAGEMENT ROUTERS
     if state == 'SELECT_SUBJECT': 
         await handle_subject_selection(update, context, text)
     elif state == 'SELECT_QUIZ': 
@@ -173,47 +281,64 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_subject_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
     name = text.replace("📘 ", "")
-    conn = get_db(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id FROM subjects WHERE subject_name = %s", (name,))
-    sub = cursor.fetchone()
-    if sub:
-        cursor.execute("SELECT title FROM quizzes WHERE subject_id = %s AND topic != 'PVP_ARENA_BATTLE'", (sub['id'],))
-        qs = cursor.fetchall(); conn.close()
-        btns = [[KeyboardButton(f"📝 {q['title']}")] for q in qs]
-        await update.message.reply_text(f"📂 *Topik: {name}*", reply_markup=ReplyKeyboardMarkup(btns + [[KeyboardButton("🔙 Main Menu")]], resize_keyboard=True), parse_mode='Markdown')
-        context.user_data['state'] = 'SELECT_QUIZ'
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT id FROM subjects WHERE subject_name = %s", (name,))
+            sub = cursor.fetchone()
+            if sub:
+                cursor.execute("SELECT title FROM quizzes WHERE subject_id = %s AND topic != 'PVP_ARENA_BATTLE'", (sub['id'],))
+                qs = cursor.fetchall()
+                
+                btns = [[KeyboardButton(f"📝 {q['title']}")] for q in qs]
+                await update.message.reply_text(
+                    f"📂 *Topik Kuiz Dibawah: {name}*", 
+                    reply_markup=ReplyKeyboardMarkup(btns + [[KeyboardButton("🔙 Main Menu")]], resize_keyboard=True), 
+                    parse_mode='Markdown'
+                )
+                context.user_data['state'] = 'SELECT_QUIZ'
 
 async def handle_quiz_selection(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
     title = text.replace("📝 ", "")
-    conn = get_db(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id FROM quizzes WHERE title = %s", (title,))
-    q = cursor.fetchone()
-    if q:
-        cursor.execute("SELECT * FROM questions WHERE quiz_id = %s", (q['id'],))
-        context.user_data.update({'state': 'IN_QUIZ', 'qid': q['id'], 'questions': cursor.fetchall(), 'idx': 0, 'score': 0})
-        conn.close(); await ask_question(update, context)
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT id FROM quizzes WHERE title = %s", (title,))
+            q = cursor.fetchone()
+            if q:
+                cursor.execute("SELECT * FROM questions WHERE quiz_id = %s", (q['id'],))
+                context.user_data.update({'state': 'IN_QUIZ', 'qid': q['id'], 'questions': cursor.fetchall(), 'idx': 0, 'score': 0})
+                await ask_question(update, context)
 
 async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     idx, qs = context.user_data['idx'], context.user_data['questions']
     total = len(qs)
+    
     if idx >= total:
         tid, score = update.effective_user.id, context.user_data['score']
         pct = int((score/total)*100)
-        conn = get_db(); cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id FROM users WHERE telegram_chat_id = %s", (tid,))
-        u = cursor.fetchone()
-        if u:
-            cursor.execute("INSERT INTO quiz_attempts (user_id, quiz_id, score, total_questions, created_at, updated_at) VALUES (%s, %s, %s, %s, NOW(), NOW())", 
-                           (u['id'], context.user_data['qid'], pct, total))
-            conn.commit()
-        conn.close()
-        await update.message.reply_text(f"🏁 *Kuiz Selesai.*\n✅ Skor: {score}/{total} ({pct}%)\n💾 *Keputusan disimpan otomatis.*") 
+        
+        with get_db() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT id FROM users WHERE telegram_chat_id = %s", (tid,))
+                u = cursor.fetchone()
+                if u:
+                    cursor.execute(
+                        "INSERT INTO quiz_attempts (user_id, quiz_id, score, total_questions, created_at, updated_at) VALUES (%s, %s, %s, %s, NOW(), NOW())", 
+                        (u['id'], context.user_data['qid'], pct, total)
+                    )
+                    conn.commit()
+                    
+        await update.message.reply_text(
+            f"🏁 *Kuiz Selesai!*\n\n"
+            f"✅ *Skor Keputusan:* `{score} / {total}` ({pct}%)\n"
+            f"💾 _Keputusan telah disimpan automatik ke dalam database portal web._"
+        ) 
         await start(update, context); return
 
     q = qs[idx]
-    conn = get_db(); cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM options WHERE question_id = %s", (q['id'],))
-    opts = cursor.fetchall(); conn.close()
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT * FROM options WHERE question_id = %s", (q['id'],))
+            opts = cursor.fetchall()
     
     context.user_data.update({'current_q': q, 'current_q_type': q['question_type'], 'current_options': opts})
     
@@ -221,9 +346,16 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
         btns = [[KeyboardButton("🔙 Quit Quiz")]]
     else:
         btns = [[KeyboardButton(o['option_text'])] for o in opts]
-        if q['question_type'] == 'multiple': btns.insert(0, [KeyboardButton("✅ Hantar Jawapan")])
+        if q['question_type'] == 'multiple': 
+            btns.insert(0, [KeyboardButton("✅ Hantar Jawapan")])
     
-    await update.message.reply_text(f"📊 *Question {idx+1} of {total}*\n\n❓ *{q['question_text']}*", reply_markup=ReplyKeyboardMarkup(btns, resize_keyboard=True), parse_mode='Markdown')
+    await update.message.reply_text(
+        f"📊 *Soalan {idx+1} daripada {total}*\n"
+        f"⏳ _Jenis Soalan: {q['question_type'].upper()}_\n\n"
+        f"❓ *{q['question_text']}*", 
+        reply_markup=ReplyKeyboardMarkup(btns, resize_keyboard=True), 
+        parse_mode='Markdown'
+    )
 
 async def handle_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
     q = context.user_data['current_q']
@@ -232,11 +364,14 @@ async def handle_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE,
     
     if q_type == 'multiple' and text != "✅ Hantar Jawapan":
         sel = context.user_data.get('multi_selection', [])
-        if text in sel: sel.remove(text); await update.message.reply_text(f"➖ Dialih: {text}")
-        else: sel.append(text); await update.message.reply_text(f"➕ Ditambah: {text}")
+        if text in sel: 
+            sel.remove(text)
+            await update.message.reply_text(f"➖ Dialih: {text}")
+        else: 
+            sel.append(text)
+            await update.message.reply_text(f"➕ Ditambah: {text}")
         context.user_data['multi_selection'] = sel; return
     
-    # SYSTEM FILED ACCURATE ANSWER EXTRACTION VECTORS
     if q_type in ['text', 'fill', 'fill_in_the_blank']:
         actual_correct = q['correct_answer_text'].strip().lower()
         is_correct = text.strip().lower() == actual_correct
@@ -248,22 +383,30 @@ async def handle_quiz_answer(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     if is_correct: 
         context.user_data['score'] += 1
-        await update.message.reply_text("✅ Betul!")
+        await update.message.reply_text("🎉 Betul! Tahniah.")
     else: 
         if q_type in ['text', 'fill', 'fill_in_the_blank']:
-            await update.message.reply_text(f"❌ Salah. Jawapan tepat: {q['correct_answer_text']}")
+            await update.message.reply_text(f"❌ Salah.\nJawapan tepat: *{q['correct_answer_text']}*", parse_mode='Markdown')
         else:
-            await update.message.reply_text(f"❌ Salah. Jawapan tepat: {', '.join(corrects)}")
+            correct_answers_str = ', '.join(corrects)
+            await update.message.reply_text(f"❌ Salah.\nJawapan tepat: *{correct_answers_str}*", parse_mode='Markdown')
     
-    context.user_data['idx'] += 1; await ask_question(update, context)
+    context.user_data['idx'] += 1
+    await ask_question(update, context)
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).read_timeout(30).write_timeout(30).build()
+    
+    # Register Commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("progress", progress_command))
     app.add_handler(CommandHandler("timetable", timetable_command))
     app.add_handler(CommandHandler("prayer", prayer_command))
     app.add_handler(CommandHandler("quiz", show_subjects))
+    
+    # Fallback Text Handlers
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    logging.info("PAI Telegram Bot Engine loaded. Polling connection initialized...")
     app.run_polling()
