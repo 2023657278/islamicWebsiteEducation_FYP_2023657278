@@ -29,9 +29,9 @@ Route::prefix('webhook')->group(function () {
 });
 
 // 4. Public API / Auth Routes
-Route::get('/auth/youtube', [YouTubeAuthController::class, 'redirect'])->name('auth.youtube');
+//Route::get('/auth/youtube', [YouTubeAuthController::class, 'redirect'])->name('auth.youtube');
 Route::get('/login/google/callback', [YouTubeAuthController::class, 'callback'])->name('login.google.callback');
-Route::get('/auth/youtube/callback', [YouTubeAuthController::class, 'callback']);
+//Route::get('/auth/youtube/callback', [YouTubeAuthController::class, 'callback']);
 
 // =========================================================
 //  LOAD SEPARATE ROUTE FILES
