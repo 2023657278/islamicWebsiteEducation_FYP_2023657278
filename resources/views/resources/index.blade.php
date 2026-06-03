@@ -217,8 +217,8 @@
         const videoTab = document.querySelector('a[href="#sub-videos"]');
         if (videoTab) {
             videoTab.click();
-            }
         }
+    }
     });
 
     // Toggle class selection based on material type

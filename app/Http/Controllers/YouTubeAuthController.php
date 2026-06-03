@@ -9,18 +9,17 @@ use Illuminate\Support\Facades\Session;
 
 class YouTubeAuthController extends Controller
 {
-    private const CALLBACK_URL = 'https://islamic-lms.online/login/google/callback';
-
     /**
-     * 1. Send User to Google
+     * 1. Send User to Google OAuth
      */
     public function redirect(Request $request)
     {
-        // Explicitly force context retention in persistent session storage
+        // Save the context IDs to session before redirecting to Google
         Session::put('sync_group_id', $request->group_id);
         Session::put('sync_subject_id', $request->subject_id);
-        Session::save(); // Force absolute save commitment to storage driver
+        Session::save();
 
+        // 🟢 FIX: Let Socialite read the redirect URL automatically from your config/services.php
         return Socialite::driver('google')
             ->scopes([
                 'https://www.googleapis.com/auth/youtube.readonly',
@@ -41,24 +40,24 @@ class YouTubeAuthController extends Controller
     public function callback()
     {
         try {
+            // 🟢 FIX: Removed the broken ->redirectUrl() call from here too
             $googleUser = Socialite::driver('google')->user();
+            
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
 
             if (!$token) {
-                throw new \Exception("Could not retrieve access token from Google.");
+                throw new \Exception("Could not retrieve access token from Google response.");
             }
 
-            // Save credentials where your AJAX handler expects it
+            // Save token for subsequent API calls
             Session::put('youtube_access_token', $token);
 
-            // 🟢 THE FIX: Explicitly pull saved context parameters back out of session memory
+            // Pull saved context parameters out of session memory
             $groupId = Session::get('sync_group_id');
             $subjectId = Session::get('sync_subject_id');
-
             Session::save();
 
-            // 🟢 FORCE INJECTION: Re-append group_id and subject_id directly into the URL path!
-            // This guarantees that the final selection page receives the parameters on the very first landing.
+            // Redirect back to your master finder view
             return redirect()->route('resources.youtube.search', [
                 'group_id' => $groupId,
                 'subject_id' => $subjectId,
