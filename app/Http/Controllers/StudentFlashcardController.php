@@ -14,7 +14,6 @@ class StudentFlashcardController extends Controller
     /**
      * 1. DASHBOARD: Shows deck collections with accurate counters.
      */
-    // 1. DASHBOARD INDEX
     public function index()
     {
         $user = Auth::user();
@@ -32,16 +31,14 @@ class StudentFlashcardController extends Controller
         foreach($subjects as $subject) {
             $allCardIds = Flashcard::where('subject_id', $subject->id)->pluck('id');
             
+            // 🟢 FIXED: Match the exact query parameters used in the study module
             $dueCount = SrsLog::where('user_id', $user->id)
                               ->whereIn('flashcard_id', $allCardIds)
-                              ->where('next_review_date', '<=', now())
+                              ->where(function($query) {
+                                  $query->where('next_review_date', '<=', now())
+                                        ->orWhere('interval', 0); // Always count active "Again" cards
+                              })
                               ->count();
-
-            // 🟢 Include the session check directly into the dashboard button render
-            $sessionCardId = session()->get('srs_again_card_' . $subject->id);
-            if ($sessionCardId && $allCardIds->contains($sessionCardId)) {
-                $dueCount = max(1, $dueCount);
-            }
 
             $newCount = Flashcard::where('subject_id', $subject->id)
                                  ->whereNotIn('id', function($query) use ($user) {
@@ -58,49 +55,58 @@ class StudentFlashcardController extends Controller
         return view('users.flashcards.index', compact('subjects'));
     }
 
-    // 2. STUDY ENGINE
-   public function study(Request $request, $subjectId)
+    /**
+     * 2. STUDY ENGINE: Manages active cards for the session.
+     */
+    public function study(Request $request, $subjectId)
     {
         $user = Auth::user();
         $allCardIds = Flashcard::where('subject_id', $subjectId)->pluck('id');
 
-        // Check if there's an active "Again" card hanging in the session memory
+        // Check for active session cards in memory
         $againCardId = session()->get('srs_again_card_' . $subjectId);
 
-        // Pull true overdue cards from the database
+        // 🟢 FIXED: Explicitly include interval 0 so the pool matches the dashboard count
         $dueCardIds = SrsLog::where('user_id', $user->id)
                             ->whereIn('flashcard_id', $allCardIds)
-                            ->where('next_review_date', '<=', now())
+                            ->where(function($query) {
+                                $query->where('next_review_date', '<=', now())
+                                      ->orWhere('interval', 0);
+                            })
                             ->pluck('flashcard_id');
 
-        // Pull completely unstudied cards
+        // Pull unstudied cards
         $newCardIds = Flashcard::where('subject_id', $subjectId)
                                ->whereNotIn('id', function($query) use ($user) {
                                    $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
                                })
                                ->pluck('id');
 
-        // Combine them into a single collection pool
+        // Merge collection layers safely
         $studyPool = $dueCardIds->concat($newCardIds);
 
-        // If an "Again" card exists, push it back to the absolute front of the pile!
+        // If an "Again" card exists, prioritize it by moving it to the front of the queue
         if ($againCardId && $allCardIds->contains($againCardId)) {
-            $studyPool = collect([$againCardId])->concat($studyPool)->unique();
+            $studyPool = collect([$againCardId])->concat($studyPool);
         }
 
-        if ($studyPool->isEmpty()) {
-            // Clean up session memory once finished
+        // Clean values before evaluating the final count
+        $finalQueue = $studyPool->unique()->values();
+
+        if ($finalQueue->isEmpty()) {
             session()->forget('srs_again_card_' . $subjectId);
             return redirect()->route('student.flashcards.index')->with('success', 'All caught up!');
         }
 
-        $card = Flashcard::findOrFail($studyPool->first());
-        $remaining = $studyPool->count();
+        $card = Flashcard::findOrFail($finalQueue->first());
+        $remaining = $finalQueue->count();
 
         return view('users.flashcards.study', compact('card', 'subjectId', 'remaining'));
     }
 
-    // 3. FIXED UPDATE SRS ENGINE
+    /**
+     * 3. SRS LOGIC ENGINE: Processes student performance data.
+     */
     public function updateLog(Request $request)
     {
         $user = Auth::user();
@@ -117,10 +123,11 @@ class StudentFlashcardController extends Controller
             $log->ease_factor = 2.5; 
             $log->repetition_count = 0;
             $log->interval = 0;
+            $log->box_number = 1; // Aligning field attributes with your SrsLog model fillable arrays
         }
 
         if ($rating == 1) { 
-            // 🔴 THE BULLETPROOF FIX: Store this card ID directly in the user session flash storage
+            // Save the card ID to session storage to persist across redirects
             session()->put('srs_again_card_' . $subjectId, $cardId);
 
             $log->repetition_count = 0;
@@ -128,7 +135,7 @@ class StudentFlashcardController extends Controller
             $log->ease_factor = max(1.3, $log->ease_factor - 0.20); 
             $log->next_review_date = now(); 
         } else {
-            // Clear this specific card from the active "Again" session queue if they pass it
+            // Remove the card from the session queue if the student passes it
             if (session()->get('srs_again_card_' . $subjectId) == $cardId) {
                 session()->forget('srs_again_card_' . $subjectId);
             }
@@ -155,7 +162,7 @@ class StudentFlashcardController extends Controller
     }
 
     /**
-     * 4. MANUAL MODE: Simple browser for previewing all cards.
+     * 4. MANUAL PREVIEW MODE
      */
     public function manual($subjectId)
     {
