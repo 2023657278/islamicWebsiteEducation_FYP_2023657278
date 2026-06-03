@@ -9,11 +9,15 @@
             <i class="fas fa-times me-2"></i> Exit
         </a>
         <div class="flex-grow-1 mx-4">
-            {{-- Satisfying Progress Bar --}}
+            {{-- Dynamic Progress Bar --}}
             <div class="progress" style="height: 10px; background-color: #e9ecef; border-radius: 10px;">
+                @php
+                    // Dynamic fallback estimation calculation
+                    $displayPercent = isset($remaining) ? max(5, min(95, (1 / max(1, $remaining)) * 100)) : 50;
+                @endphp
                 <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
                      role="progressbar" 
-                     style="width: 70%; border-radius: 10px;"></div>
+                     style="width: {{ $displayPercent }}%; border-radius: 10px; transition: width 0.4s ease;"></div>
             </div>
         </div>
         <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill">
@@ -55,10 +59,11 @@
             <input type="hidden" name="card_id" value="{{ $card->id }}">
             <input type="hidden" name="subject_id" value="{{ $subjectId }}">
 
+            {{-- AGAIN: Shows standard SRS 1 minute delay subtext --}}
             <div class="col-6 col-md-3">
                 <button type="submit" name="rating" value="1" class="btn btn-danger w-100 py-3 rounded-4 shadow-sm hover-scale border-0">
                     <div class="fw-bold fs-5">Again</div>
-                    <small class="opacity-75">Next: <b>Now</b></small>
+                    <small class="opacity-75">Next: <b>&lt; 1 min</b></small>
                 </button>
             </div>
             <div class="col-6 col-md-3">
@@ -139,15 +144,13 @@
         isFlipped = true;
     }
 
-    // Advanced Flow Control: Keyboard Hotkeys
+    // Keyboard Hotkeys Map Engine
     document.addEventListener('keydown', function(event) {
-        // Space or Enter to Reveal Answer
         if ((event.code === 'Space' || event.code === 'Enter') && !isFlipped) {
             event.preventDefault();
             flipCard();
         } 
         
-        // Number Keys (1-4) to Rate Answer
         if (isFlipped) {
             if (event.key === '1') document.querySelector('button[value="1"]').click();
             if (event.key === '2') document.querySelector('button[value="2"]').click();

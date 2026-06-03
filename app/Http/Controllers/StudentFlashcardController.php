@@ -58,39 +58,62 @@ class StudentFlashcardController extends Controller
     /**
      * 2. STUDY ENGINE: Manages active cards for the session.
      */
+    // 2. STUDY ENGINE (With Real-Time Minute Delay)
     public function study(Request $request, $subjectId)
     {
         $user = Auth::user();
         $allCardIds = Flashcard::where('subject_id', $subjectId)->pluck('id');
 
-        // Check for active session cards in memory
+        // Check if there's an active "Again" card waiting in session memory
         $againCardId = session()->get('srs_again_card_' . $subjectId);
 
-        // 🟢 FIXED: Explicitly include interval 0 so the pool matches the dashboard count
+        if ($againCardId) {
+            $log = SrsLog::where('user_id', $user->id)
+                         ->where('flashcard_id', $againCardId)
+                         ->first();
+
+            // If 1 minute has passed, bring it back! Otherwise, keep it hidden for now
+            if ($log && $log->next_review_date->isPast()) {
+                // The minute is up! Clear the session block so it behaves normally
+                session()->forget('srs_again_card_' . $subjectId);
+            }
+        }
+
+        // Pull database cards that are genuinely due right now (next_review_date <= current time)
         $dueCardIds = SrsLog::where('user_id', $user->id)
                             ->whereIn('flashcard_id', $allCardIds)
-                            ->where(function($query) {
-                                $query->where('next_review_date', '<=', now())
-                                      ->orWhere('interval', 0);
-                            })
+                            ->where('next_review_date', '<=', now())
                             ->pluck('flashcard_id');
 
-        // Pull unstudied cards
+        // Pull completely unstudied cards
         $newCardIds = Flashcard::where('subject_id', $subjectId)
                                ->whereNotIn('id', function($query) use ($user) {
                                    $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
                                })
                                ->pluck('id');
 
-        // Merge collection layers safely
+        // Combine overdue and new cards
         $studyPool = $dueCardIds->concat($newCardIds);
 
-        // If an "Again" card exists, prioritize it by moving it to the front of the queue
-        if ($againCardId && $allCardIds->contains($againCardId)) {
-            $studyPool = collect([$againCardId])->concat($studyPool);
+        // If we are waiting on an "Again" card but other cards are available, skip the "Again" card for now
+        if (session()->has('srs_again_card_' . $subjectId) && $studyPool->isNotEmpty()) {
+            // Remove the waiting card from this specific loop so the student sees other cards first
+            $studyPool = $studyPool->reject(function ($id) use ($againCardId) {
+                return $id == $againCardId;
+            });
         }
 
-        // Clean values before evaluating the final count
+        // If the pool is empty but we have an "Again" card waiting, we must check if its minute is up
+        if ($studyPool->isEmpty() && $againCardId) {
+            $log = SrsLog::where('user_id', $user->id)->where('flashcard_id', $againCardId)->first();
+            if ($log && $log->next_review_date->isFuture()) {
+                // The minute isn't up yet, and there are no other cards left to do!
+                $secondsLeft = now()->diffInSeconds($log->next_review_date);
+                return redirect()->route('student.flashcards.index')
+                                 ->with('info', "Card recycling active. Reappears in {$secondsLeft} seconds!");
+            }
+        }
+
         $finalQueue = $studyPool->unique()->values();
 
         if ($finalQueue->isEmpty()) {
@@ -104,9 +127,7 @@ class StudentFlashcardController extends Controller
         return view('users.flashcards.study', compact('card', 'subjectId', 'remaining'));
     }
 
-    /**
-     * 3. SRS LOGIC ENGINE: Processes student performance data.
-     */
+    // 3. UPDATE SRS ENGINE
     public function updateLog(Request $request)
     {
         $user = Auth::user();
@@ -123,19 +144,20 @@ class StudentFlashcardController extends Controller
             $log->ease_factor = 2.5; 
             $log->repetition_count = 0;
             $log->interval = 0;
-            $log->box_number = 1; // Aligning field attributes with your SrsLog model fillable arrays
+            $log->box_number = 1;
         }
 
         if ($rating == 1) { 
-            // Save the card ID to session storage to persist across redirects
+            // Save the card ID to session storage so our study method knows we are tracking a delay
             session()->put('srs_again_card_' . $subjectId, $cardId);
 
             $log->repetition_count = 0;
             $log->interval = 0; 
             $log->ease_factor = max(1.3, $log->ease_factor - 0.20); 
-            $log->next_review_date = now(); 
+            
+            // 🟢 THE REAL 1-MINUTE TIME DELAY: Set review date to exactly 1 minute from right now
+            $log->next_review_date = now()->addMinute(); 
         } else {
-            // Remove the card from the session queue if the student passes it
             if (session()->get('srs_again_card_' . $subjectId) == $cardId) {
                 session()->forget('srs_again_card_' . $subjectId);
             }
