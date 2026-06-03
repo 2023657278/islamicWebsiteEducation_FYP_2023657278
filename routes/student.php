@@ -53,6 +53,8 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     Route::get('/student/resources', [StudentResourceController::class, 'index'])->name('student.resources.index');
     Route::get('/student/resources/{teacherId}', [StudentResourceController::class, 'show'])->name('student.resources.show');
     Route::get('/student/textbooks', [StudentResourceController::class, 'textbooks'])->name('student.textbooks.index');
+    // 🟢 ADD THIS: Direct path mapping to the preview streaming method for students
+    Route::get('/resources/{id}/preview', [\App\Http\Controllers\ResourcesController::class, 'preview'])->name('student.resources.preview');
 
     // 8. STUDENT PROGRESS & ANALYTICS
     Route::get('/student/progress', [StudentProgressController::class, 'index'])->name('student.progress.index');

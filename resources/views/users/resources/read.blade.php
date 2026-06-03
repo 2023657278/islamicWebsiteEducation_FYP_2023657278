@@ -30,7 +30,7 @@
         /* View Mode Toggle (Single/Double) */
         .view-toggle { display: flex; background: #f1f3f4; border-radius: 8px; padding: 2px; }
         .view-toggle button { width: 32px; height: 32px; border: none; background: transparent; border-radius: 6px; color: #666; }
-        .view-toggle button.active { background: white; shadow: 0 1px 3px rgba(0,0,0,0.1); color: #000; font-weight: bold; }
+        .view-toggle button.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #000; font-weight: bold; }
 
         /* --- SIDEBAR --- */
         .sidebar { width: 280px; background: white; border-right: 1px solid #ddd; position: absolute; top: 64px; bottom: 50px; left: 0; transform: translateX(-100%); transition: transform 0.3s ease; z-index: 15; display: flex; flex-direction: column; }
@@ -45,7 +45,7 @@
         
         /* Book Wrapper */
         .book-wrapper { display: flex; gap: 0; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transition: transform 0.2s ease; transform-origin: center top; }
-        canvas { display: block; background: white; }
+        canvas { display: block; background: white; max-width: 100%; height: auto; }
         
         /* Navigation Arrows (Floating) */
         .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(255,255,255,0.9); border-radius: 50%; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #333; z-index: 10; transition: all 0.2s; opacity: 0; }
@@ -59,7 +59,6 @@
         .progress-track { flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; margin: 0 15px; position: relative; cursor: pointer; }
         .progress-fill { height: 100%; background: #dc3545; border-radius: 3px; width: 0%; transition: width 0.3s; }
         .page-info { font-size: 0.85rem; color: #666; font-weight: 600; min-width: 100px; text-align: right; }
-
     </style>
 </head>
 <body>
@@ -98,7 +97,7 @@
             <li class="chapter-item" onclick="goToPage(10)">Chapter 2</li>
             <li class="chapter-item" onclick="goToPage(20)">Chapter 3</li>
             <li class="chapter-item" onclick="goToPage(30)">Chapter 4</li>
-            </ul>
+        </ul>
     </div>
 
     {{-- READER AREA --}}
@@ -126,12 +125,12 @@
 
     <script>
         // --- CONFIGURATION ---
-        const url = "{{ asset('storage/' . $book->file_url) }}";
+        const url = "/resources/" + resourceId + "/preview";
         const resourceId = {{ $book->id }};
         let pdfDoc = null;
         let pageNum = {{ $startPage }};
-        let scale = 1.0; // Zoom 100%
-        let isDoublePage = true; // Default to Book View
+        let scale = 1.0; 
+        let isDoublePage = true; 
         let pageRendering = false;
         let pageNumPending = null;
 
@@ -144,69 +143,79 @@
         pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
             pdfDoc = pdfDoc_;
             document.getElementById('pageTotal').textContent = pdfDoc.numPages;
-            
-            // Adjust Zoom to fit screen initially
             fitToScreen();
-            
             render();
+        }).catch(function(error) {
+            console.error("PDF setup failed: ", error);
         });
 
-        // --- RENDER LOGIC ---
+        // --- 🟢 MASTER SEQUENCED RENDER CONTROLLER ---
         function render() {
-            // If Double Page, ensure we start on odd number (1, 3, 5) or even-odd pairs depending on preference
-            // Standard Book: Cover is 1 (Single), then 2-3, 4-5.
-            
-            renderPage(pageNum, canvasLeft, ctxLeft);
-
-            if (isDoublePage && pageNum < pdfDoc.numPages) {
-                canvasRight.style.display = 'block';
-                renderPage(pageNum + 1, canvasRight, ctxRight);
-            } else {
-                canvasRight.style.display = 'none';
+            if (pageRendering) {
+                pageNumPending = pageNum;
+                return;
             }
 
-            updateUI();
+            pageRendering = true;
+
+            // Step A: Load and render the primary left-hand side canvas page layout
+            renderPage(pageNum, canvasLeft, ctxLeft).then(() => {
+                // Step B: Once complete, check if double page view model parameters are active
+                if (isDoublePage && pageNum < pdfDoc.numPages) {
+                    canvasRight.style.display = 'block';
+                    return renderPage(pageNum + 1, canvasRight, ctxRight);
+                } else {
+                    canvasRight.style.display = 'none';
+                    return Promise.resolve();
+                }
+            }).then(() => {
+                // Step C: Release thread locking parameters smoothly
+                pageRendering = false;
+                updateUI();
+
+                if (pageNumPending !== null) {
+                    let nextToRender = pageNumPending;
+                    pageNumPending = null;
+                    goToPage(nextToRender);
+                }
+            }).catch(err => {
+                pageRendering = false;
+                console.error("Rendering flow halted contextually: ", err);
+            });
         }
 
+        // Returns a verifiable promise mapping instance
         function renderPage(num, canvas, ctx) {
-            pageRendering = true;
-            pdfDoc.getPage(num).then(function(page) {
-                var viewport = page.getViewport({ scale: scale });
+            return pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: scale });
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
-                var renderContext = { canvasContext: ctx, viewport: viewport };
-                var renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        render(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
+                const renderContext = { canvasContext: ctx, viewport: viewport };
+                return renderTask = page.render(renderContext).promise;
             });
         }
 
         // --- NAVIGATION ---
         function prevPage() {
-            let step = isDoublePage ? 2 : 1;
             if (pageNum <= 1) return;
-            pageNum -= step;
-            if(pageNum < 1) pageNum = 1;
+            pageNum -= (isDoublePage ? 2 : 1);
+            if (pageNum < 1) pageNum = 1;
             render();
             saveProgress();
         }
 
         function nextPage() {
-            let step = isDoublePage ? 2 : 1;
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum += step;
+            if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+            pageNum += (isDoublePage ? 2 : 1);
+            if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
             render();
             saveProgress();
         }
 
         function goToPage(num) {
+            if (num < 1) num = 1;
+            if (pdfDoc && num > pdfDoc.numPages) num = pdfDoc.numPages;
             pageNum = num;
             render();
             saveProgress();
@@ -216,39 +225,40 @@
         function setViewMode(mode) {
             isDoublePage = (mode === 'double');
             
-            // Toggle Buttons
             document.getElementById('btnSingle').classList.toggle('active', !isDoublePage);
             document.getElementById('btnDouble').classList.toggle('active', isDoublePage);
 
-            // Adjust sizing
             fitToScreen();
             render();
         }
 
         function changeZoom(delta) {
             scale += delta;
-            if(scale < 0.5) scale = 0.5;
-            if(scale > 3.0) scale = 3.0;
+            if (scale < 0.3) scale = 0.3;
+            if (scale > 3.0) scale = 3.0;
             
             document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
             render();
         }
 
         function fitToScreen() {
-            // Simple logic: if double, zoom out a bit. If single, zoom in.
-            if(isDoublePage) scale = 0.8; 
-            else scale = 1.2;
+            const containerWidth = document.getElementById('readerContainer').clientWidth;
+            // Provide custom scaling layout bounds based on double page structure layouts
+            if (isDoublePage) {
+                scale = containerWidth > 1200 ? 0.75 : 0.55;
+            } else {
+                scale = 1.1;
+            }
             document.getElementById('zoomLevel').textContent = Math.round(scale * 100) + '%';
         }
 
         // --- UI UPDATES ---
         function updateUI() {
-            // Update Page Count Text
+            if (!pdfDoc) return;
             let displayNum = pageNum;
-            if(isDoublePage && pageNum < pdfDoc.numPages) displayNum = pageNum + "-" + (pageNum + 1);
+            if (isDoublePage && pageNum < pdfDoc.numPages) displayNum = pageNum + "-" + (pageNum + 1);
             document.getElementById('pageCurrent').textContent = displayNum;
 
-            // Update Progress Bar
             let percent = (pageNum / pdfDoc.numPages) * 100;
             document.getElementById('progressBar').style.width = percent + '%';
         }
@@ -267,16 +277,17 @@
         }
 
         function scrub(e) {
+            if (!pdfDoc) return;
             let rect = e.target.closest('.progress-track').getBoundingClientRect();
             let clickX = e.clientX - rect.left;
             let width = rect.width;
             let percent = clickX / width;
             let newPage = Math.round(percent * pdfDoc.numPages);
-            if(newPage < 1) newPage = 1;
             goToPage(newPage);
         }
 
         function saveProgress() {
+            if (!pdfDoc) return;
             fetch("{{ route('student.textbooks.save_progress') }}", {
                 method: "POST",
                 headers: {
@@ -290,6 +301,14 @@
                 })
             });
         }
+
+        // Handle auto resizing dynamics natively
+        window.addEventListener('resize', () => {
+            if (pdfDoc) {
+                fitToScreen();
+                render();
+            }
+        });
     </script>
 </body>
 </html>
