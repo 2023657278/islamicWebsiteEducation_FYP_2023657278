@@ -14,6 +14,7 @@ class StudentFlashcardController extends Controller
     /**
      * 1. DASHBOARD: Shows deck collections with accurate counters.
      */
+    // 1. DASHBOARD INDEX
     public function index()
     {
         $user = Auth::user();
@@ -31,12 +32,12 @@ class StudentFlashcardController extends Controller
         foreach($subjects as $subject) {
             $allCardIds = Flashcard::where('subject_id', $subject->id)->pluck('id');
             
-            // 🟢 FIXED: Using precise query nesting to prevent logical OR leakage
+            // 🟢 FIX: Clamping conditions inside a localized subquery avoids logic leakage
             $dueCount = SrsLog::where('user_id', $user->id)
                               ->whereIn('flashcard_id', $allCardIds)
-                              ->where(function($mainQuery) {
-                                  $mainQuery->where('next_review_date', '<=', now())
-                                            ->orWhere('interval', 0);
+                              ->where(function($query) {
+                                  $query->where('next_review_date', '<=', now())
+                                        ->orWhere('interval', 0);
                               })
                               ->count();
 
@@ -55,15 +56,13 @@ class StudentFlashcardController extends Controller
         return view('users.flashcards.index', compact('subjects'));
     }
 
-    /**
-     * 2. STUDY MODE: Prioritizes and manages active cards for the session.
-     */
+    // 2. STUDY ENGINE
     public function study($subjectId)
     {
         $user = Auth::user();
         $allCardIds = Flashcard::where('subject_id', $subjectId)->pluck('id');
 
-        // Pool A: Overdue cards OR cards marked "Again" (interval 0)
+        // 🟢 FIX: Match the exact same clamped closure constraint here
         $dueCardIds = SrsLog::where('user_id', $user->id)
                             ->whereIn('flashcard_id', $allCardIds)
                             ->where(function($query) {
@@ -72,19 +71,16 @@ class StudentFlashcardController extends Controller
                             })
                             ->pluck('flashcard_id');
 
-        // Pool B: Brand new cards
         $newCardIds = Flashcard::where('subject_id', $subjectId)
                                ->whereNotIn('id', function($query) use ($user) {
                                    $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
                                })
                                ->pluck('id');
 
-        // Combine pools (Due/Again cards first)
         $studyPool = $dueCardIds->concat($newCardIds);
 
         if ($studyPool->isEmpty()) {
-            return redirect()->route('student.flashcards.index')
-                             ->with('success', 'Alhamdulillah! You have completed all cards for this subject today.');
+            return redirect()->route('student.flashcards.index')->with('success', 'All caught up!');
         }
 
         $card = Flashcard::findOrFail($studyPool->first());
