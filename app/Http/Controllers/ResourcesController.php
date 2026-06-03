@@ -46,7 +46,7 @@ class ResourcesController extends Controller
             'title' => 'required|string', 
             'type' => 'required|in:note,textbook', 
             'subject_id' => 'required', 
-            'file' => 'required|file|max:51200'
+            'file' => 'required|file|max:204800'
         ]);
         
         $path = $request->file('file')->store('class_materials', 'public');
