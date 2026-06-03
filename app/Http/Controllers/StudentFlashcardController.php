@@ -30,18 +30,16 @@ class StudentFlashcardController extends Controller
         foreach($subjects as $subject) {
             $allCardIds = Flashcard::where('subject_id', $subject->id)->pluck('id');
             
+            // 🟢 FIXED: Only count cards where the review date is in the past (Overdue)
             $dueCount = SrsLog::where('user_id', $user->id)
                               ->whereIn('flashcard_id', $allCardIds)
                               ->where('next_review_date', '<=', now())
                               ->count();
 
-            $newCount = Flashcard::where('subject_id', $subject->id)
-                                 ->whereNotIn('id', function($query) use ($user) {
-                                     $query->select('flashcard_id')->from('srs_logs')->where('user_id', $user->id);
-                                 })
-                                 ->count();
-
-            $subject->due_cards = $dueCount + $newCount;
+            // We calculate newCount but DO NOT add it to the final dashboard badge
+            // unless you explicitly want "New" cards to show up as "Due".
+            $subject->due_cards = $dueCount; 
+            
             $key = $subject->subject_name;
             $subject->style = $styles[$key] ?? ['icon' => 'fa-layer-group', 'color' => 'primary'];
         }
