@@ -6,7 +6,7 @@
     .profile-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #eee; margin-bottom: 30px; }
     .profile-banner { height: 140px; background: #008f78; }
     .profile-content { padding: 0 40px 40px 40px; position: relative; }
-    .avatar-box { width: 150px; height: 150px; background: white; padding: 6px; border-radius: 20px; position: absolute; top: -55px; left: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .avatar-box { width: 200px; height: 200px; background: white; padding: 6px; border-radius: 20px; position: absolute; top: -55px; left: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     .avatar-inner { width: 100%; height: 100%; background: #E6FFFA; color: #008f78; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 14px; overflow: hidden; }
     
     /* Info Box Design */
@@ -40,7 +40,7 @@
                     @endif
                 </div>
             </div>
-            <div class="d-flex justify-content-between align-items-end pt-3" style="padding-left: 100px;">
+            <div class="d-flex justify-content-between align-items-end pt-3" style="padding-left: 200px;">
                 <div>
                     <h2 class="fw-bold mb-1">{{ $user->name }}</h2>
                     <p class="text-muted mb-0">Form 4 Student • PAI Class</p>
