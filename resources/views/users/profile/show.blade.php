@@ -4,10 +4,10 @@
 <style>
     /* Profile UI Styling */
     .profile-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #eee; margin-bottom: 30px; }
-    .profile-banner { height: 140px; background: #008f78; }
+    .profile-banner { height: 140px; background: #8f0000; }
     .profile-content { padding: 0 40px 40px 40px; position: relative; }
     .avatar-box { width: 110px; height: 110px; background: white; padding: 6px; border-radius: 20px; position: absolute; top: -55px; left: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .avatar-inner { width: 100%; height: 100%; background: #E6FFFA; color: #008f78; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 14px; overflow: hidden; }
+    .avatar-inner { width: 300%; height: 300%; background: #E6FFFA; color: #a40000; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 14px; overflow: hidden; }
     
     /* Info Box Design */
     .info-box { background: white; border: 1px solid #eee; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 15px; height: 100%; transition: transform 0.2s, border-color 0.2s; text-align: left; }
@@ -34,7 +34,7 @@
             <div class="avatar-box">
                 <div class="avatar-inner">
                     @if($user->profile_image)
-                        <img src="{{ asset('storage/' . $user->profile_image) }}" alt="Profile" style="width: 500%; height: 500%; object-fit: cover;">
+                        <img src="{{ asset('storage/' . $user->profile_image) }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
                     @else
                         {{ substr($user->name, 0, 2) }}
                     @endif
