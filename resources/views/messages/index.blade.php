@@ -102,6 +102,7 @@
         font-weight: bold; color: white; margin-right: 15px;
         flex-shrink: 0;
         font-size: 1.1rem;
+        overflow: hidden; /* Added to keep images inside circle bounds */
     }
 
     /* --- CHAT AREA --- */
@@ -237,7 +238,19 @@
                     <div class="section-title">Contacts</div>
                     @foreach($contacts as $contact)
                         <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="contact-item {{ ($type == 'private' && $id == $contact->id) ? 'active' : '' }}" data-name="{{ $contact->name }}" onclick="loadChat(event, this.href)">
-                            <div class="avatar">{{ substr($contact->name, 0, 1) }}</div>
+                            {{-- 🟢 FIXED: Safe clean string validation fix --}}
+                            <div class="avatar">
+                                @if(!empty($contact->profile_image))
+                                    @php
+                                        // Cleans out duplicate path mutations if any exist inside the database entry string
+                                        $cleanPath = str_replace('profile_images/profile_images/', 'profile_images/', $contact->profile_image);
+                                    @endphp
+                                    <img src="{{ asset('storage/' . $cleanPath) }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <span style="display: none;">{{ strtoupper(substr($contact->name, 0, 1)) }}</span>
+                                @else
+                                    <span>{{ strtoupper(substr($contact->name, 0, 1)) }}</span>
+                                @endif
+                            </div>
                             <div>
                                 <div class="fw-bold">{{ $contact->name }}</div>
                                 <small style="color: var(--text-secondary)">{{ ucfirst($contact->role) }}</small>
@@ -254,8 +267,23 @@
         <div class="chat-area" id="chatArea">
             @if($activeChat)
                 <div class="chat-header">
+                    {{-- 🟢 FIXED: Safe Header image path normalization block --}}
                     <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : '#6c757d' }}">
-                        @if($type == 'group') <i class="fas fa-users"></i> @elseif($type == 'global') <i class="fas fa-bullhorn"></i> @else {{ substr($activeChat->name, 0, 1) }} @endif
+                        @if($type == 'group') 
+                            <i class="fas fa-users"></i> 
+                        @elseif($type == 'global') 
+                            <i class="fas fa-bullhorn"></i> 
+                        @else 
+                            @if(!empty($activeChat->profile_image))
+                                @php
+                                    $cleanHeaderPath = str_replace('profile_images/profile_images/', 'profile_images/', $activeChat->profile_image);
+                                @endphp
+                                <img src="{{ asset('storage/' . $cleanHeaderPath) }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <span style="display: none;">{{ strtoupper(substr($activeChat->name, 0, 1)) }}</span>
+                            @else
+                                <span>{{ strtoupper(substr($activeChat->name, 0, 1)) }}</span>
+                            @endif
+                        @endif
                     </div>
                     <div>
                         <div class="fw-bold">
