@@ -7,7 +7,7 @@
     .profile-banner { height: 140px; background: #008f78; }
     .profile-content { padding: 0 40px 40px 40px; position: relative; }
     .avatar-box { width: 150px; height: 150px; background: white; padding: 6px; border-radius: 20px; position: absolute; top: -55px; left: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .avatar-inner { width: 150%; height: 150%; background: #E6FFFA; color: #008f78; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 14px; overflow: hidden; }
+    .avatar-inner { width: 100%; height: 100%; background: #E6FFFA; color: #008f78; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 14px; overflow: hidden; }
     
     /* Info Box Design */
     .info-box { background: white; border: 1px solid #eee; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 15px; height: 100%; transition: transform 0.2s, border-color 0.2s; text-align: left; }
