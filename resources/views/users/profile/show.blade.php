@@ -34,7 +34,7 @@
             <div class="avatar-box">
                 <div class="avatar-inner">
                     @if($user->profile_image)
-                        <img src="{{ asset('storage/' . $user->profile_image) }}" alt="Profile" style="width: 150%; height: 150%; object-fit: cover;">
+                        <img src="{{ asset('storage/' . $user->profile_image) }}" alt="Profile" style="width: 500%; height: 500%; object-fit: cover;">
                     @else
                         {{ substr($user->name, 0, 2) }}
                     @endif
