@@ -11,10 +11,17 @@
     {{-- HEADER PROFILE --}}
     <div class="d-flex align-items-center mb-5 text-start">
         <div class="me-4" style="width: 80px; height: 80px; border-radius: 50%; background: #fff; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            @if($teacher->profile_image)
+            {{-- Check both string existence and that it's not empty/null --}}
+            @if(!empty($teacher->profile_image) && Storage::disk('public')->exists($teacher->profile_image))
                 <img src="{{ asset('storage/' . $teacher->profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
+            @elseif(!empty($teacher->profile_image) && (str_starts_with($teacher->profile_image, 'http') || str_starts_with($teacher->profile_image, 'https')))
+                {{-- Handle full url strings if images come via CDNs --}}
+                <img src="{{ $teacher->profile_image }}" style="width: 100%; height: 100%; object-fit: cover;">
             @else
-                <h2 class="fw-bold text-secondary m-0">{{ substr($teacher->name, 0, 2) }}</h2>
+                {{-- Dynamic Fallback Initials Block --}}
+                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light text-secondary fw-bold" style="font-size: 1.5rem;">
+                    {{ strtoupper(substr($teacher->name ?? 'TR', 0, 2)) }}
+                </div>
             @endif
         </div>
         <div>

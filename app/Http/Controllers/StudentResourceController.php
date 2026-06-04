@@ -66,9 +66,11 @@ class StudentResourceController extends Controller
     public function show($teacherId)
     {
         $student = Auth::user();
-        $teacher = User::findOrFail($teacherId);
+        
+        // Explicitly ensuring we pull all attributes including images
+        $teacher = User::where('id', $teacherId)->firstOrFail();
 
-        // ✅ FIX: Fetch videos for Class OR Global
+        // Fetch videos for Class OR Global
         $videos = Resources::where('teacher_id', $teacherId)
                     ->where('type', 'video')
                     ->where(function($q) use ($student) {
@@ -85,9 +87,10 @@ class StudentResourceController extends Controller
                     ->get();
 
         $timetable = Timetable::where('teacher_id', $teacherId)
-                        ->where('group_id', $student->group_id)
-                        ->with('subject')
-                        ->first();
+                            ->where('group_id', $student->group_id)
+                            ->with('subject')
+                            ->first();
+                            
         $subjectName = $timetable ? $timetable->subject->subject_name : 'General';
 
         return view('users.resources.show', compact('teacher', 'videos', 'notes', 'subjectName'));
