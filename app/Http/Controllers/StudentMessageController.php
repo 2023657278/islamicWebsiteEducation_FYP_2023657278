@@ -20,26 +20,12 @@ class StudentMessageController extends Controller
         $teachers = User::whereIn('id', $teacherIds)->get();
         $this->attachLastMessage($teachers, $student);
 
-        // 🟢 FIX: Clean image paths for teachers loop
-        foreach ($teachers as $teacher) {
-            if (!empty($teacher->profile_image)) {
-                $teacher->profile_image = $this->cleanImagePath($teacher->profile_image);
-            }
-        }
-
         // B. GET CLASSMATES
         $classmates = User::where('group_id', $student->group_id)
                         ->where('role', 'student')
                         ->where('id', '!=', $student->id)
                         ->get();
         $this->attachLastMessage($classmates, $student);
-
-        // 🟢 FIX: Clean image paths for classmates loop
-        foreach ($classmates as $classmate) {
-            if (!empty($classmate->profile_image)) {
-                $classmate->profile_image = $this->cleanImagePath($classmate->profile_image);
-            }
-        }
 
         // C. CHANNEL 1: SCHOOL ANNOUNCEMENTS (Global)
         $globalChannel = new User(['id' => 0, 'name' => 'School Announcements', 'role' => 'system']);
@@ -73,7 +59,7 @@ class StudentMessageController extends Controller
         // SCHOOL ANNOUNCEMENTS (Read-Only)
         if ($id === 'global') {
             $teacher = (object)[
-                'id' => 'global', 
+                'id' => 'global', // Added ID to fix the error
                 'name' => 'School Announcements', 
                 'role' => 'system'
             ];
@@ -85,7 +71,7 @@ class StudentMessageController extends Controller
         // CLASS ANNOUNCEMENTS (Class Chat)
         if ($id === 'group') {
             $teacher = (object)[
-                'id' => 'group', 
+                'id' => 'group', // Added ID to fix the error
                 'name' => 'Class Announcements', 
                 'role' => 'system'
             ];
@@ -95,6 +81,7 @@ class StudentMessageController extends Controller
                                ->orderBy('created_at', 'asc')
                                ->get();
             
+            // Set to false to show the chat input box
             $isBroadcast = false; 
             
             return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
@@ -102,12 +89,6 @@ class StudentMessageController extends Controller
 
         // PRIVATE CHAT
         $teacher = User::findOrFail($id);
-        
-        // 🟢 FIX: Clean image path for single teacher/contact chat window profile header
-        if (!empty($teacher->profile_image)) {
-            $teacher->profile_image = $this->cleanImagePath($teacher->profile_image);
-        }
-
         $messages = Message::where(function($q) use ($student, $teacher) {
                         $q->where('sender_id', $student->id)->where('target_id', $teacher->id);
                     })->orWhere(function($q) use ($student, $teacher) {
@@ -131,6 +112,7 @@ class StudentMessageController extends Controller
             return back()->with('error', 'You cannot reply to school-wide announcements.');
         }
 
+        // Save to Group Chat
         if ($id === 'group') {
             Message::create([
                 'sender_id' => $student->id,
@@ -142,6 +124,7 @@ class StudentMessageController extends Controller
             return back();
         }
 
+        // Save Private Message
         Message::create([
             'sender_id' => $student->id,
             'target_id' => $id,
@@ -151,22 +134,5 @@ class StudentMessageController extends Controller
         ]);
 
         return back();
-    }
-
-    /**
-     * 🟢 HELPER UTILITY: Sanitizes and repairs mutated directory paths
-     */
-    private function cleanImagePath($path)
-    {
-        // 1. Strip duplicate folder variations completely
-        $cleaned = str_replace([
-            'profile_images/profile_images/', 
-            'profile_picture/profile_picture/',
-            'profile_images/',
-            'profile_picture/'
-        ], '', $path);
-
-        // 2. Prepend with the unified profile folder structure
-        return 'profile_images/' . ltrim($cleaned, '/');
     }
 }

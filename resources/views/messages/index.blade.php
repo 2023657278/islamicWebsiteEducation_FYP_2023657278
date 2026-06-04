@@ -102,7 +102,7 @@
         font-weight: bold; color: white; margin-right: 15px;
         flex-shrink: 0;
         font-size: 1.1rem;
-        overflow: hidden; /* Keeps images inside circle bounds */
+        overflow: hidden; /* Added to keep image profiles neatly within circle borders */
     }
 
     /* --- CHAT AREA --- */
@@ -216,7 +216,7 @@
             </div>
             
             <div class="contact-list" id="contactList">
-                {{-- Global --}}
+                {{-- Global Announcements --}}
                 <a href="{{ route('messages.index', ['type' => 'global', 'id' => 0]) }}" class="contact-item {{ ($type == 'global') ? 'active' : '' }}" onclick="loadChat(event, this.href)" data-name="Global Announcement">
                     <div class="avatar" style="background: #E53935;"><i class="fas fa-bullhorn"></i></div>
                     <div><div class="fw-bold">Global Announcement</div><small style="color: var(--text-secondary)">Message All</small></div>
@@ -233,26 +233,37 @@
                     @endforeach
                 @endif
 
-                {{-- People --}}
-                @if($contacts->count() > 0)
-                    <div class="section-title">Contacts</div>
-                    @foreach($contacts as $contact)
-                        {{-- 🟢 FIXED: Added data-name attribute back to enable search function --}}
+                {{-- Teachers Section --}}
+                @if($teachers->count() > 0)
+                    <div class="section-title">My Teachers</div>
+                    @foreach($teachers as $contact)
                         <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="contact-item {{ ($type == 'private' && $id == $contact->id) ? 'active' : '' }}" data-name="{{ $contact->name }}" onclick="loadChat(event, this.href)">
                             <div class="avatar">
-                                @if(!empty($contact->profile_image))
-                                    @php
-                                        // 🟢 NUCLEAR PATH CLEANER: Strips both variations of nested subfolders cleanly
-                                        $cleanPath = str_replace(['profile_images/profile_images/', 'profile_picture/profile_picture/'], '', $contact->profile_image);
-                                        // Ensure the root directory isn't duplicated during asset pipeline compilation
-                                        if(!str_starts_with($cleanPath, 'profile_images/') && !str_starts_with($cleanPath, 'profile_picture/')) {
-                                            $cleanPath = 'profile_images/' . $cleanPath;
-                                        }
-                                    @endphp
-                                    <img src="{{ asset('storage/' . $cleanPath) }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                    <span style="display: none;">{{ strtoupper(substr($contact->name, 0, 1)) }}</span>
+                                @if($contact->profile_image)
+                                    <img src="{{ asset('storage/' . $contact->profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 @else
-                                    <span>{{ strtoupper(substr($contact->name, 0, 1)) }}</span>
+                                    {{ substr($contact->name, 0, 1) }}
+                                @endif
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ $contact->name }}</div>
+                                <small style="color: var(--text-secondary)">{{ ucfirst($contact->role) }}</small>
+                            </div>
+                        </a>
+                    @endforeach
+                @endif
+
+                {{-- Classmates Section --}}
+                @if($classmates->count() > 0)
+                    <div class="section-title">Classmates</div>
+                    @foreach($classmates as $contact)
+                        <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="contact-item {{ ($type == 'private' && $id == $contact->id) ? 'active' : '' }}" data-name="{{ $contact->name }}" onclick="loadChat(event, this.href)">
+                            {{-- 🟢 FIXED: Replaced standard text avatar with image rendering loop check --}}
+                            <div class="avatar">
+                                @if($contact->profile_image)
+                                    <img src="{{ asset('storage/' . $contact->profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                @else
+                                    {{ substr($contact->name, 0, 1) }}
                                 @endif
                             </div>
                             <div>
@@ -271,24 +282,17 @@
         <div class="chat-area" id="chatArea">
             @if($activeChat)
                 <div class="chat-header">
+                    {{-- 🟢 FIXED: Added dynamic fallback to active conversation window profile headers --}}
                     <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : '#6c757d' }}">
                         @if($type == 'group') 
                             <i class="fas fa-users"></i> 
                         @elseif($type == 'global') 
                             <i class="fas fa-bullhorn"></i> 
                         @else 
-                            @if(!empty($activeChat->profile_image))
-                                @php
-                                    // 🟢 NUCLEAR PATH CLEANER FOR HEADER
-                                    $cleanHeaderPath = str_replace(['profile_images/profile_images/', 'profile_picture/profile_picture/'], '', $activeChat->profile_image);
-                                    if(!str_starts_with($cleanHeaderPath, 'profile_images/') && !str_starts_with($cleanHeaderPath, 'profile_picture/')) {
-                                        $cleanHeaderPath = 'profile_images/' . $cleanHeaderPath;
-                                    }
-                                @endphp
-                                <img src="{{ asset('storage/' . $cleanHeaderPath) }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                <span style="display: none;">{{ strtoupper(substr($activeChat->name, 0, 1)) }}</span>
+                            @if($activeChat->profile_image)
+                                <img src="{{ asset('storage/' . $activeChat->profile_image) }}" style="width: 100%; height: 100%; object-fit: cover;">
                             @else
-                                <span>{{ strtoupper(substr($activeChat->name, 0, 1)) }}</span>
+                                {{ substr($activeChat->name, 0, 1) }} 
                             @endif
                         @endif
                     </div>
@@ -338,35 +342,29 @@
 </div>
 
 <script>
-    // 1. SCROLL TO BOTTOM
     function scrollToBottom() {
         var container = document.getElementById("messageContainer");
         if(container) container.scrollTop = container.scrollHeight;
     }
     scrollToBottom();
 
-    // 2. SEARCH (Instant)
     document.getElementById('contactSearch').addEventListener('keyup', function() {
         let filter = this.value.toLowerCase();
         let items = document.querySelectorAll('.contact-item');
         let hasVisible = false;
 
         items.forEach(item => {
-            let name = item.getAttribute('data-name');
-            if(name) {
-                name = name.toLowerCase();
-                if(name.includes(filter)) {
-                    item.style.display = 'flex';
-                    hasVisible = true;
-                } else {
-                    item.style.display = 'none';
-                }
+            let name = item.getAttribute('data-name').toLowerCase();
+            if(name.includes(filter)) {
+                item.style.display = 'flex';
+                hasVisible = true;
+            } else {
+                item.style.display = 'none';
             }
         });
         document.getElementById('noResults').style.display = hasVisible ? 'none' : 'block';
     });
 
-    // 3. LOAD CHAT (No Reload)
     function loadChat(e, url) {
         e.preventDefault();
         document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
@@ -381,7 +379,6 @@
         });
     }
 
-    // 4. SEND MESSAGE (AJAX)
     function submitMessage(e) {
         e.preventDefault();
         const form = e.target;
