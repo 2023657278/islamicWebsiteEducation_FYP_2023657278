@@ -4,15 +4,10 @@
 <style>
     /* Profile UI Styling */
     .profile-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #eee; margin-bottom: 30px; }
-    
-    /* 🟢 INCREASED BANNER HEIGHT FROM 140px TO 180px */
-    .profile-banner { height: 180px; background: #008f78; }
-    
+    .profile-banner { height: 140px; background: #008f78; }
     .profile-content { padding: 0 40px 40px 40px; position: relative; }
-    
-    /* 🟢 INCREASED AVATAR BOX SIZE FROM 110px TO 150px (Adjusted absolute top positioning half-way down) */
-    .avatar-box { width: 150px; height: 150px; background: white; padding: 6px; border-radius: 24px; position: absolute; top: -75px; left: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .avatar-inner { width: 100%; height: 100%; background: #E6FFFA; color: #008f78; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 18px; overflow: hidden; }
+    .avatar-box { width: 110px; height: 110px; background: white; padding: 6px; border-radius: 20px; position: absolute; top: -55px; left: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .avatar-inner { width: 100%; height: 100%; background: #E6FFFA; color: #008f78; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; border-radius: 14px; overflow: hidden; }
     
     /* Info Box Design */
     .info-box { background: white; border: 1px solid #eee; border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 15px; height: 100%; transition: transform 0.2s, border-color 0.2s; text-align: left; }
@@ -39,14 +34,13 @@
             <div class="avatar-box">
                 <div class="avatar-inner">
                     @if($user->profile_image)
-                        <img src="{{ asset('storage/' . $user->profile_image) }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="{{ asset('storage/' . $user->profile_image) }}" alt="Profile" style="width: 150%; height: 150%; object-fit: cover;">
                     @else
                         {{ substr($user->name, 0, 2) }}
                     @endif
                 </div>
             </div>
-            {{-- 🟢 ADJUSTED PADDING-LEFT FROM 130px TO 170px TO MAKE ROOM FOR BIGGER AVATAR --}}
-            <div class="d-flex justify-content-between align-items-end pt-3" style="padding-left: 170px;">
+            <div class="d-flex justify-content-between align-items-end pt-3" style="padding-left: 130px;">
                 <div>
                     <h2 class="fw-bold mb-1">{{ $user->name }}</h2>
                     <p class="text-muted mb-0">Form 4 Student • PAI Class</p>
@@ -241,16 +235,22 @@
 </div>
 @endif
 
+{{-- 5. LOCAL STORAGE SYNC STORAGE EXECUTION SCRIPTS --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const pSelect = document.getElementById('profilePrayerLoc');
 
+    // 1. Check if an active selection footprint exists inside LocalStorage
     if(localStorage.getItem('prayerLoc')) {
         pSelect.value = localStorage.getItem('prayerLoc');
     }
 
+    // 2. Add change listener to store updates dynamically when user travels states
     pSelect.addEventListener('change', function() {
         localStorage.setItem('prayerLoc', this.value);
+        
+        // Optional Event dispatch alert: If a student updates their zone from the profile page, 
+        // this keeps values persistent globally across dashboard widgets if opened in another tab.
         if (typeof fetchPrayerTimes === "function") {
             const coords = this.value.split(',');
             fetchPrayerTimes(coords[0], coords[1]);
