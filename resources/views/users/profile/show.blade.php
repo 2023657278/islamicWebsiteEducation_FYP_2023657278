@@ -42,8 +42,8 @@
             </div>
             <div class="d-flex justify-content-between align-items-end pt-3" style="padding-left: 130px;">
                 <div>
-                    <h2 class="fw-bold mb-1">{{ $user->name }}</h2>
-                    <p class="text-muted mb-0">Form 4 Student • PAI Class</p>
+                    <h2 class="fw-bold mb-3">{{ $user->name }}</h2>
+                    <p class="text-muted mb-2">Form 4 Student • PAI Class</p>
                 </div>
                 <a href="{{ route('student.profile.edit') }}" class="btn btn-outline-secondary px-4 fw-bold" style="border-radius: 10px;">
                     <i class="fas fa-pen me-2"></i> Edit Profile
