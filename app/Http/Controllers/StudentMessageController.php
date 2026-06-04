@@ -10,10 +10,16 @@ use App\Models\Timetable;
 
 class StudentMessageController extends Controller
 {
-    // 1. List Contacts (Teachers, Classmates, Announcements)
-    public function index()
+    /**
+     * 1. List Contacts & Load Active Chats Dynamically
+     */
+    public function index(Request $request)
     {
         $student = Auth::user();
+        
+        // Extract optional routing type parameters from active background stream
+        $type = $request->query('type', 'global');
+        $id = $request->query('id', 0);
 
         // A. GET TEACHERS
         $teacherIds = Timetable::where('group_id', $student->group_id)->pluck('teacher_id')->unique();
@@ -22,9 +28,9 @@ class StudentMessageController extends Controller
 
         // B. GET CLASSMATES
         $classmates = User::where('group_id', $student->group_id)
-                        ->where('role', 'student')
-                        ->where('id', '!=', $student->id)
-                        ->get();
+                            ->where('role', 'student')
+                            ->where('id', '!=', $student->id)
+                            ->get();
         $this->attachLastMessage($classmates, $student);
 
         // C. CHANNEL 1: SCHOOL ANNOUNCEMENTS (Global)
@@ -34,10 +40,56 @@ class StudentMessageController extends Controller
         // D. CHANNEL 2: CLASS ANNOUNCEMENTS (Group)
         $groupChannel = new User(['id' => 0, 'name' => 'Class Announcements', 'role' => 'system']);
         $groupChannel->last_message = Message::where('type', 'group')
-                                        ->where('target_id', $student->group_id)
-                                        ->latest()->first();
+                                            ->where('target_id', $student->group_id)
+                                            ->latest()->first();
 
-        return view('users.messages.index', compact('teachers', 'classmates', 'globalChannel', 'groupChannel'));
+        // E. EVALUATE RESOLUTION OF ACTIVE SELECTED CHAT STREAM
+        $activeChat = null;
+        $messages = collect();
+
+        if ($type === 'global') {
+            $activeChat = (object)['id' => 'global', 'name' => 'School Announcements', 'role' => 'system', 'email' => 'All Students Broadcast'];
+            $messages = Message::where('type', 'global')->with('sender')->orderBy('created_at', 'asc')->get();
+        } elseif ($type === 'group') {
+            $activeChat = \App\Models\Group::find($id);
+            if ($activeChat) {
+                $messages = Message::where('type', 'group')
+                                   ->where('target_id', $id)
+                                   ->with('sender')
+                                   ->orderBy('created_at', 'asc')
+                                   ->get();
+            }
+        } elseif ($type === 'private') {
+            $activeChat = User::find($id);
+            if ($activeChat) {
+                $messages = Message::where(function($q) use ($student, $id) {
+                                    $q->where('sender_id', $student->id)->where('target_id', $id);
+                                })->orWhere(function($q) use ($student, $id) {
+                                    $q->where('sender_id', $id)->where('target_id', $student->id);
+                                })
+                                ->with('sender')
+                                ->orderBy('created_at', 'asc')
+                                ->get();
+            }
+        }
+
+        // Build list collection array parameters for search filtering mapping 
+        $contacts = $teachers->concat($classmates);
+        $groups = \App\Models\Group::where('id', $student->group_id)->get();
+
+        // 🟢 THE CRITICAL FIX: Detect background AJAX requests
+        // If request is AJAX, return only the chat window layout contents to avoid broken duplicates
+        if ($request->ajax() || $request->hasHeader('X-Requested-With')) {
+            return view('users.messages.index', compact(
+                'teachers', 'classmates', 'globalChannel', 'groupChannel', 
+                'activeChat', 'messages', 'type', 'id', 'contacts', 'groups'
+            ))->fragment('chatArea-content');
+        }
+
+        return view('users.messages.index', compact(
+            'teachers', 'classmates', 'globalChannel', 'groupChannel', 
+            'activeChat', 'messages', 'type', 'id', 'contacts', 'groups'
+        ));
     }
 
     private function attachLastMessage($users, $student)
@@ -51,69 +103,27 @@ class StudentMessageController extends Controller
         }
     }
 
-    // 2. Show Chat (FIXED: Added 'id' to dummy objects)
-    public function show($id)
+    /**
+     * 2. Send Message
+     */
+    public function store(Request $request)
     {
         $student = Auth::user();
+        $request->validate([
+            'message' => 'required|string',
+            'type' => 'required|string',
+            'target_id' => 'required'
+        ]);
 
-        // SCHOOL ANNOUNCEMENTS (Read-Only)
-        if ($id === 'global') {
-            $teacher = (object)[
-                'id' => 'global', // Added ID to fix the error
-                'name' => 'School Announcements', 
-                'role' => 'system'
-            ];
-            $messages = Message::where('type', 'global')->with('sender')->orderBy('created_at', 'asc')->get();
-            $isBroadcast = true;
-            return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
+        $type = $request->input('type');
+        $targetId = $request->input('target_id');
+
+        if ($type === 'global') {
+            return response()->json(['status' => 'error', 'message' => 'You cannot reply to school-wide announcements.'], 403);
         }
 
-        // CLASS ANNOUNCEMENTS (Class Chat)
-        if ($id === 'group') {
-            $teacher = (object)[
-                'id' => 'group', // Added ID to fix the error
-                'name' => 'Class Announcements', 
-                'role' => 'system'
-            ];
-            $messages = Message::where('type', 'group')
-                               ->where('target_id', $student->group_id)
-                               ->with('sender')
-                               ->orderBy('created_at', 'asc')
-                               ->get();
-            
-            // Set to false to show the chat input box
-            $isBroadcast = false; 
-            
-            return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
-        }
-
-        // PRIVATE CHAT
-        $teacher = User::findOrFail($id);
-        $messages = Message::where(function($q) use ($student, $teacher) {
-                        $q->where('sender_id', $student->id)->where('target_id', $teacher->id);
-                    })->orWhere(function($q) use ($student, $teacher) {
-                        $q->where('sender_id', $teacher->id)->where('target_id', $student->id);
-                    })
-                    ->with('sender')
-                    ->orderBy('created_at', 'asc')
-                    ->get();
-
-        $isBroadcast = false;
-        return view('users.messages.show', compact('teacher', 'messages', 'isBroadcast'));
-    }
-
-    // 3. Send Message
-    public function store(Request $request, $id)
-    {
-        $student = Auth::user();
-        $request->validate(['message' => 'required|string']);
-
-        if ($id === 'global') {
-            return back()->with('error', 'You cannot reply to school-wide announcements.');
-        }
-
-        // Save to Group Chat
-        if ($id === 'group') {
+        // Save Group Chat
+        if ($type === 'group') {
             Message::create([
                 'sender_id' => $student->id,
                 'target_id' => $student->group_id,
@@ -121,18 +131,18 @@ class StudentMessageController extends Controller
                 'subject'   => 'Group Chat',
                 'message'   => $request->message,
             ]);
-            return back();
+            return response()->json(['status' => 'success']);
         }
 
         // Save Private Message
         Message::create([
             'sender_id' => $student->id,
-            'target_id' => $id,
+            'target_id' => $targetId,
             'type'      => 'private',
             'subject'   => 'Private Chat',
             'message'   => $request->message,
         ]);
 
-        return back();
+        return response()->json(['status' => 'success']);
     }
 }
