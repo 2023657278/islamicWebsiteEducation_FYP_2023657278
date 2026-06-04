@@ -62,7 +62,8 @@
                     <a href="{{ route('student.messages.show', $teacher->id) }}" class="wa-contact-item">
                         <div class="wa-avatar">
                             @if($teacher->profile_image)
-                                <img src="{{ asset('storage/profile_images/' . $teacher->profile_image) }}">
+                                {{-- 🟢 FIXED: Swapped to secure Storage URL loader rule --}}
+                                <img src="{{ str_starts_with($teacher->profile_image, 'profile_images/') ? asset('storage/' . $teacher->profile_image) : asset('storage/profile_images/' . $teacher->profile_image) }}">
                             @else
                                 <span class="text-secondary fw-bold">{{ substr($teacher->name, 0, 2) }}</span>
                             @endif
@@ -85,7 +86,8 @@
                     <a href="{{ route('student.messages.show', $student->id) }}" class="wa-contact-item">
                         <div class="wa-avatar bg-light">
                             @if($student->profile_image)
-                                <img src="{{ asset('storage/profile_images/' . $student->profile_image) }}">
+                                {{-- 🟢 FIXED: Checks if profile_images folder naming prefix is present before compiling path URL --}}
+                                <img src="{{ str_starts_with($student->profile_image, 'profile_images/') ? asset('storage/' . $student->profile_image) : asset('storage/profile_images/' . $student->profile_image) }}">
                             @else
                                 <span class="text-secondary fw-bold small">{{ substr($student->name, 0, 2) }}</span>
                             @endif

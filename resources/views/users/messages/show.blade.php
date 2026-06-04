@@ -31,7 +31,8 @@
                         @elseif($teacher->name == 'Class Announcements')
                             <i class="fas fa-bullhorn" style="color: #f39c12;"></i>
                         @elseif(isset($teacher->profile_image) && $teacher->profile_image)
-                            <img src="{{ asset('storage/profile_images/' . $teacher->profile_image) }}">
+                            {{-- 🟢 FIXED: Unified path selector for conversation frame titles --}}
+                            <img src="{{ str_starts_with($teacher->profile_image, 'profile_images/') ? asset('storage/' . $teacher->profile_image) : asset('storage/profile_images/' . $teacher->profile_image) }}">
                         @else
                             {{ strtoupper(substr($teacher->name, 0, 2)) }}
                         @endif
