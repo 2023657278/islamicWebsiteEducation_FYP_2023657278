@@ -22,14 +22,13 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // 1. Validate the input - the field is named 'email' in your blade, but can be either
+        // 1. Validate the input
         $this->validate($request, [
             'email' => 'required|string',
             'password' => 'required|string',
         ]);
 
         // 2. Determine if the input is an email or a No. Maktab
-        // We use filter_var to check if the text looks like an email address
         $loginField = filter_var($request->email, FILTER_VALIDATE_EMAIL) ? 'email' : 'no_maktab';
 
         // 3. Create the credentials array dynamically
@@ -56,22 +55,22 @@ class LoginController extends Controller
         $user = Auth::user(); 
 
         // 1. If Super Admin -> Go to Real Admin Panel
-    if ($user->role === 'admin') {
-        return route('adminreal.dashboard'); 
-    }
+        if ($user->role === 'admin') {
+            return route('adminreal.dashboard'); 
+        }
 
-    // 2. If Teacher -> Go to Teacher Management Panel
-    if ($user->role === 'teacher') {
-        return route('admin.dashboard'); 
-    } 
-    
-    // 3. If Student -> Go to Student Homepage
-    if ($user->role === 'student') {
-        return route('student.homepage'); 
-    }
+        // 2. If Teacher -> Go to Teacher Management Panel
+        if ($user->role === 'teacher') {
+            return route('admin.dashboard'); 
+        } 
         
-        // 3. Fallback
-        return '/laravel'; 
+        // 3. If Student -> Go to Student Homepage
+        if ($user->role === 'student') {
+            return route('student.homepage'); 
+        }
+        
+        // Fallback
+        return '/home'; 
     }
 
     /**
@@ -86,16 +85,23 @@ class LoginController extends Controller
         return redirect('/login');
     }
 
+    /**
+     * 🟢 FIXED: This method must explicitly return a redirect 
+     * to prevent the login page from freezing/reloading.
+     */
     protected function authenticated(Request $request, $user)
-{
-    $user->update([
-        'last_login_at' => now()
-    ]);
-}
+    {
+        // Save the login timestamp
+        $user->update([
+            'last_login_at' => now()
+        ]);
 
-public function redirectToGoogle()
-{
-    return Socialite::driver('google')->redirect();
-}
+        // Force a hard redirect using our role-based redirectTo() logic above
+        return redirect()->intended($this->redirectTo());
+    }
 
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
 }
