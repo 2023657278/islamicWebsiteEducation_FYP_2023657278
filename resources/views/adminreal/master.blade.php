@@ -100,6 +100,7 @@
              <div class="dropdown-divider border-secondary"></div>
              <a class="dropdown-item text-danger rounded py-2" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="fas fa-power-off mr-2"></i> Log Out
+                @csrf
              </a>
              <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
           </div>
@@ -139,7 +140,8 @@
 
           <li class="nav-item mt-5">
             <a href="{{ route('logout') }}" class="nav-link text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="nav-icon fas fa-sign-out-alt"></i> 
+                <i class="nav-icon fas fa-sign-out-alt"></i>
+                @csrf 
                 <p>Exit Console</p>
             </a>
           </li>
