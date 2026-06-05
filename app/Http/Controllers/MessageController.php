@@ -17,7 +17,7 @@ class MessageController extends Controller
     }
 
     /**
-     * 1. List Contacts & Classrooms with Eager-Loaded Years
+     * 1. List Contacts & Handle Unified Text/Email Searching
      */
     public function index(Request $request, $type = null, $id = null)
     {
@@ -28,15 +28,12 @@ class MessageController extends Controller
         // --- 1. PREPARE SIDEBAR CONTACTS ---
         $groups = collect();
         $contacts = collect();
-        $teachers = collect(); 
 
         // A. GROUPS LOGIC
         if ($role === 'teacher') {
             $groupIds = Timetable::where('teacher_id', $user->id)->pluck('group_id')->unique();
-            // 🟢 Eager load 'year' to attach academic years safely
             $groups = Group::with('year')->whereIn('id', $groupIds)->get();
         } elseif ($role === 'student' && $user->group_id) {
-            // 🟢 Eager load 'year' to attach academic years safely
             $groups = Group::with('year')->where('id', $user->group_id)->get();
         }
 
@@ -61,58 +58,70 @@ class MessageController extends Controller
             $query->whereIn('id', $teacherIds);
         }
 
-        // C. APPLY SEARCH (Name, Phone, Email)
+        // C. APPLY SEARCH FILTER (Filters Sidebar Contacts dynamically by Name, Phone, or Email)
         if ($search) {
             $query->where(function($q) use ($search) {
-                $q->where('name', 'LIKE', "%$search%")
-                  ->orWhere('phone_number', 'LIKE', "%$search%")
-                  ->orWhere('email', 'LIKE', "%$search%");
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('phone_number', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%");
             });
         }
 
         $contacts = $query->orderBy('name')->get();
 
-        // --- 2. LOAD ACTIVE CHAT MESSAGES ---
+        // --- 2. LOAD ACTIVE CHAT MESSAGES & EXTENDED MESSAGE SEARCH ---
         $activeChat = null;
         $messages = collect();
+        $searchedMessages = collect(); // To store matched text content hits
+
+        // If a global search string query is active, scan the text inside all messages
+        if ($search) {
+            $searchedMessages = Message::where(function($q) use ($user) {
+                                    $q->where('sender_id', $user->id)
+                                      ->orWhere('target_id', $user->id);
+                                })
+                                ->where('message', 'LIKE', "%{$search}%")
+                                ->with('sender')
+                                ->latest()
+                                ->get();
+        }
 
         if ($type && $id !== null) {
             if ($type === 'global') {
                 $activeChat = (object)['name' => 'Global Announcement', 'type' => 'global'];
                 $messages = Message::where('type', 'global')
-                            ->with('sender')
-                            ->orderBy('created_at', 'asc')
-                            ->get();
+                                    ->with('sender')
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
             }
             elseif ($type === 'group') {
-                // 🟢 Eager load 'year' here for the active conversation window title
                 $activeChat = Group::with('year')->find($id);
                 if($activeChat) {
                     $messages = Message::where('type', 'group')
-                                ->where('target_id', $id)
-                                ->with('sender')
-                                ->orderBy('created_at', 'asc')
-                                ->get();
+                                        ->where('target_id', $id)
+                                        ->with('sender')
+                                        ->orderBy('created_at', 'asc')
+                                        ->get();
                 }
             } 
             elseif ($type === 'private') {
                 $activeChat = User::find($id);
                 if($activeChat) {
                     $messages = Message::where('type', 'private')
-                                ->where(function($q) use ($user, $id) {
-                                    $q->where('sender_id', $user->id)->where('target_id', $id);
-                                })
-                                ->orWhere(function($q) use ($user, $id) {
-                                    $q->where('sender_id', $id)->where('target_id', $user->id);
-                                })
-                                ->with('sender')
-                                ->orderBy('created_at', 'asc')
-                                ->get();
+                                        ->where(function($q) use ($user, $id) {
+                                            $q->where('sender_id', $user->id)->where('target_id', $id);
+                                        })
+                                        ->orWhere(function($q) use ($user, $id) {
+                                            $q->where('sender_id', $id)->where('target_id', $user->id);
+                                        })
+                                        ->with('sender')
+                                        ->orderBy('created_at', 'asc')
+                                        ->get();
                 }
             }
         }
 
-        return view('messages.index', compact('groups', 'contacts', 'activeChat', 'messages', 'type', 'id', 'search'));
+        return view('messages.index', compact('groups', 'contacts', 'activeChat', 'messages', 'type', 'id', 'search', 'searchedMessages'));
     }
 
     /**

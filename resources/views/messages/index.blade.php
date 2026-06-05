@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-    /* --- DARK MODE & LAYOUT --- */
+    /* --- DARK MODE & WHATSAPP FLAT LAYOUT --- */
     :root {
         --dark-bg: #121212; 
         --dark-sidebar: #1f2c34; 
@@ -55,14 +55,12 @@
         background-color: var(--dark-input);
         border: none;
         color: var(--text-primary);
-        border-radius: 20px;
+        border-radius: 10px;
         padding: 10px 15px;
         width: 100%;
         outline: none;
         font-size: 0.9rem;
-        text-align: center;
     }
-    .search-input:focus { text-align: left; background-color: #374045; }
 
     .contact-list {
         overflow-y: auto;
@@ -163,35 +161,38 @@
     ::-webkit-scrollbar-track { background: transparent; }
 </style>
 
-<div class="chat-wrapper">
+<div class="chat-wrapper text-start">
     <div class="chat-container">
         
         {{-- SIDEBAR --}}
         <div class="chat-sidebar">
             <div class="sidebar-search">
-                <input type="text" id="contactSearch" class="search-input" placeholder="Search contact..." autocomplete="off">
+                {{-- Form element captures search criteria inputs securely --}}
+                <form action="{{ route('messages.index') }}" method="GET">
+                    <input type="text" name="search" id="contactSearch" class="search-input" placeholder="Search name, phone or email..." value="{{ $search }}" autocomplete="off">
+                    <button type="submit" style="display: none;"></button>
+                </form>
             </div>
             
             <div class="contact-list" id="contactList">
-                {{-- Global Broadcast Channel --}}
+                {{-- Global --}}
                 <a href="{{ route('messages.index', ['type' => 'global', 'id' => 0]) }}" class="contact-item {{ ($type == 'global') ? 'active' : '' }}" onclick="loadChat(event, this.href)" data-name="Global Announcement">
                     <div class="avatar" style="background: #E53935;"><i class="fas fa-bullhorn"></i></div>
                     <div><div class="fw-bold">Global Announcement</div><small style="color: var(--text-secondary)">Message All</small></div>
                 </a>
 
-                {{-- Groups Section Loops --}}
+                {{-- Groups --}}
                 @if($groups->count() > 0)
                     <div class="section-title">Class Groups</div>
                     @foreach($groups as $group)
                         <a href="{{ route('messages.index', ['type' => 'group', 'id' => $group->id]) }}" class="contact-item {{ ($type == 'group' && $id == $group->id) ? 'active' : '' }}" data-name="{{ $group->group_name }}" onclick="loadChat(event, this.href)">
-                            <div class="avatar"><i class="fas fa-users"></i></div>
-                            {{-- 🟢 FIXED: Outputs "4Amanah (2025)" automatically inside the sidebar loops --}}
+                            <div class="avatar" style="background: #008f78;"><i class="fas fa-users"></i></div>
                             <div><div class="fw-bold">{{ $group->group_with_year }}</div><small style="color: var(--text-secondary)">Classroom</small></div>
                         </a>
                     @endforeach
                 @endif
 
-                {{-- Contacts Section Loops --}}
+                {{-- People --}}
                 @if($contacts->count() > 0)
                     <div class="section-title">Contacts</div>
                     @foreach($contacts as $contact)
@@ -209,36 +210,69 @@
             </div>
         </div>
 
-        {{-- CHAT WINDOW CONTENT BOUNDARY FRAGMENT AREA --}}
+        {{-- CHAT AREA --}}
         <div class="chat-area" id="chatArea">
-            @if($activeChat)
+            {{-- DISPLAY COMPLEX EXTENDED SEARCH PORTLET RESULTS IF SEARCH QUERY INPUT RUNS WITHOUT SPECIFIC ACTIVE CHATS SELECTED --}}
+            @if($search && !$activeChat)
+                <div class="p-4 text-start" style="overflow-y: auto; height: 100%; color: var(--text-primary);">
+                    <h4 class="fw-bold mb-4" style="color: #38a169;">
+                        <i class="fas fa-search me-2"></i> Unified Query Search Matches for: "{{ $search }}"
+                    </h4>
+                    
+                    {{-- Email / Profiles matches section bucket --}}
+                    <div class="mb-4">
+                        <h6 class="section-title text-start ps-0 mb-3" style="color: var(--maroon-accent);">Profile Matches / Verified Email Addresses ({{ $contacts->count() }})</h6>
+                        @forelse($contacts as $contact)
+                            <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="d-flex align-items-center p-3 mb-2 rounded-3 text-decoration-none text-light" style="background: rgba(255,255,255,0.03); border: 1px solid #333;">
+                                <div class="avatar" style="width: 35px; height: 35px; font-size: 0.9rem;">{{ strtoupper(substr($contact->name, 0, 1)) }}</div>
+                                <div>
+                                    <div class="fw-bold text-white mb-0" style="font-size: 0.95rem;">{{ $contact->name }}</div>
+                                    <small class="text-success">{{ $contact->email }} • {{ ucfirst($contact->role) }}</small>
+                                </div>
+                            </a>
+                        @empty
+                            <p class="text-muted small ps-2">No user accounts found matching this string query.</p>
+                        @endforelse
+                    </div>
+
+                    {{-- Text messages body strings matches section bucket --}}
+                    <div class="mb-4">
+                        <h6 class="section-title text-start ps-0 mb-3" style="color: var(--maroon-accent);">Matching Historical Message Content ({{ $searchedMessages->count() }})</h6>
+                        @forelse($searchedMessages as $msg)
+                            <div class="p-3 mb-2 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid #333;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-warning" style="font-size: 0.85rem;">{{ $msg->sender->name }}</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">{{ $msg->created_at->format('d M Y H:i') }}</small>
+                                </div>
+                                <p class="mb-0 text-white-50" style="font-size: 0.9rem;">{{ $msg->message }}</p>
+                            </div>
+                        @empty
+                            <p class="text-muted small ps-2">No conversations containing this message text phrase match.</p>
+                        @endforelse
+                    </div>
+                </div>
+
+            @elseif($activeChat)
+                {{-- Standard Active Chat Display Window Header --}}
                 <div class="chat-header">
-    <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : ($type == 'group' ? '#008f78' : '#4a5568') }}">
-        @if($type == 'group') <i class="fas fa-users"></i> @elseif($type == 'global') <i class="fas fa-bullhorn"></i> @else {{ strtoupper(substr($activeChat->name, 0, 1)) }} @endif
-    </div>
-    <div>
-        <div class="fw-bold">
-            @if($type == 'group') 
-                {{-- 🟢 FIXED: Force header name to print year parameter suffix --}}
-                {{ $activeChat->group_with_year }} 
-            @elseif($type == 'global') 
-                Global Announcement 
-            @else 
-                {{ $activeChat->name }} 
-            @endif
-        </div>
-        <small style="color: var(--text-secondary)">
-            @if($type == 'private') 
-                <i class="far fa-envelope me-1"></i> {{ $activeChat->email }} 
-            @elseif($type == 'group' && isset($activeChat->year))
-                {{-- 🟢 FIXED: Sub-info prints out the session data tag perfectly --}}
-                <i class="fas fa-graduation-cap me-1"></i> Academic Session: {{ $activeChat->year->year ?? 'N/A' }}
-            @else 
-                <i class="fas fa-comments me-1"></i> Open Communication Room 
-            @endif
-        </small>
-    </div>
-</div>
+                    <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : ($type == 'group' ? '#008f78' : '#6c757d') }}">
+                        @if($type == 'group') <i class="fas fa-users"></i> @elseif($type == 'global') <i class="fas fa-bullhorn"></i> @else {{ substr($activeChat->name, 0, 1) }} @endif
+                    </div>
+                    <div>
+                        <div class="fw-bold">
+                            @if($type == 'group') 
+                                {{ $activeChat->group_with_year }} 
+                            @elseif($type == 'global') 
+                                Global Announcement 
+                            @else 
+                                {{ $activeChat->name }} 
+                            @endif
+                        </div>
+                        <small style="color: var(--text-secondary)">
+                            @if($type == 'private') {{ $activeChat->email }} @else Chat Room @endif
+                        </small>
+                    </div>
+                </div>
 
                 <div class="messages-box" id="messageContainer">
                     @forelse($messages as $msg)
@@ -264,6 +298,7 @@
                     </form>
                 </div>
             @else
+                {{-- Fallback default window when zero parameters are checked --}}
                 <div class="h-100 d-flex flex-column align-items-center justify-content-center text-center p-5">
                     <i class="fas fa-comments fa-4x mb-3" style="color: #2a3942;"></i>
                     <h4 class="fw-bold" style="color: var(--text-secondary)">Select a Chat</h4>
@@ -279,23 +314,6 @@
         if(container) container.scrollTop = container.scrollHeight;
     }
     scrollToBottom();
-
-    document.getElementById('contactSearch').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let items = document.querySelectorAll('.contact-item');
-        let hasVisible = false;
-
-        items.forEach(item => {
-            let name = item.getAttribute('data-name').toLowerCase();
-            if(name.includes(filter)) {
-                item.style.display = 'flex';
-                hasVisible = true;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        document.getElementById('noResults').style.display = hasVisible ? 'none' : 'block';
-    });
 
     function loadChat(e, url) {
         e.preventDefault();
