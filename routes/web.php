@@ -19,7 +19,27 @@ Route::get('/laravel', function () { return view('welcome'); });
 
 // 2. Authentication
 Auth::routes();
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+Route::get('/home', function () {
+    $user = Auth::user();
+
+    // 1. If Super Admin -> Go to Admin Panel
+    if ($user->role === 'admin') {
+        return redirect()->route('adminreal.dashboard');
+    }
+
+    // 2. If Teacher -> Go to Teacher Management Panel
+    if ($user->role === 'teacher') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    // 3. If Student -> Go to Student Homepage
+    if ($user->role === 'student') {
+        return redirect()->route('student.homepage');
+    }
+
+    // Fallback if role is missing or mismatched
+    return redirect('/');
+})->middleware('auth')->name('home');
 
 // 3. Admin Tools (Webhook Setup)
 Route::prefix('webhook')->group(function () {
