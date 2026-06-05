@@ -29,13 +29,13 @@ class Group extends Model
     }
 
     /**
-     * 🟢 ACCESSED VIA: $group->group_with_year
-     * Generates "4Amanah (2025)" safely without changing any database column structures.
+     * 🟢 FIXED COLUMN: Uses ->year to grab '2025' instead of ->year_name
+     * Generates: "4 Amanah (2025)"
      */
     public function getGroupWithYearAttribute()
     {
         if ($this->year) {
-            return "{$this->group_name} ({$this->year->year_name})";
+            return "{$this->group_name} ({$this->year->year})";
         }
 
         return $this->group_name;

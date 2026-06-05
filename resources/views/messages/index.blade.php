@@ -213,23 +213,32 @@
         <div class="chat-area" id="chatArea">
             @if($activeChat)
                 <div class="chat-header">
-                    <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : '#6c757d' }}">
-                        @if($type == 'group') <i class="fas fa-users"></i> @else {{ substr($activeChat->name, 0, 1) }} @endif
-                    </div>
-                    <div>
-                        <div class="fw-bold">
-                            {{-- 🟢 FIXED: Outputs "4Amanah (2025)" directly into the chat active profile frame header --}}
-                            @if($type == 'group') 
-                                {{ $activeChat->group_with_year }} 
-                            @else 
-                                {{ $activeChat->name }} 
-                            @endif
-                        </div>
-                        <small style="color: var(--text-secondary)">
-                            @if($type == 'private') {{ $activeChat->email }} @else Chat Room @endif
-                        </small>
-                    </div>
-                </div>
+    <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : ($type == 'group' ? '#008f78' : '#4a5568') }}">
+        @if($type == 'group') <i class="fas fa-users"></i> @elseif($type == 'global') <i class="fas fa-bullhorn"></i> @else {{ strtoupper(substr($activeChat->name, 0, 1)) }} @endif
+    </div>
+    <div>
+        <div class="fw-bold">
+            @if($type == 'group') 
+                {{-- 🟢 FIXED: Force header name to print year parameter suffix --}}
+                {{ $activeChat->group_with_year }} 
+            @elseif($type == 'global') 
+                Global Announcement 
+            @else 
+                {{ $activeChat->name }} 
+            @endif
+        </div>
+        <small style="color: var(--text-secondary)">
+            @if($type == 'private') 
+                <i class="far fa-envelope me-1"></i> {{ $activeChat->email }} 
+            @elseif($type == 'group' && isset($activeChat->year))
+                {{-- 🟢 FIXED: Sub-info prints out the session data tag perfectly --}}
+                <i class="fas fa-graduation-cap me-1"></i> Academic Session: {{ $activeChat->year->year ?? 'N/A' }}
+            @else 
+                <i class="fas fa-comments me-1"></i> Open Communication Room 
+            @endif
+        </small>
+    </div>
+</div>
 
                 <div class="messages-box" id="messageContainer">
                     @forelse($messages as $msg)
