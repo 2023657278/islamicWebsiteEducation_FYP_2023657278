@@ -28,6 +28,11 @@ class StudentController extends Controller
             $query->where('group_id', $request->group);
         }
 
+        // 🟢 FIXED: Check and apply registration year filter parameters
+        if ($request->filled('year')) {
+            $query->whereYear('created_at', $request->year);
+        }
+
         $students = $query->latest()->get();
 
         return view('students.index', compact('students', 'groups'));
