@@ -23,9 +23,21 @@ class Group extends Model
         return $this->hasMany(User::class, 'group_id')->where('role', 'student');
     }
 
-    // ✅ ADD THIS MISSING RELATIONSHIP
     public function timetables()
     {
         return $this->hasMany(Timetable::class, 'group_id');
+    }
+
+    /**
+     * 🟢 ACCESSED VIA: $group->group_with_year
+     * Generates "4Amanah (2025)" safely without changing any database column structures.
+     */
+    public function getGroupWithYearAttribute()
+    {
+        if ($this->year) {
+            return "{$this->group_name} ({$this->year->year_name})";
+        }
+
+        return $this->group_name;
     }
 }

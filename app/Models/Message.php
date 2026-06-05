@@ -9,25 +9,40 @@ class Message extends Model
 {
     use HasFactory;
 
-    // ✅ Match your existing table columns
+    /**
+     * Explicitly map your existing database table fields.
+     */
     protected $fillable = [
         'sender_id', 
         'target_id', 
-        'type',      // Your table has this column
-        'subject',   // Your table has this column
+        'type',      // 'private', 'group', or 'global'
+        'subject',   
         'message', 
-        'is_read'    // Assuming you have this or similar
+        'is_read'    
     ];
 
-    // Link to Sender
+    /**
+     * Relationship: Link to the User who sent the message.
+     */
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    // Link to Target (Receiver)
+    /**
+     * Relationship: Link to the User target (For private 1-to-1 messages).
+     */
     public function target()
     {
         return $this->belongsTo(User::class, 'target_id');
+    }
+
+    /**
+     * 🟢 ADDED: Link to the Group target (For class announcements/chat).
+     * This links the message target_id to the groups table id.
+     */
+    public function group()
+    {
+        return $this->belongsTo(Group::class, 'target_id');
     }
 }

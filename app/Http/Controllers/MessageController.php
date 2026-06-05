@@ -16,6 +16,9 @@ class MessageController extends Controller
         $this->middleware('auth');
     }
 
+    /**
+     * 1. List Contacts & Classrooms with Eager-Loaded Years
+     */
     public function index(Request $request, $type = null, $id = null)
     {
         $user = Auth::user();
@@ -25,14 +28,16 @@ class MessageController extends Controller
         // --- 1. PREPARE SIDEBAR CONTACTS ---
         $groups = collect();
         $contacts = collect();
-        $teachers = collect(); // For Teacher-to-Teacher chat
+        $teachers = collect(); 
 
         // A. GROUPS LOGIC
         if ($role === 'teacher') {
             $groupIds = Timetable::where('teacher_id', $user->id)->pluck('group_id')->unique();
-            $groups = Group::whereIn('id', $groupIds)->get();
+            // 🟢 Eager load 'year' to attach academic years safely
+            $groups = Group::with('year')->whereIn('id', $groupIds)->get();
         } elseif ($role === 'student' && $user->group_id) {
-            $groups = Group::where('id', $user->group_id)->get();
+            // 🟢 Eager load 'year' to attach academic years safely
+            $groups = Group::with('year')->where('id', $user->group_id)->get();
         }
 
         // B. CONTACTS LOGIC (Students & Teachers)
@@ -80,7 +85,8 @@ class MessageController extends Controller
                             ->get();
             }
             elseif ($type === 'group') {
-                $activeChat = Group::find($id);
+                // 🟢 Eager load 'year' here for the active conversation window title
+                $activeChat = Group::with('year')->find($id);
                 if($activeChat) {
                     $messages = Message::where('type', 'group')
                                 ->where('target_id', $id)
@@ -109,12 +115,15 @@ class MessageController extends Controller
         return view('messages.index', compact('groups', 'contacts', 'activeChat', 'messages', 'type', 'id', 'search'));
     }
 
+    /**
+     * 2. Send Message Store Function
+     */
     public function store(Request $request)
     {
         $request->validate([
             'message'   => 'required|string',
             'type'      => 'required|in:group,private,global',
-            'target_id' => 'required|integer', // 0 for global
+            'target_id' => 'required|integer', 
         ]);
 
         Message::create([
