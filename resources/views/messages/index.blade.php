@@ -156,9 +156,28 @@
     .btn-send { background: none; border: none; margin-left: 15px; color: var(--text-secondary); font-size: 1.4rem; cursor: pointer; transition: color 0.2s; }
     .btn-send:hover { color: var(--maroon-accent); }
 
+    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #374045; border-radius: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
+
+    /* 🟢 EXTENDED CONTRAST STYLING FOR SEARCH RESULTS PANEL */
+    .search-results-overlay {
+        overflow-y: auto;
+        height: 100%;
+        padding: 24px;
+        background-color: rgba(18, 18, 18, 0.92); /* Solid dark mask filtering the cream image map out */
+        backdrop-filter: blur(4px); /* Clean glass accentuation logic */
+        color: var(--text-primary);
+    }
+    .search-item-card {
+        background: #1f2c34 !important; /* Forces solid dark-mode container panels */
+        border: 1px solid #2a3942 !important;
+        transition: background 0.2s ease;
+    }
+    .search-item-card:hover {
+        background: #2a3942 !important;
+    }
 </style>
 
 <div class="chat-wrapper text-start">
@@ -167,7 +186,6 @@
         {{-- SIDEBAR --}}
         <div class="chat-sidebar">
             <div class="sidebar-search">
-                {{-- Form element captures search criteria inputs securely --}}
                 <form action="{{ route('messages.index') }}" method="GET">
                     <input type="text" name="search" id="contactSearch" class="search-input" placeholder="Search name, phone or email..." value="{{ $search }}" autocomplete="off">
                     <button type="submit" style="display: none;"></button>
@@ -212,22 +230,22 @@
 
         {{-- CHAT AREA --}}
         <div class="chat-area" id="chatArea">
-            {{-- DISPLAY COMPLEX EXTENDED SEARCH PORTLET RESULTS IF SEARCH QUERY INPUT RUNS WITHOUT SPECIFIC ACTIVE CHATS SELECTED --}}
+            {{-- 🟢 APPLIED THE CONDITIONAL OVERLAY TINT COMPONENT BLOCK --}}
             @if($search && !$activeChat)
-                <div class="p-4 text-start" style="overflow-y: auto; height: 100%; color: var(--text-primary);">
+                <div class="search-results-overlay">
                     <h4 class="fw-bold mb-4" style="color: #38a169;">
                         <i class="fas fa-search me-2"></i> Unified Query Search Matches for: "{{ $search }}"
                     </h4>
                     
-                    {{-- Email / Profiles matches section bucket --}}
+                    {{-- Profile / Email Section --}}
                     <div class="mb-4">
-                        <h6 class="section-title text-start ps-0 mb-3" style="color: var(--maroon-accent);">Profile Matches / Verified Email Addresses ({{ $contacts->count() }})</h6>
+                        <h6 class="section-title text-start ps-0 mb-3" style="color: #8696a0;">Profile Matches / Verified Email Addresses ({{ $contacts->count() }})</h6>
                         @forelse($contacts as $contact)
-                            <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="d-flex align-items-center p-3 mb-2 rounded-3 text-decoration-none text-light" style="background: rgba(255,255,255,0.03); border: 1px solid #333;">
+                            <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="search-item_card d-flex align-items-center p-3 mb-2 rounded-3 text-decoration-none text-light search-item-card">
                                 <div class="avatar" style="width: 35px; height: 35px; font-size: 0.9rem;">{{ strtoupper(substr($contact->name, 0, 1)) }}</div>
                                 <div>
                                     <div class="fw-bold text-white mb-0" style="font-size: 0.95rem;">{{ $contact->name }}</div>
-                                    <small class="text-success">{{ $contact->email }} • {{ ucfirst($contact->role) }}</small>
+                                    <small style="color: #38a169; font-weight: 600;">{{ $contact->email }} • {{ ucfirst($contact->role) }}</small>
                                 </div>
                             </a>
                         @empty
@@ -235,11 +253,11 @@
                         @endforelse
                     </div>
 
-                    {{-- Text messages body strings matches section bucket --}}
+                    {{-- Text Message Snippets Section --}}
                     <div class="mb-4">
-                        <h6 class="section-title text-start ps-0 mb-3" style="color: var(--maroon-accent);">Matching Historical Message Content ({{ $searchedMessages->count() }})</h6>
+                        <h6 class="section-title text-start ps-0 mb-3" style="color: #8696a0;">Matching Historical Message Content ({{ $searchedMessages->count() }})</h6>
                         @forelse($searchedMessages as $msg)
-                            <div class="p-3 mb-2 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid #333;">
+                            <div class="p-3 mb-2 rounded-3 search-item-card">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="fw-bold text-warning" style="font-size: 0.85rem;">{{ $msg->sender->name }}</span>
                                     <small class="text-muted" style="font-size: 0.7rem;">{{ $msg->created_at->format('d M Y H:i') }}</small>
@@ -253,7 +271,6 @@
                 </div>
 
             @elseif($activeChat)
-                {{-- Standard Active Chat Display Window Header --}}
                 <div class="chat-header">
                     <div class="avatar me-3" style="background: {{ $type == 'global' ? '#E53935' : ($type == 'group' ? '#008f78' : '#6c757d') }}">
                         @if($type == 'group') <i class="fas fa-users"></i> @elseif($type == 'global') <i class="fas fa-bullhorn"></i> @else {{ substr($activeChat->name, 0, 1) }} @endif
@@ -298,7 +315,6 @@
                     </form>
                 </div>
             @else
-                {{-- Fallback default window when zero parameters are checked --}}
                 <div class="h-100 d-flex flex-column align-items-center justify-content-center text-center p-5">
                     <i class="fas fa-comments fa-4x mb-3" style="color: #2a3942;"></i>
                     <h4 class="fw-bold" style="color: var(--text-secondary)">Select a Chat</h4>
