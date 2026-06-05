@@ -31,7 +31,6 @@
                         @elseif($teacher->name == 'Class Announcements')
                             <i class="fas fa-bullhorn" style="color: #f39c12;"></i>
                         @elseif(isset($teacher->profile_image) && $teacher->profile_image)
-                            {{-- 🟢 FIXED: Unified path selector for conversation frame titles --}}
                             <img src="{{ str_starts_with($teacher->profile_image, 'profile_images/') ? asset('storage/' . $teacher->profile_image) : asset('storage/profile_images/' . $teacher->profile_image) }}">
                         @else
                             {{ strtoupper(substr($teacher->name, 0, 2)) }}
@@ -53,9 +52,11 @@
                 <div class="wa-messages-area" id="message-box">
                     @foreach($messages as $message)
                         <div class="wa-bubble {{ ($message->sender_id == Auth::id()) ? 'wa-sent' : 'wa-received' }}">
-                            @if($isBroadcast && $message->sender_id != Auth::id())
+                            {{-- 🟢 FIXED: Display names for BOTH School and Class Announcements loops from other profiles --}}
+                            @if(($teacher->name == 'School Announcements' || $teacher->name == 'Class Announcements') && $message->sender_id != Auth::id())
                                 <small class="d-block fw-bold text-primary mb-1">{{ $message->sender->name ?? 'Staff' }}</small>
                             @endif
+                            
                             {{ $message->message }}
                             <div class="wa-meta"><span>{{ $message->created_at->format('H:i') }}</span></div>
                         </div>
