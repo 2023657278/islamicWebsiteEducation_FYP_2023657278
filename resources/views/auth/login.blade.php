@@ -50,8 +50,8 @@
                 </div>
             </div>
             
-            <p class="text-center mt-4 text-secondary small">
-                Don't have an account yet? <a href="{{ route('register') ?? '#' }}" class="text-decoration-none text-primary font-weight-bold ml-1">Create an account</a>
+            <p class="text-center mt-4 text-white font-weight-bold small drop-shadow" style="text-shadow: 0 2px 4px rgba(0,0,0,0.4);">
+                Don't have an account yet? <a href="{{ route('register') ?? '#' }}" class="text-decoration-none text-warning font-weight-bold ml-1">Create an account</a>
             </p>
         </div>
     </div>

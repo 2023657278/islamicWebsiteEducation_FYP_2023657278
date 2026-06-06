@@ -104,8 +104,8 @@
                 </div>
             </div>
             
-            <p class="text-center mt-4 text-secondary small">
-                Already have an academic account? <a href="{{ route('login') ?? '#' }}" class="text-decoration-none text-primary font-weight-bold ml-1">Sign In instead</a>
+            <p class="text-center mt-4 text-white font-weight-bold small drop-shadow" style="text-shadow: 0 2px 4px rgba(0,0,0,0.4);">
+                Already have an academic account? <a href="{{ route('login') ?? '#' }}" class="text-decoration-none text-warning font-weight-bold ml-1">Sign In instead</a>
             </p>
         </div>
     </div>
