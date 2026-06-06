@@ -4,17 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'PAI Platform') }}</title>
 
-    <!-- Fonts & FontAwesome Icons -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 
     <style>
@@ -39,10 +36,7 @@
         .black-header .navbar-brand {
             color: #ffffff !important;
             font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
+            font-size: 0.95rem;
         }
 
         .black-header .nav-link {
@@ -76,7 +70,7 @@
         .rainbow-card-wrapper .card {
             border: none !important;
             border-radius: 16px !important;
-            background: #ffffff !important;
+            background: #ffffff !important; /* Retained safe white inside design */
         }
     </style>
 </head>
@@ -84,17 +78,14 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-dark black-header shadow-sm py-3">
             <div class="container">
-                <!-- 🟢 CHANGED: Added icon and modified brand text to 'Login & Register' -->
                 <a class="navbar-brand text-uppercase" href="{{ url('/') }}">
-                    <i class="fas fa-user-circle me-2 text-primary" style="font-size: 1.2rem;"></i>
-                    {{ __('Login & Register') }}
+                    <i class="fas fa-home mr-2"></i> {{ __('Login & Register') }}
                 </a>
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ms-auto">
                         @guest
                             @if (Route::has('login'))
