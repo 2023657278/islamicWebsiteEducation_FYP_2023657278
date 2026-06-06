@@ -268,9 +268,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # FLEXIBLE STUDENT TRACKING-CODE HANDSHAKE ROUTER
-    if text.isdigit() and (7 <= len(text) <= 12):
+    if (6 <= len(text) <= 12):
         try:
-            user_code = ''.join(filter(str.isdigit, text))
+            # Extract numbers or clean text for matching parameters
+            user_code = text.strip()
+            # If your database column stores ONLY numbers (e.g. '1234'), we strip letters:
+            # user_code = ''.join(filter(str.isdigit, text)) 
+            
             short_match = user_code[-6:] if len(user_code) >= 6 else user_code
             
             with get_db() as conn:
@@ -299,6 +303,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             parse_mode='Markdown'
                         )
                         return
+                    else:
+                        # Optional: debug message if code matches format but no student record exists
+                        logging.warning(f"Code {text} received but no unmatched student found in database.")
+                        
         except Exception as e:
             logging.error(f"Handshake Link System Failure: {str(e)}")
 
