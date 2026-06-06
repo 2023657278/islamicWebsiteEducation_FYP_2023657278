@@ -5,6 +5,7 @@
     <div class="row justify-content-center align-items-center" style="min-height: 75vh;">
         <div class="col-lg-4 col-md-6 col-sm-10">
             
+            <!-- Rainbow line wrapper -->
             <div class="rainbow-card-wrapper">
                 <div class="card p-4">
                     
@@ -21,12 +22,13 @@
                         <form method="POST" action="{{ route('login') }}">
                             @csrf
 
+                            <!-- 🟢 BIGGER INPUT WITH PADDING TO PUSH TEXT DOWN -->
                             <div class="form-floating mb-3 position-relative">
                                 <input id="email" type="text" class="form-control @error('email') is-invalid @enderror" 
                                     name="email" value="{{ old('email') }}" required autocomplete="email" autofocus 
                                     placeholder="Email or No. Maktab"
-                                    style="border-radius: 12px; padding: 14px 16px; border: 1px solid #cbd5e1; background-color: #f8fafc;">
-                                <label for="email" style="color: #64748b; padding-left: 16px;">
+                                    style="border-radius: 14px; padding-top: 1.8rem !important; padding-bottom: 0.7rem !important; padding-left: 16px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 1.15rem; font-weight: 500; height: 68px !important;">
+                                <label for="email" style="color: #64748b; padding-left: 16px; top: 2px;">
                                     <i class="fas fa-envelope-open mr-2 text-primary" style="opacity: 0.7;"></i> Email Address or No. Maktab
                                 </label>
                                 @error('email')
@@ -36,12 +38,13 @@
                                 @enderror
                             </div>
 
+                            <!-- 🟢 BIGGER INPUT WITH PADDING TO PUSH TEXT DOWN -->
                             <div class="form-floating mb-4 position-relative">
                                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" 
                                     name="password" required autocomplete="current-password"
                                     placeholder="Password"
-                                    style="border-radius: 12px; padding: 14px 16px; border: 1px solid #cbd5e1; background-color: #f8fafc;">
-                                <label for="password" style="color: #64748b; padding-left: 16px;">
+                                    style="border-radius: 14px; padding-top: 1.8rem !important; padding-bottom: 0.7rem !important; padding-left: 16px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 1.15rem; height: 68px !important;">
+                                <label for="password" style="color: #64748b; padding-left: 16px; top: 2px;">
                                     <i class="fas fa-lock mr-2 text-primary" style="opacity: 0.7;"></i> Password
                                 </label>
                                 @error('password')
@@ -53,14 +56,16 @@
 
                             <div class="d-grid mb-2">
                                 <button type="submit" class="btn btn-primary btn-lg font-weight-bold shadow-sm py-3" 
-                                    style="border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: none; font-size: 0.95rem;">
+                                    style="border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: none; font-size: 1.05rem;">
                                     Enter Platform Portal <i class="fas fa-arrow-right ml-2 small"></i>
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-            </div> <p class="text-center mt-4 text-white font-weight-bold">
+            </div> <!-- End Rainbow line wrapper -->
+            
+            <p class="text-center mt-4 text-white font-weight-bold">
                 Don't have an account yet? <a href="{{ route('register') ?? '#' }}" class="text-decoration-none text-warning">Create one here</a>
             </p>
         </div>
