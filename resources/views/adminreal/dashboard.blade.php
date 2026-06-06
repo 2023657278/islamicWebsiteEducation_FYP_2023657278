@@ -71,7 +71,6 @@
 
     {{-- 3. ANALYTICS GRAPHICS SECTION --}}
     <div class="row mb-4">
-        {{-- Doughnut Chart: Account Distribution Ratio --}}
         <div class="col-lg-4 mb-3">
             <div class="card bg-dark border-secondary h-100 shadow" style="background-color: #121214 !important;">
                 <div class="card-header border-bottom border-secondary bg-transparent py-3">
@@ -89,7 +88,6 @@
             </div>
         </div>
 
-        {{-- Dynamic Density Benchmarks --}}
         <div class="col-lg-8 mb-3">
             <div class="card bg-dark border-secondary h-100 shadow" style="background-color: #121214 !important;">
                 <div class="card-header border-bottom border-secondary bg-transparent py-3">
@@ -156,7 +154,7 @@
         </div>
     </div>
 
-    {{-- 5. MASTER CONTROLLER INFRASTRUCTURE SYSTEM LOGS --}}
+    {{-- 5. MASTER INFRASTRUCTURE SYSTEM LOGS --}}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card bg-dark border-secondary shadow" style="background-color: #121214 !important;">
@@ -196,34 +194,34 @@
             </div>
         </div>
     </div>
-
 </div>
 
-{{-- TWO-TIER DOUBLE VERIFICATION MODAL POPUP --}}
-<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+{{-- TWO-TIER DOUBLE VERIFICATION MODAL --}}
+<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" style="z-index: 1050 !important;">
     <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important;">
+        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div class="modal-header border-bottom border-secondary bg-transparent">
                 <h5 class="modal-title font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-2"></i> High-Level Security Reset Required</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form action="{{ route('adminreal.timetables.resetAll') }}" method="POST" id="wipeTimetableForm">
             
+            <form action="{{ route('adminreal.timetables.resetAll') }}" method="POST" id="wipeTimetableForm">
                 @csrf
                 <div class="modal-body text-start">
-                    <div class="alert alert-danger bg-transparent border-danger text-danger py-3 text-sm mb-4" style="line-height: 1.5;">
+                    <div class="alert alert-danger bg-transparent border-danger text-danger py-3 text-sm mb-4" style="line-height: 1.5; background-color: rgba(220, 53, 69, 0.05) !important;">
                         <i class="fas fa-info-circle mr-2"></i> <b>CRITICAL WARNING:</b> Executing this command will completely wipe out all classroom scheduling allocation configurations permanently across all teacher and student profile portals. This cannot be undone.
                     </div>
 
-                    <div class="form-group mb-2">
+                    <div class="form-group mb-2" style="position: relative; z-index: 1060 !important;">
                         <label class="text-xs text-muted font-weight-bold text-uppercase mb-2 d-block text-left">
                             Type <span class="text-danger font-weight-bold">RESET TIMETABLE</span> to confirm deletion:
                         </label>
                         <input type="text" name="confirmation_text" id="securityPassphraseInput" autocomplete="off"
-                               class="form-control bg-transparent text-white border-secondary text-center font-weight-bold text-md tracking-wide py-3" 
-                               placeholder="Type the exact phrase above" onkeyup="evaluateSecurityTier(this.value)">
+                               class="form-control text-white text-center font-weight-bold text-md tracking-wide py-3" 
+                               style="background-color: #1a1a1e !important; border: 1px solid #495057 !important; color: #ffffff !important; pointer-events: auto !important;"
+                               placeholder="Type the exact phrase here" onkeyup="evaluateSecurityTier(this.value)">
                     </div>
                 </div>
                 
@@ -238,11 +236,9 @@
     </div>
 </div>
 
-{{-- Chart.js and Execution scripts --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // 1. Live System Clock Logic
         function clockTicker() {
             const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
             const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' });
@@ -250,7 +246,6 @@
         }
         setInterval(clockTicker, 1000); clockTicker();
 
-        // 2. High Tech Doughnut Metric execution
         const ctx = document.getElementById('userRatioChart').getContext('2d');
         new Chart(ctx, {
             type: 'doughnut',
@@ -273,7 +268,6 @@
         });
     });
 
-    // 3. Client-Side Input Matrix Listener
     function evaluateSecurityTier(inputValue) {
         const targetString = "RESET TIMETABLE";
         const submitBtn = document.getElementById('finalWipeSubmitButton');
@@ -291,7 +285,6 @@
 </script>
 
 <style>
-    /* Styling adjustments to match high-tech design matrix */
     .card-glow:hover {
         border-color: #3b82f6 !important;
         box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15) !important;
