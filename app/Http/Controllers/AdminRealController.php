@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Group;
 use App\Models\Resources;
+use App\Models\Timetable;
 use Carbon\Carbon;
 
 class AdminRealController extends Controller
@@ -18,6 +19,7 @@ class AdminRealController extends Controller
             'teachers'  => User::where('role', 'teacher')->count(),
             'groups'    => Group::count(),
             'resources' => Resources::count(),
+            'timetables'=> Timetable::count(),
         ];
 
         // 2. Dynamic Platform Ratios (No maximum limits!)

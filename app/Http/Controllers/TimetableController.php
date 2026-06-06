@@ -182,4 +182,30 @@ class TimetableController extends Controller
         $timetable->delete();
         return redirect()->route('timetables.index')->with('success','Schedule deleted successfully');
     }
+
+    /**
+     * 🟢 TWO-TIER RESET SAFETIES: Wipes out all rows inside the 
+     * timetables table after verifying the strict passphrase.
+     */
+    public function resetAll(Request $request)
+    {
+        // 1. Verify that the form field was sent
+        $request->validate([
+            'confirmation_text' => 'required|string'
+        ]);
+
+        // 2. Air-tight string parameter check
+        if ($request->confirmation_text !== 'RESET TIMETABLE') {
+            return back()->withErrors(['msg' => 'Security Verification Failed: The typed validation phrase does not match. Operation aborted.']);
+        }
+
+        try {
+            // 3. Clean truncate execution command
+            Timetable::truncate();
+
+            return redirect()->route('adminreal.dashboard')->with('success', 'System Reset Successful: All active timetables have been completely purged.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['msg' => 'Database Execution Failure: ' . $e->getMessage()]);
+        }
+    }
 }

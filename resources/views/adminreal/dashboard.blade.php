@@ -3,6 +3,25 @@
 @section('content')
 <div class="container-fluid text-light">
 
+    {{-- POPUP SYSTEM ALERTS FOR ERROR OR SUCCESS CONTEXT FEEDBACKS --}}
+    @if($errors->has('msg'))
+        <div class="alert alert-danger alert-dismissible fade show font-weight-bold border-0 shadow mb-4" role="alert" style="background-color: rgba(220, 53, 69, 0.15); color: #ff6b6b; text-align: left;">
+            <i class="fas fa-shield-alt mr-2"></i> {{ $errors->first('msg') }}
+            <button type="button" class="close text-white" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show font-weight-bold border-0 shadow mb-4" role="alert" style="background-color: rgba(40, 167, 69, 0.15); color: #2ecc71; text-align: left;">
+            <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+            <button type="button" class="close text-white" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     {{-- 1. CONTROL TERMINAL STATUS ROW --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -33,7 +52,7 @@
             <div class="card bg-dark h-100 border-secondary shadow-lg card-glow" style="border-left: 4px solid {{ $card['color'] }} !important; background-color: #121214 !important;">
                 <div class="card-body p-3 d-flex flex-column justify-content-between">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
+                        <div class="text-left">
                             <p class="text-uppercase small font-weight-bold text-muted mb-1">{{ $card['label'] }}</p>
                             <h1 class="font-weight-bold mb-0 text-white tracking-tight">{{ $card['value'] }}</h1>
                         </div>
@@ -41,7 +60,9 @@
                             <i class="fas {{ $card['icon'] }} fa-xl" style="color: {{ $card['color'] }}"></i>
                         </div>
                     </div>
-                    <small class="text-xs text-muted-dark"><i class="fas fa-chart-line mr-1 text-secondary"></i> {{ $card['desc'] }}</small>
+                    <div class="text-left">
+                        <small class="text-xs text-muted-dark"><i class="fas fa-chart-line mr-1 text-secondary"></i> {{ $card['desc'] }}</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -54,7 +75,7 @@
         <div class="col-lg-4 mb-3">
             <div class="card bg-dark border-secondary h-100 shadow" style="background-color: #121214 !important;">
                 <div class="card-header border-bottom border-secondary bg-transparent py-3">
-                    <h6 class="card-title text-uppercase font-weight-bold mb-0 text-info" style="font-size: 0.8rem; letter-spacing: 1px;"><i class="fas fa-pie-chart mr-2"></i> Account Density Profile</h6>
+                    <h6 class="card-title text-uppercase font-weight-bold mb-0 text-info" style="font-size: 0.8rem; letter-spacing: 1px;"><i class="fas fa-chart-pie mr-2"></i> Account Density Profile</h6>
                 </div>
                 <div class="card-body d-flex flex-column justify-content-center">
                     <div style="position: relative; height:200px;">
@@ -74,7 +95,7 @@
                 <div class="card-header border-bottom border-secondary bg-transparent py-3">
                     <h6 class="card-title text-uppercase font-weight-bold mb-0 text-info" style="font-size: 0.8rem; letter-spacing: 1px;"><i class="fas fa-sliders-h mr-2"></i> Live Ecosystem Vectors</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body text-left">
                     <div class="mb-4">
                         <div class="d-flex justify-content-between text-xs mb-1">
                             <span class="text-muted">Classroom Utilization Density (Average Students/Class)</span>
@@ -109,8 +130,34 @@
         </div>
     </div>
 
-    {{-- 4. BOTTOM ROW: TELEMETRY ENGINE & SECURITY LOGS --}}
-    <div class="row">
+    {{-- 4. SYSTEM MAINTENANCE & UTILITY SECTION --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary rounded-3 shadow" style="background-color: #121214 !important; border-color: #27272a !important;">
+                <div class="card-header border-bottom border-secondary d-flex align-items-center">
+                    <h5 class="card-title font-weight-bold mb-0 text-warning" style="font-size: 1.1rem;">
+                        <i class="fas fa-tools mr-2"></i> Root System Maintenance & Database Utilities
+                    </h5>
+                </div>
+                <div class="card-body py-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                        <div class="text-left">
+                            <h6 class="font-weight-bold text-white mb-1">Purge Active System Timetables</h6>
+                            <p class="text-muted text-sm mb-md-0">Wipes out all active class timetable rows currently mapped inside the database schema. Currently holding: <span class="badge badge-primary font-weight-bold px-2 py-1">{{ $stats['timetables'] }} records</span>.</p>
+                        </div>
+                        <div class="mt-3 mt-md-0">
+                            <button type="button" class="btn btn-outline-danger font-weight-bold px-4" data-toggle="modal" data-target="#doubleVerificationModal">
+                                <i class="fas fa-radiation-alt mr-2"></i> Reset Timetables
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 5. MASTER CONTROLLER INFRASTRUCTURE SYSTEM LOGS --}}
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card bg-dark border-secondary shadow" style="background-color: #121214 !important;">
                 <div class="card-header border-bottom border-secondary bg-transparent">
@@ -121,24 +168,24 @@
                         <table class="table table-dark table-hover table-borderless mb-0 text-xs text-muted-dark">
                             <thead style="background: #1e1e24; color: #64748b;">
                                 <tr>
-                                    <th>SYSTEM VECTOR</th>
-                                    <th>STATUS FLAG</th>
-                                    <th>DIAGNOSTIC TELEMETRY VALUE</th>
+                                    <th class="text-left pl-4">SYSTEM VECTOR</th>
+                                    <th class="text-left">STATUS FLAG</th>
+                                    <th class="text-left">DIAGNOSTIC TELEMETRY VALUE</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="text-left">
                                 <tr>
-                                    <td>Student Directory Matrix</td>
+                                    <td class="pl-4">Student Directory Matrix</td>
                                     <td><span class="text-success"><i class="fas fa-check-circle mr-1"></i> Scaling</span></td>
                                     <td>Dynamic Database Index active (Total records: {{ $stats['students'] }})</td>
                                 </tr>
                                 <tr>
-                                    <td>Telegram Webhook Gateway</td>
+                                    <td class="pl-4">Telegram Webhook Gateway</td>
                                     <td><span class="text-info"><i class="fas fa-sync-alt fa-spin mr-1"></i> Listening</span></td>
                                     <td>Awaiting inbound handshakes ({{ $systemMetrics['telegram_linked'] }} accounts configured)</td>
                                 </tr>
                                 <tr>
-                                    <td>Academic Resource Registry</td>
+                                    <td class="pl-4">Academic Resource Registry</td>
                                     <td><span class="text-success"><i class="fas fa-check-circle mr-1"></i> Unbounded</span></td>
                                     <td>Storage vector expanding smoothly ({{ $stats['resources'] }} files registered)</td>
                                 </tr>
@@ -152,7 +199,46 @@
 
 </div>
 
-{{-- Chart.js and Custom Engine Execution scripts --}}
+{{-- TWO-TIER DOUBLE VERIFICATION MODAL POPUP --}}
+<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important;">
+            <div class="modal-header border-bottom border-secondary bg-transparent">
+                <h5 class="modal-title font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-2"></i> High-Level Security Reset Required</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <form action="{{ route('timetables.resetAll') }}" method="POST" id="wipeTimetableForm">
+                @csrf
+                <div class="modal-body text-start">
+                    <div class="alert alert-danger bg-transparent border-danger text-danger py-3 text-sm mb-4" style="line-height: 1.5;">
+                        <i class="fas fa-info-circle mr-2"></i> <b>CRITICAL WARNING:</b> Executing this command will completely wipe out all classroom scheduling allocation configurations permanently across all teacher and student profile portals. This cannot be undone.
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label class="text-xs text-muted font-weight-bold text-uppercase mb-2 d-block text-left">
+                            Type <span class="text-danger font-weight-bold">RESET TIMETABLE</span> to confirm deletion:
+                        </label>
+                        <input type="text" name="confirmation_text" id="securityPassphraseInput" autocomplete="off"
+                               class="form-control bg-transparent text-white border-secondary text-center font-weight-bold text-md tracking-wide py-3" 
+                               placeholder="Type the exact phrase above" onkeyup="evaluateSecurityTier(this.value)">
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-top border-secondary bg-transparent">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" id="finalWipeSubmitButton" class="btn btn-danger btn-sm px-4 font-weight-bold" disabled>
+                        Confirm Final Purge <i class="fas fa-radiation-alt ml-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Chart.js and Execution scripts --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -186,10 +272,26 @@
             }
         });
     });
+
+    // 3. Client-Side Input Matrix Listener
+    function evaluateSecurityTier(inputValue) {
+        const targetString = "RESET TIMETABLE";
+        const submitBtn = document.getElementById('finalWipeSubmitButton');
+        
+        if (inputValue.trim() === targetString) {
+            submitBtn.removeAttribute('disabled');
+            submitBtn.classList.remove('btn-danger');
+            submitBtn.classList.add('btn-success'); 
+        } else {
+            submitBtn.setAttribute('disabled', 'true');
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-danger');
+        }
+    }
 </script>
 
 <style>
-    /* Styling adjustments to match high-tech tech design matrix */
+    /* Styling adjustments to match high-tech design matrix */
     .card-glow:hover {
         border-color: #3b82f6 !important;
         box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15) !important;
