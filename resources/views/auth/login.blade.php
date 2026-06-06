@@ -1,73 +1,58 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container my-5">
-    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
-        <div class="col-lg-4 col-md-6">
-            <div class="card shadow-lg p-4 border-0">
-                <div class="card-title text-center mb-4">
-                    <h2 class="fw-bold text-primary">{{ __('Welcome') }}</h2>
-                    <img src="{{ asset('image/logoMRSM.png') }}" alt="My Picture" width="100">
-                    <hr>
-                    <p class="text-muted">Sign in to continue to your account.</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-4 col-md-6 col-sm-10">
+            <div class="card glass-card shadow-2xl p-4 border-0">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <img src="{{ asset('image/logoMRSM.png') }}" alt="MRSM Logo" width="85" class="img-fluid drop-shadow">
+                    </div>
+                    <h3 class="fw-bold text-white mb-1">{{ __('Welcome Back') }}</h3>
+                    <p class="text-white-50 small">Sign in to continue to your platform dashboard account.</p>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body p-0">
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
 
-                        <div class="form-floating mb-3">
+                        <div class="form-floating glass-input-group mb-3">
                             <input id="email" type="text" class="form-control @error('email') is-invalid @enderror" 
                                 name="email" value="{{ old('email') }}" required autocomplete="email" autofocus 
                                 placeholder="Email or No. Maktab">
-                            <label for="email">{{ __('Email Address or No. Maktab') }}</label>
+                            <label for="email"><i class="fas fa-user-shield mr-2"></i>{{ __('Email Address or No. Maktab') }}</label>
                             @error('email')
-                                <span class="invalid-feedback" role="alert">
+                                <span class="invalid-feedback font-weight-bold text-xs mt-1" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
                             @enderror
                         </div>
 
-                        <div class="form-floating mb-3">
+                        <div class="form-floating glass-input-group mb-4">
                             <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" 
                                 name="password" required autocomplete="current-password"
                                 placeholder="Password">
-                            <label for="password">{{ __('Password') }}</label>
+                            <label for="password"><i class="fas fa-key mr-2"></i>{{ __('Password') }}</label>
                             @error('password')
-                                <span class="invalid-feedback" role="alert">
+                                <span class="invalid-feedback font-weight-bold text-xs mt-1" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
                             @enderror
                         </div>
 
-                        <!--
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                <label class="form-check-label text-muted" for="remember">
-                                    {{ __('Remember Me') }}
-                                </label>
-                            </div>
-                            @if (Route::has('password.request'))
-                                <a class="text-decoration-none small" href="{{ route('password.request') }}">
-                                    {{ __('Forgot Your Password?') }}
-                                </a>
-                            @endif
-                        </div>
-                        -->
-
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                {{ __('Login') }}
+                            <button type="submit" class="btn btn-primary btn-lg font-weight-bold shadow-sm" style="border-radius: 10px; background-color: #3b82f6; border: none; font-size: 1rem; py: 12px;">
+                                {{ __('Login') }} <i class="fas fa-sign-in-alt ml-2"></i>
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
             
-            <p class="text-center mt-3 text-white">
-    Don't have an account? <a href="{{ route('register') ?? '#' }}" class="ttext-decoration-none text-white font-weight-bold hover:text-light">Sign Up</a>
-</p>
+            <p class="text-center mt-4 text-white-50 small">
+                Don't have an academic profile? <a href="{{ route('register') ?? '#' }}" class="text-decoration-none text-white font-weight-bold ml-1 hover-underline">Sign Up Now</a>
+            </p>
         </div>
     </div>
 </div>
