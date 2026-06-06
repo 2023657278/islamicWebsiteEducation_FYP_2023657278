@@ -38,9 +38,11 @@
 
         .black-header .navbar-brand {
             color: #ffffff !important;
-            font-weight: 800;
-            font-size: 1.1rem;
+            font-weight: 700;
+            font-size: 1rem;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
         }
 
         .black-header .nav-link {
@@ -82,9 +84,10 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-dark black-header shadow-sm py-3">
             <div class="container">
-                <!-- 🟢 CHANGED: Replaced 'Back to home' with 'MRSM PAI' -->
+                <!-- 🟢 CHANGED: Added icon and modified brand text to 'Login & Register' -->
                 <a class="navbar-brand text-uppercase" href="{{ url('/') }}">
-                    {{ __('MRSM PAI') }}
+                    <i class="fas fa-user-circle me-2 text-primary" style="font-size: 1.2rem;"></i>
+                    {{ __('Login & Register') }}
                 </a>
                 <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>
