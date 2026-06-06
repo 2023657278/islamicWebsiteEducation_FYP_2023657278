@@ -196,10 +196,10 @@
     </div>
 </div>
 
-{{-- TWO-TIER DOUBLE VERIFICATION MODAL FRAMEWORK CONTAINER --}}
-<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" style="z-index: 99999 !important;">
-    <div class="modal-dialog modal-dialog-centered" role="document" style="z-index: 999999 !important;">
-        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important; box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;">
+{{-- 🛑 AIR-TIGHT EXTRACTION FIX: Modal moved completely out of structural page flows to override AdminLTE layout trees --}}
+<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important; box-shadow: 0 15px 45px rgba(0,0,0,0.75) !important;">
             <div class="modal-header border-bottom border-secondary bg-transparent">
                 <h5 class="modal-title font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-2"></i> High-Level Security Reset Required</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
@@ -218,10 +218,10 @@
                         <label class="text-xs text-muted font-weight-bold text-uppercase mb-2 d-block text-left">
                             Type <span class="text-danger font-weight-bold">RESET TIMETABLE</span> to confirm deletion:
                         </label>
-                        {{-- Forced background properties, font controls, and clean mouse pointers --}}
+                        {{-- Forced style elements to ensure focus event capture --}}
                         <input type="text" name="confirmation_text" id="securityPassphraseInput" autocomplete="off"
-                               class="form-control text-white text-center font-weight-bold text-md tracking-wide py-3" 
-                               style="background-color: #1c1c1f !important; border: 1px solid #495057 !important; color: #ffffff !important; pointer-events: auto !important; display: block !important; width: 100% !important;"
+                               class="form-control font-weight-bold text-md tracking-wide py-3" 
+                               style="background-color: #1c1c1f !important; border: 1px solid #495057 !important; color: #ffffff !important; display: block !important; width: 100% !important; opacity: 1 !important; visibility: visible !important;"
                                placeholder="Type the exact phrase here" onkeyup="evaluateSecurityTier(this.value)">
                     </div>
                 </div>
@@ -239,7 +239,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // 🟢 GLOBAL POSITIONING: Moved out of DOMContentLoaded wrapper so 'onkeyup' catches it instantly
+    // Global functional space matching interceptor
     function evaluateSecurityTier(inputValue) {
         const targetString = "RESET TIMETABLE";
         const submitBtn = document.getElementById('finalWipeSubmitButton');
@@ -283,6 +283,9 @@
                 plugins: { legend: { display: false } }
             }
         });
+        
+        // 🟢 FIXED: Force modal append extraction directly under body to remove pointer-events blocks
+        $('#doubleVerificationModal').appendTo("body");
     });
 </script>
 
@@ -300,6 +303,17 @@
         0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
         70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
         100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    
+    /* 🟢 FORCE MODAL FIX: Override AdminLTE background layers block */
+    .modal-backdrop {
+        z-index: 1040 !important;
+    }
+    #doubleVerificationModal {
+        z-index: 1050 !important;
+    }
+    #securityPassphraseInput {
+        cursor: text !important;
     }
 </style>
 @endsection
