@@ -5,7 +5,7 @@
 
     {{-- POPUP SYSTEM ALERTS FOR ERROR OR SUCCESS CONTEXT FEEDBACKS --}}
     @if($errors->has('msg'))
-        <div class="alert alert-danger alert-dismissible fade show font-weight-bold border-0 shadow mb-4" role="alert" style="background-color: rgba(220, 53, 69, 0.15); color: #ff6b6b; text-align: left;">
+        <div class="alert alert-danger alert-dismissible fade show font-weight-bold border-0 shadow mb-4" role="alert" style="background-color: rgba(220, 53, 69, 0.15); color: #ff6b6b; text-align: left; position: relative; z-index: 10;">
             <i class="fas fa-shield-alt mr-2"></i> {{ $errors->first('msg') }}
             <button type="button" class="close text-white" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -14,7 +14,7 @@
     @endif
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show font-weight-bold border-0 shadow mb-4" role="alert" style="background-color: rgba(40, 167, 69, 0.15); color: #2ecc71; text-align: left;">
+        <div class="alert alert-success alert-dismissible fade show font-weight-bold border-0 shadow mb-4" role="alert" style="background-color: rgba(40, 167, 69, 0.15); color: #2ecc71; text-align: left; position: relative; z-index: 10;">
             <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
             <button type="button" class="close text-white" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -196,10 +196,10 @@
     </div>
 </div>
 
-{{-- TWO-TIER DOUBLE VERIFICATION MODAL --}}
-<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" style="z-index: 1050 !important;">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+{{-- TWO-TIER DOUBLE VERIFICATION MODAL FRAMEWORK CONTAINER --}}
+<div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" style="z-index: 99999 !important;">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="z-index: 999999 !important;">
+        <div class="modal-content bg-dark text-light border border-danger" style="border-radius: 12px; background-color: #121214 !important; box-shadow: 0 15px 45px rgba(0,0,0,0.6) !important;">
             <div class="modal-header border-bottom border-secondary bg-transparent">
                 <h5 class="modal-title font-weight-bold text-danger"><i class="fas fa-exclamation-triangle mr-2"></i> High-Level Security Reset Required</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
@@ -214,13 +214,14 @@
                         <i class="fas fa-info-circle mr-2"></i> <b>CRITICAL WARNING:</b> Executing this command will completely wipe out all classroom scheduling allocation configurations permanently across all teacher and student profile portals. This cannot be undone.
                     </div>
 
-                    <div class="form-group mb-2" style="position: relative; z-index: 1060 !important;">
+                    <div class="form-group mb-2">
                         <label class="text-xs text-muted font-weight-bold text-uppercase mb-2 d-block text-left">
                             Type <span class="text-danger font-weight-bold">RESET TIMETABLE</span> to confirm deletion:
                         </label>
+                        {{-- Forced background properties, font controls, and clean mouse pointers --}}
                         <input type="text" name="confirmation_text" id="securityPassphraseInput" autocomplete="off"
                                class="form-control text-white text-center font-weight-bold text-md tracking-wide py-3" 
-                               style="background-color: #1a1a1e !important; border: 1px solid #495057 !important; color: #ffffff !important; pointer-events: auto !important;"
+                               style="background-color: #1c1c1f !important; border: 1px solid #495057 !important; color: #ffffff !important; pointer-events: auto !important; display: block !important; width: 100% !important;"
                                placeholder="Type the exact phrase here" onkeyup="evaluateSecurityTier(this.value)">
                     </div>
                 </div>
@@ -238,6 +239,22 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // 🟢 GLOBAL POSITIONING: Moved out of DOMContentLoaded wrapper so 'onkeyup' catches it instantly
+    function evaluateSecurityTier(inputValue) {
+        const targetString = "RESET TIMETABLE";
+        const submitBtn = document.getElementById('finalWipeSubmitButton');
+        
+        if (inputValue.trim() === targetString) {
+            submitBtn.removeAttribute('disabled');
+            submitBtn.classList.remove('btn-danger');
+            submitBtn.classList.add('btn-success'); 
+        } else {
+            submitBtn.setAttribute('disabled', 'true');
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-danger');
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         function clockTicker() {
             const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
@@ -267,21 +284,6 @@
             }
         });
     });
-
-    function evaluateSecurityTier(inputValue) {
-        const targetString = "RESET TIMETABLE";
-        const submitBtn = document.getElementById('finalWipeSubmitButton');
-        
-        if (inputValue.trim() === targetString) {
-            submitBtn.removeAttribute('disabled');
-            submitBtn.classList.remove('btn-danger');
-            submitBtn.classList.add('btn-success'); 
-        } else {
-            submitBtn.setAttribute('disabled', 'true');
-            submitBtn.classList.remove('btn-success');
-            submitBtn.classList.add('btn-danger');
-        }
-    }
 </script>
 
 <style>
