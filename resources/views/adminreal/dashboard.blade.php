@@ -209,8 +209,8 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+            <form action="{{ route('adminreal.timetables.resetAll') }}" method="POST" id="wipeTimetableForm">
             
-            <form action="{{ route('timetables.resetAll') }}" method="POST" id="wipeTimetableForm">
                 @csrf
                 <div class="modal-body text-start">
                     <div class="alert alert-danger bg-transparent border-danger text-danger py-3 text-sm mb-4" style="line-height: 1.5;">
