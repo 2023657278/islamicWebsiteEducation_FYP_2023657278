@@ -57,6 +57,8 @@ Route::get('/youtube/fetch-data', [App\Http\Controllers\ResourcesController::cla
     Route::post('/quizzes/{id}/questions', [QuizController::class, 'storeQuestion'])->name('questions.store');
     Route::delete('/questions/{id}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
     Route::get('/teacher/quizzes/{quiz_id}/create-room', [RoomController::class, 'create'])->name('teacher.quizzes.create_room');
+    // 🟢 ADD THIS LINE: Registers the update route mapping to handle the edit modal submission
+    Route::put('/questions/{id}/update', [QuizController::class, 'updateQuestion'])->name('questions.update');
 
 
     // Flashcards (Teacher)

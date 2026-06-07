@@ -106,7 +106,7 @@
                                 <span class="badge badge-secondary">{{ ucfirst($q->question_type) }}</span>
                                 <span class="badge badge-warning text-dark">{{ $q->points }} pts</span>
                                 
-                                {{-- 🟢 FIXED: Single quote outer wrapper prevents quote nesting rendering breakdown --}}
+                                {{-- Edit Trigger Button Input Element --}}
                                 <button type="button" 
                                         class="btn btn-sm text-primary border-0 bg-transparent p-0 ml-2 edit-question-btn"
                                         data-id="{{ $q->id }}"
@@ -305,7 +305,6 @@
             let points = $(this).data('points');
             let type = $(this).data('type');
             
-            // 🟢 FIXED: Reads via attr fallback to prevent string serialization clip drops
             let optionsRaw = $(this).attr('data-options');
             let options = [];
             try {
@@ -314,8 +313,8 @@
                 console.error("JSON Deserialization Exception caught:", e);
             }
 
-            // Set Form action mapping targets dynamically
-            editForm.action = `/admin/questions/${id}/update`;
+            // 🟢 FIXED: Updated endpoint path prefix tracking format to line up with web.php
+            editForm.action = `/questions/${id}/update`;
 
             document.getElementById('edit_question_text').value = text;
             document.getElementById('edit_points').value = points;
