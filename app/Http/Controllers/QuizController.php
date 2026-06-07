@@ -214,4 +214,66 @@ class QuizController extends Controller
         
         return back()->with('success', 'Question deleted successfully.');
     }
+
+    // =========================================================
+    // 🟢 ADDED: UPDATE QUESTION LOGIC ENGINE (Handles Choices Refresh)
+    // =========================================================
+    public function updateQuestion(Request $request, $id)
+    {
+        $request->validate([
+            'question_text' => 'required',
+            'question_type' => 'required|in:single,multiple,text',
+            'points' => 'integer|min:1',
+        ]);
+
+        $question = Question::findOrFail($id);
+
+        $questionData = [
+            'question_text' => $request->question_text,
+            'question_type' => $request->question_type,
+            'points' => $request->points ?? 1,
+        ];
+
+        if ($request->question_type === 'text') {
+            $questionData['correct_answer_text'] = $request->text_answer;
+        } else {
+            $questionData['correct_answer_text'] = null;
+        }
+
+        // Update core question details
+        $question->update($questionData);
+
+        // Delete old dependent options tracking lines securely to prevent orphan records rows
+        $question->options()->delete();
+
+        // Regenerate options factory engine
+        if ($request->question_type === 'text') {
+            $question->options()->create([
+                'option_text' => $request->text_answer, 
+                'is_correct' => true
+            ]);
+        } else {
+            if ($request->options) {
+                foreach ($request->options as $key => $optionText) {
+                    if (trim($optionText) == '') continue;
+                    
+                    $isCorrect = false;
+                    if ($request->question_type === 'single') {
+                        if ($request->correct_single == $key) $isCorrect = true;
+                    } elseif ($request->question_type === 'multiple') {
+                        if (isset($request->correct_multiple) && in_array($key, $request->correct_multiple)) {
+                            $isCorrect = true;
+                        }
+                    }
+
+                    $question->options()->create([
+                        'option_text' => $optionText, 
+                        'is_correct' => $isCorrect
+                    ]);
+                }
+            }
+        }
+
+        return back()->with('success', 'Question updated successfully!');
+    }
 }
