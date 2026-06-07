@@ -12,7 +12,9 @@
                         <p class="mb-0 opacity-75">Academic Session: {{ $group->year->year ?? 'N/A' }}</p>
                     </div>
                     <div class="text-end">
-                        <a href="{{ route('groups.index') }}" class="btn btn-outline-light btn-sm">Back to Groups</a>
+                        <a href="{{ route('groups.index') }}" class="btn btn-outline-light btn-sm px-3 rounded-pill font-weight-bold" style="letter-spacing: 0.3px;">
+                            <i class="fas fa-arrow-left mr-1 small"></i> Back to Groups
+                        </a>
                     </div>
                 </div>
             </div>
@@ -217,7 +219,7 @@
     /* VARIABLES */
     :root { --deep-maroon: #4a0000; --accent-gold: #c5a059; }
 
-    /* TIMETABLE GRID CSS (Same as Timetable View) */
+    /* TIMETABLE GRID CSS */
     .timetable-grid {
         display: grid;
         grid-template-columns: 80px repeat(11, 1fr); 
