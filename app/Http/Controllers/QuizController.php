@@ -64,14 +64,13 @@ class QuizController extends Controller
         ]);
     }
 
-
     // =========================================================
-    // PART B: TEACHER FUNCTIONS (Shared Global Pool - No PvP Rows)
+    // PART B: TEACHER FUNCTIONS (Shared Global Pool Management)
     // =========================================================
 
     public function index()
     {
-        // 🟢 FIXED: Filter out automated PvP records so teachers only see hand-crafted solo quizzes
+        // Filter out automated PvP records so teachers only see hand-crafted solo quizzes
         $quizzes = Quiz::where('topic', '!=', 'PVP_ARENA_BATTLE')
                         ->with(['subject']) 
                         ->latest()
@@ -101,7 +100,7 @@ class QuizController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
-            'teacher_id' => Auth::id(), // Track who created it initially
+            'teacher_id' => Auth::id(), 
             'subject_id' => $request->subject_id,
             'topic' => $request->topic,
             'difficulty' => $request->difficulty,
@@ -157,8 +156,11 @@ class QuizController extends Controller
 
         $quiz = Quiz::findOrFail($quiz_id);
 
+        // Clean out any accidental formatting tags ($ or $$ symbols) before saving
+        $cleanQuestionText = str_replace('$', '', $request->question_text);
+
         $questionData = [
-            'question_text' => $request->question_text,
+            'question_text' => $cleanQuestionText,
             'question_type' => $request->question_type,
             'points' => $request->points ?? 1,
             'subject_id' => $quiz->subject_id, 
@@ -172,10 +174,10 @@ class QuizController extends Controller
 
         $question = Question::create($questionData);
 
-        // Link question specifically to this Solo Quiz structure using your pivot table
+        // Link question specifically to this Solo Quiz structure using pivot relationship
         $quiz->questions()->attach($question->id);
 
-        // Options factory engine
+        // Options choice generation engine
         if ($request->question_type === 'text') {
             $question->options()->create([
                 'option_text' => $request->text_answer, 
@@ -202,22 +204,9 @@ class QuizController extends Controller
         return back()->with('success', 'Question added successfully to this quiz!');
     }
 
-    public function shadowPvpBypass() 
-    {
-        // Keeps architecture safe for background dynamic queries
-    }
-
-    public function destroyQuestion($id)
-    {
-        $question = Question::findOrFail($id);
-        $question->delete();
-        
-        return back()->with('success', 'Question deleted successfully.');
-    }
-
-    // =========================================================
-    // 🟢 ADDED: UPDATE QUESTION LOGIC ENGINE (Handles Choices Refresh)
-    // =========================================================
+    // =================================================================
+    // PART C: EDIT MECHANICS (Handles PUT Updates from Modal View)
+    // =================================================================
     public function updateQuestion(Request $request, $id)
     {
         $request->validate([
@@ -228,8 +217,11 @@ class QuizController extends Controller
 
         $question = Question::findOrFail($id);
 
+        // Clean out any accidental formatting tags ($ or $$ symbols) before updating
+        $cleanQuestionText = str_replace('$', '', $request->question_text);
+
         $questionData = [
-            'question_text' => $request->question_text,
+            'question_text' => $cleanQuestionText,
             'question_type' => $request->question_type,
             'points' => $request->points ?? 1,
         ];
@@ -240,13 +232,12 @@ class QuizController extends Controller
             $questionData['correct_answer_text'] = null;
         }
 
-        // Update core question details
         $question->update($questionData);
 
-        // Delete old dependent options tracking lines securely to prevent orphan records rows
+        // Drop old dependent option records safely to ensure clean database indexes
         $question->options()->delete();
 
-        // Regenerate options factory engine
+        // Repopulate options list maps securely
         if ($request->question_type === 'text') {
             $question->options()->create([
                 'option_text' => $request->text_answer, 
@@ -275,5 +266,18 @@ class QuizController extends Controller
         }
 
         return back()->with('success', 'Question updated successfully!');
+    }
+
+    public function destroyQuestion($id)
+    {
+        $question = Question::findOrFail($id);
+        $question->delete();
+        
+        return back()->with('success', 'Question deleted successfully.');
+    }
+
+    public function shadowPvpBypass() 
+    {
+        // Architectural placeholder wrapper for safe automated tracking routines
     }
 }

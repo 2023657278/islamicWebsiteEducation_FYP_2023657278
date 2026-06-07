@@ -113,7 +113,7 @@
                                         data-text="{{ $q->question_text }}"
                                         data-points="{{ $q->points }}"
                                         data-type="{{ $q->question_type }}"
-                                        data-options='@json($q->options)'>
+                                        data-options="{{ json_encode($q->options) }}">
                                     <i class="fas fa-pen"></i>
                                 </button>
 
