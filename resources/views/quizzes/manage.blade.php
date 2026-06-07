@@ -106,14 +106,14 @@
                                 <span class="badge badge-secondary">{{ ucfirst($q->question_type) }}</span>
                                 <span class="badge badge-warning text-dark">{{ $q->points }} pts</span>
                                 
-                                {{-- 🟢 ADDED: EDIT TRIGGER BUTTON (Triggers JS hydration matrix) --}}
+                                {{-- 🟢 FIXED: Single quote outer wrapper prevents quote nesting rendering breakdown --}}
                                 <button type="button" 
                                         class="btn btn-sm text-primary border-0 bg-transparent p-0 ml-2 edit-question-btn"
                                         data-id="{{ $q->id }}"
                                         data-text="{{ $q->question_text }}"
                                         data-points="{{ $q->points }}"
                                         data-type="{{ $q->question_type }}"
-                                        data-options="{{ json_encode($q->options) }}">
+                                        data-options='{!! json_encode($q->options) !!}'>
                                     <i class="fas fa-pen"></i>
                                 </button>
 
@@ -149,7 +149,7 @@
     </div>
 </div>
 
-{{-- 🟢 ADDED: BOOTSTRAP EDIT QUESTION MODAL BOX OVERLAY --}}
+{{-- BOOTSTRAP EDIT QUESTION MODAL BOX OVERLAY --}}
 <div class="modal fade" id="editQuestionModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content border-0 shadow-lg">
@@ -209,7 +209,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // --- ADD SCREEN LOGIC ENGRAVINGS ---
         const typeSelector = document.getElementById('typeSelector');
         const choicesSection = document.getElementById('choicesSection');
         const textSection = document.getElementById('textSection');
@@ -287,7 +286,7 @@
             });
         }
 
-        // --- 🟢 ADDED: EDIT MODAL DESERIALIZATION MACHINE ENGINE ---
+        // --- EDIT MODAL INTERACTION CONTROLLERS ---
         const editModal = $('#editQuestionModal');
         const editForm = document.getElementById('editQuestionForm');
         const editTypeSelector = document.getElementById('editTypeSelector');
@@ -305,7 +304,15 @@
             let text = $(this).data('text');
             let points = $(this).data('points');
             let type = $(this).data('type');
-            let options = $(this).data('options');
+            
+            // 🟢 FIXED: Reads via attr fallback to prevent string serialization clip drops
+            let optionsRaw = $(this).attr('data-options');
+            let options = [];
+            try {
+                options = typeof optionsRaw === 'string' ? JSON.parse(optionsRaw) : optionsRaw;
+            } catch(e) {
+                console.error("JSON Deserialization Exception caught:", e);
+            }
 
             // Set Form action mapping targets dynamically
             editForm.action = `/admin/questions/${id}/update`;
@@ -318,10 +325,10 @@
             document.getElementById('edit_text_answer').value = '';
 
             if (type === 'text') {
-                if(options.length > 0) {
+                if(options && options.length > 0) {
                     document.getElementById('edit_text_answer').value = options[0].option_text;
                 }
-            } else {
+            } else if (options) {
                 options.forEach((opt, idx) => {
                     let displayRadio = (type === 'single') ? 'inline-block' : 'none';
                     let displayCheck = (type === 'multiple') ? 'inline-block' : 'none';
