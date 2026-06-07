@@ -35,7 +35,6 @@ class PvpController extends Controller
             $totalPlayers = $participants->count();
             foreach ($participants as $p) {
                 if ($p->hp <= 0 && $p->status === 'active') {
-                    // Calculate rank based on how many are already dead
                     $defeatedCount = $participants->where('status', 'defeated')->count();
                     $myRank = $totalPlayers - $defeatedCount;
 
@@ -51,7 +50,6 @@ class PvpController extends Controller
             $aliveAndActive = $participants->where('status', 'active')->where('hp', '>', 0);
             
             if ($room->status === 'active' && $aliveAndActive->count() <= 1) {
-                // Set the survivor as Rank #1
                 $winner = $aliveAndActive->first();
                 if ($winner) {
                     $winner->update(['rank' => 1]);
@@ -91,9 +89,9 @@ class PvpController extends Controller
     public function submitStrike(Request $request, $code)
     {
         $room = QuizRoom::where('room_code', $code)->first();
-        $me = RoomParticipant::where('room_id', $room->id)->where('user_id', Auth::id())->first();
+        $participants = RoomParticipant::where('room_id', $room->id)->get();
+        $me = $participants->where('user_id', Auth::id())->first();
         
-        // 🛑 Block dead players
         if ($me->status !== 'active') return response()->json(['error' => 'Defeated.'], 403);
 
         if ($me->strike_locked_until && now()->lessThan($me->strike_locked_until)) {
@@ -103,23 +101,40 @@ class PvpController extends Controller
         $isCorrect = $this->checkAnswer($request->question_id, $request->answer, $request->question_type);
         $timeLeft = (int)$request->time_left;
 
+        $totalPlayers = $participants->count();
+
         if ($isCorrect) {
-            $dmg = ($timeLeft < 30) ? 10 : 20;
-            if ($me->active_boost) { $dmg *= 2; $me->update(['active_boost' => false]); }
+            // 🟢 DAMAGE SCALING: 20 damage if time >= 30s, 10 damage if below 30s
+            $baseDmg = ($timeLeft >= 30) ? 20 : 10;
+            
+            // 🟢 PHP FIX: Changed Math.round() to PHP native round()
+            $normalizedDmg = (int)round(($baseDmg / ($totalPlayers * 100)) * 100);
+            if ($normalizedDmg < 1) $normalizedDmg = 1;
+
+            if ($me->active_boost) { 
+                $normalizedDmg *= 2; 
+                $me->update(['active_boost' => false]); 
+            }
 
             $opponents = RoomParticipant::where('room_id', $room->id)->where('user_id', '!=', Auth::id())->where('status', 'active')->get();
             foreach ($opponents as $opp) {
                 if ($opp->is_shielded) {
                     $opp->update(['is_shielded' => false]);
                 } else {
-                    $opp->decrement('hp', $dmg);
+                    $opp->decrement('hp', $normalizedDmg);
                     if ($opp->hp < 0) $opp->update(['hp' => 0]);
                 }
             }
             $me->increment('mp', 15);
+            if ($me->mp > 100) $me->update(['mp' => 100]);
         } else {
-            $penalty = $me->active_boost ? 20 : 10;
-            $me->decrement('hp', $penalty);
+            // Wrong answer penalty logic
+            $basePenalty = $me->active_boost ? 20 : 10;
+            // 🟢 PHP FIX: Changed Math.round() to PHP native round()
+            $normalizedPenalty = (int)round(($basePenalty / ($totalPlayers * 100)) * 100);
+            if ($normalizedPenalty < 1) $normalizedPenalty = 1;
+
+            $me->decrement('hp', $normalizedPenalty);
             if ($me->hp < 0) $me->update(['hp' => 0]);
             $me->update(['active_boost' => false]);
         }
@@ -130,16 +145,17 @@ class PvpController extends Controller
     }
 
     /**
-     * POWER SYSTEM: Handles Freeze and other abilities.
+     * POWER SYSTEM: Handles dynamic spell actions.
      */
     public function usePower(Request $request, $code)
     {
         $room = QuizRoom::where('room_code', $code)->first();
-        $me = RoomParticipant::where('room_id', $room->id)->where('user_id', Auth::id())->first();
+        $participants = RoomParticipant::where('room_id', $room->id)->get();
+        $me = $participants->where('user_id', Auth::id())->first();
         
         if ($me->status !== 'active') return response()->json(['error' => 'Disabled.'], 403);
 
-        $costs = ['heal' => 80, 'shield' => 60, 'freeze' => 40, 'boost' => 20];
+        $costs = ['heal' => 40, 'shield' => 40, 'freeze' => 40, 'boost' => 40];
         $type = $request->power_type;
 
         if ($me->skills_locked_turns > 0) return response()->json(['error' => 'Skills Locked!'], 403);
@@ -148,15 +164,21 @@ class PvpController extends Controller
         $me->decrement('mp', $costs[$type]);
 
         if ($type === 'heal') {
-            $me->increment('hp', 15);
-            $me->update(['strike_locked_until' => now()->addSeconds(5)]);
+            $totalPlayers = $participants->count();
+            // 🟢 PHP FIX: Changed Math.round() to round() and fixed missing $ on totalPlayers
+            $normalizedHeal = (int)round((40 / ($totalPlayers * 100)) * 100);
+            if ($normalizedHeal < 1) $normalizedHeal = 5;
+
+            $me->increment('hp', $normalizedHeal);
+            if ($me->hp > 100) $me->update(['hp' => 100]); 
+            
+            $me->update(['strike_locked_until' => now()->addSeconds(3)]);
         } elseif ($type === 'freeze') {
-            // ❄️ Restore Freeze: Set timestamp for 10 seconds
             RoomParticipant::where('room_id', $room->id)->where('user_id', '!=', Auth::id())
                 ->where('status', 'active')
                 ->update(['is_frozen' => true, 'frozen_until' => now()->addSeconds(10)]);
         } elseif ($type === 'shield') {
-            $me->update(['is_shielded' => true, 'skills_locked_turns' => 2]);
+            $me->update(['is_shielded' => true, 'skills_locked_turns' => 1]);
         } elseif ($type === 'boost') {
             $me->update(['active_boost' => true]);
         }
@@ -166,13 +188,11 @@ class PvpController extends Controller
 
     /**
      * RESULTS: Sorted leaderboard.
-     * 🟢 FIXED: Removed orderByRaw('rank ASC') to fix MySQL 8 Reserved Word error.
      */
     public function results($code)
     {
         $room = QuizRoom::where('room_code', $code)->firstOrFail();
 
-        // Use standard orderBy (Laravel automatically adds backticks to escape "rank")
         $participants = RoomParticipant::where('room_id', $room->id)
             ->with('user')
             ->orderBy('rank', 'asc')
