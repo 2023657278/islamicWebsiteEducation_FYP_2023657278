@@ -53,7 +53,7 @@
 
         .power-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
         
-        /* 🎮 STUDENT FRIENDLY TEXTURE BUTTONS */
+        /* 🎮 CLASSROOM INTERACTIVE ABILITY BUTTONS */
         .pwr-btn { 
             border: 2px solid rgba(255,255,255,0.15); 
             border-radius: 14px; 
@@ -212,6 +212,7 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     const roomCode = "{{ $room->room_code }}";
     const baseURL = "/student/quizzes/pvp/{{ $room->room_code }}";
@@ -256,12 +257,20 @@
                 clearInterval(timer);
             }
 
-            // 🟢 ACCURATE DAMAGE TINT FLASH (Ignores synchronization spikes)
-            if (lastKnownHp !== null && me.hp < lastKnownHp && !isDead) {
+            // 🟢 FIXED CALCULATION SYNC POOL: Always scale default HP pool up by a clean multiplier matching 100/player metrics
+            const totalPlayersCount = data.participants.length;
+            const maxHp = totalPlayersCount * 100; 
+
+            // Calculate scaled HP relative to the base 100 scaling coming from backend
+            let scaledCurrentHp = Math.round((me.hp / 100) * maxHp);
+            if (scaledCurrentHp > maxHp) scaledCurrentHp = maxHp;
+
+            // DAMAGE TINT FLASH CHECK
+            if (lastKnownHp !== null && scaledCurrentHp < lastKnownHp && !isDead) {
                 arena.classList.add('damage-flash');
                 setTimeout(() => { arena.classList.remove('damage-flash'); }, 350);
             }
-            lastKnownHp = me.hp;
+            lastKnownHp = scaledCurrentHp;
 
             arena.classList.toggle('theme-shield', me.is_shielded);
             arena.classList.toggle('theme-boost', me.active_boost);
@@ -289,12 +298,9 @@
                 arena.classList.remove('is-frozen-state', 'theme-freeze'); 
             }
 
-            // 🟢 LINEAR HEALTH FORMULA: 1 User = 100, 2 Users = 200, 3 Users = 300...
-            const maxHp = data.participants.length * 100; 
-
-            // 🟢 FIXED SPYING DROP DAMAGE BUG: Full structural compliance match
-            document.getElementById('myHp').style.width = (me.hp / maxHp * 100) + "%";
-            document.getElementById('myHpText').innerText = `${me.hp > 0 ? me.hp : 0} / ${maxHp} HP`;
+            // RENDER LOGICAL DISPLAY METRICS AT 100% RATIOS
+            document.getElementById('myHp').style.width = (scaledCurrentHp / maxHp * 100) + "%";
+            document.getElementById('myHpText').innerText = `${scaledCurrentHp > 0 ? scaledCurrentHp : 0} / ${maxHp} HP`;
             
             document.getElementById('myMp').style.width = me.mp + "%";
             document.getElementById('myMpText').innerText = `${me.mp} / 100 MP`;
@@ -311,25 +317,33 @@
                 } else {
                     btn.classList.remove('cooldown');
                     btn.innerText = `${p.toUpperCase()} (40)`;
-                    btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !feedbackActive && !isDead && !isFrozen);
+                    // 🟢 HEAL FIX: Allow healing if current scaled HP is less than the room max pool limit!
+                    let canHealCheck = (p === 'heal') ? (scaledCurrentHp < maxHp) : true;
+                    
+                    btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !feedbackActive && !isDead && !isFrozen && canHealCheck);
                 }
             });
 
-            // 🏆 HIGH-VISIBILITY WARRIOR STANDINGS SIDEBAR CARD RENDERER
-            document.getElementById('warriorList').innerHTML = data.participants.map(p => `
-                <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold small" style="color: #ffffff; font-size: 0.9rem;">
-                            ${p.rank ? `<span class="badge bg-primary me-1" style="font-size:0.7rem; padding: 4px 7px;">#${p.rank}</span>` : ''}
-                            ${p.name} ${p.hp <= 0 ? '💀' : ''}
-                        </span>
-                        <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; font-weight:700;">${p.hp > 0 ? p.hp : '0'} / ${maxHp} HP</span>
+            // 🏆 WARRIOR STANDINGS SIDEBAR
+            document.getElementById('warriorList').innerHTML = data.participants.map(p => {
+                let pScaledHp = Math.round((p.hp / 100) * maxHp);
+                if (pScaledHp > maxHp) pScaledHp = maxHp;
+                
+                return `
+                    <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small" style="color: #ffffff; font-size: 0.9rem;">
+                                ${p.rank ? `<span class="badge bg-primary me-1" style="font-size:0.7rem; padding: 4px 7px;">#${p.rank}</span>` : ''}
+                                ${p.name} ${p.hp <= 0 ? '💀' : ''}
+                            </span>
+                            <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; font-weight:700;">${p.hp > 0 ? pScaledHp : '0'} / ${maxHp} HP</span>
+                        </div>
+                        <div class="progress" style="height:6px; background: rgba(0,0,0,0.4); border-radius: 50px; margin-top: 6px;">
+                            <div class="progress-bar bg-danger" style="width:${(pScaledHp / maxHp * 100)}%; border-radius: 50px;"></div>
+                        </div>
                     </div>
-                    <div class="progress" style="height:6px; background: rgba(0,0,0,0.4); border-radius: 50px; margin-top: 6px;">
-                        <div class="progress-bar bg-danger" style="width:${(p.hp / maxHp * 100)}%; border-radius: 50px;"></div>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         } catch (e) { console.error("Sync Error:", e); }
     }
 
@@ -426,7 +440,7 @@
     }
 
     async function castPower(type) {
-        if (spellUsedThisTurn || isDead || isFrozen || cooldowns[type] > 0 || feedbackActive) return;
+        if (isDead || isFrozen || cooldowns[type] > 0 || feedbackActive) return;
         try {
             const res = await fetch(`${baseURL}/power`, { 
                 method: 'POST', 
@@ -437,7 +451,6 @@
             if (data.success) {
                 cooldowns[type] = 10;
                 
-                // 🟢 FIXED: Smooth visual confirmation state triggers
                 if (type === 'heal') {
                     document.getElementById('arenaCard').classList.add('theme-heal');
                     setTimeout(() => { document.getElementById('arenaCard').classList.remove('theme-heal'); }, 800);
