@@ -5,15 +5,22 @@
     {{-- HEADER CARD --}}
     <div class="row mb-4">
         <div class="col-md-12">
-            <div class="card bg-maroon text-white border-0 shadow" style="background-color: #800000;">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="fw-bold mb-0">{{ $group->group_name }}</h2>
-                        <p class="mb-0 opacity-75">Academic Session: {{ $group->year->year ?? 'N/A' }}</p>
+            <div class="card bg-maroon text-white border-0 shadow" style="background-color: #800000; overflow: hidden !important;">
+                <div class="card-body" style="padding: 1.5rem !important;">
+                    
+                    <div style="float: right !important; margin-top: 4px !important;">
+                        <a href="{{ route('groups.index') }}" class="btn btn-outline-light btn-sm px-4 rounded-pill font-weight-bold shadow-sm" style="letter-spacing: 0.3px; border-width: 2px !important;">
+                            <i class="fas fa-arrow-left mr-1 small"></i> Back to Groups
+                        </a>
                     </div>
-                    <div class="btn btn-sm position-absolute top-right-btn">
-                        <a href="{{ route('groups.index') }}" class="btn btn-outline-light btn-sm">Back to Groups</a>
+
+                    <div style="float: left !important;">
+                        <h2 class="fw-bold mb-0" style="font-weight: 800 !important; letter-spacing: -0.5px;">{{ $group->group_name }}</h2>
+                        <p class="mb-0 opacity-75 small">Academic Session: {{ $group->year->year ?? 'N/A' }}</p>
                     </div>
+
+                    <div style="clear: both !important;"></div>
+
                 </div>
             </div>
         </div>
@@ -101,7 +108,7 @@
         </div>
     </div>
 
-    {{-- ✅ CORRECT TIMETABLE SECTION --}}
+    {{-- ✅ TIMETABLE GRID SECTION --}}
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0">
@@ -110,13 +117,11 @@
                 </div>
                 <div class="card-body p-4 overflow-auto">
                     
-                    {{-- Prepare Data: Group the flat timetable collection by Day Name --}}
                     @php 
                         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
                         $shortDays = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
                         $timeslots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
                         
-                        // Group schedules by Day Name
                         $groupedSchedules = $group->timetables->groupBy(function($item) {
                             return $item->day->day_name;
                         });
@@ -124,7 +129,6 @@
 
                     <div class="timetable-grid">
                         
-                        {{-- 1. TOP HEADER ROW --}}
                         <div class="text-center fw-bold text-muted d-flex align-items-end justify-content-center pb-2">
                             <small>DAY / TIME</small>
                         </div>
@@ -136,21 +140,16 @@
                             </div>
                         @endforeach
 
-                        {{-- 2. MAIN LOOP: DAYS --}}
                         @foreach($days as $dayIndex => $dayName)
-                            
-                            {{-- Day Label --}}
                             <div class="day-label-cell">
                                 {{ $shortDays[$dayIndex] }}
                             </div>
                             
                             @php 
                                 $slotsToSkip = 0;
-                                // Get only schedules for this specific day
                                 $daySchedules = $groupedSchedules->get($dayName, collect());
                             @endphp
 
-                            {{-- Inner Loop: Times --}}
                             @foreach($timeslots as $time)
                             
                                 @if($slotsToSkip > 0)
@@ -159,7 +158,6 @@
                                 @endif
 
                                 @php
-                                    // Check for lesson starting at this exact time (compare Hour)
                                     $currentLesson = $daySchedules->first(function($item) use ($time) {
                                         return date('H', strtotime($item->time_from)) == date('H', strtotime($time));
                                     });
@@ -176,7 +174,6 @@
                                     }
                                 @endphp
 
-                                {{-- Render Cell --}}
                                 <div class="cell" style="grid-column: span {{ $colSpan }};">
                                     @if($currentLesson)
                                         <div class="lesson-card">
@@ -201,23 +198,21 @@
                                     @endif
                                 </div>
 
-                            @endforeach {{-- End Time --}}
-                        @endforeach {{-- End Day --}}
+                            @endforeach
+                        @endforeach
 
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <style>
     /* VARIABLES */
     :root { --deep-maroon: #4a0000; --accent-gold: #c5a059; }
 
-    /* TIMETABLE GRID CSS (Same as Timetable View) */
+    /* TIMETABLE GRID CSS */
     .timetable-grid {
         display: grid;
         grid-template-columns: 80px repeat(11, 1fr); 
