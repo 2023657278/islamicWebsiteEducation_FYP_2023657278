@@ -11,7 +11,7 @@
                         <h2 class="fw-bold mb-0">{{ $group->group_name }}</h2>
                         <p class="mb-0 opacity-75">Academic Session: {{ $group->year->year ?? 'N/A' }}</p>
                     </div>
-                    <div class="text-end position-absolute top-right-btn">
+                    <div class="btn btn-sm position-absolute top-right-btn">
                         <a href="{{ route('groups.index') }}" class="btn btn-outline-light btn-sm">Back to Groups</a>
                     </div>
                 </div>
