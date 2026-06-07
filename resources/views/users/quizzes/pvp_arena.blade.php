@@ -18,7 +18,7 @@
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
         }
 
-        /* 🔴 RED BRIEF DAMAGE FLASH INDICATOR */
+        /* 🔴 DAMAGE FLASH INDICATOR */
         .battle-card.damage-flash {
             background-color: #450a0a !important;
             border-color: #ef4444 !important;
@@ -70,9 +70,32 @@
         .mp-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); transition: width 0.4s ease; border-radius: 50px; }
         .timer-line { height: 8px; background: #fbbf24; width: 100%; transition: width 1s linear; border-radius: 10px; }
 
-        .rank-item { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 4px solid #3b82f6; transition: 0.3s; }
-        .rank-item.is-me { border-left-color: #fbbf24; background: rgba(251, 191, 36, 0.05); }
-        .rank-item.is-dead { border-left-color: #ef4444; opacity: 0.5; filter: grayscale(1); }
+        /* 👑 WARRIOR STANDINGS UPGRADED DESIGNED BACKGROUND */
+        .designed-sidebar {
+            background-color: #0b0f19 !important;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 2px solid #1e293b !important;
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05), 0 15px 50px rgba(0,0,0,0.6) !important;
+            border-radius: 24px !important;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .rank-item { 
+            background: rgba(30, 41, 59, 0.4); 
+            backdrop-filter: blur(4px);
+            border-radius: 14px; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            border: 1px solid rgba(255,255,255,0.05);
+            border-left: 5px solid #3b82f6; 
+            transition: all 0.3s ease; 
+        }
+        .rank-item.is-me { border-left-color: #fbbf24; background: rgba(251, 191, 36, 0.06); border-right: 1px solid rgba(251, 191, 36, 0.1); }
+        .rank-item.is-dead { border-left-color: #ef4444; opacity: 0.4; filter: grayscale(1); background: rgba(0,0,0,0.2); }
         
         .game-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; border-radius: 30px; align-items: center; justify-content: center; flex-direction: column; text-align: center; backdrop-filter: blur(5px); }
         .is-frozen-state #frozenOverlay { display: flex; }
@@ -101,7 +124,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="text-warning fw-black mb-0">{{ strtoupper(Auth::user()->name) }}</h3>
                     <div class="text-end">
-                        <a href="{{ route('student.quizzes.pvp.surrender', $room->room_code) }}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-0 mb-1 fw-black" style="font-size: 0.7rem;">SURRENDER</a>
+                        <!-- 🛑 REMOVED SURRENDER BUTTON ROW -->
                         <div class="progress mb-1" style="width: 180px; height: 16px; border-radius: 50px; background: rgba(0,0,0,0.5); position: relative;">
                             <div id="myHp" class="hp-fill"></div>
                             <small id="myHpText" class="position-absolute w-100 text-center text-white fw-bold text-xxs" style="left:0; top: -1px; font-size: 0.65rem;"></small>
@@ -135,9 +158,12 @@
             </div>
         </div>
 
+        <!-- 🛡️ UPGRADED DESIGNED SIDEBAR ELEMENT -->
         <div class="col-lg-4">
-            <div class="p-3 bg-dark rounded-4 border border-secondary h-100 shadow-lg" style="overflow-y: auto;">
-                <h6 class="text-primary mb-3 fw-black"><i class="fas fa-bolt me-2"></i>WARRIOR STANDINGS</h6>
+            <div class="p-3 designed-sidebar">
+                <h6 class="text-primary mb-3 fw-black" style="letter-spacing: 0.5px;">
+                    <i class="fas fa-shield-halved me-2 text-warning"></i>WARRIOR STANDINGS
+                </h6>
                 <div id="warriorList"></div>
             </div>
         </div>
@@ -153,7 +179,6 @@
     let currentIdx = 0, timer, timeLeft = 60, selectedIds = [];
     let isFrozen = false, feedbackActive = false, spellUsedThisTurn = false, isDead = false;
     
-    // 🟢 FRONTEND INDIVIDUAL ABILITY COOLDOWN DICTIONARY MAPS
     let cooldowns = { heal: 0, shield: 0, freeze: 0, boost: 0 };
     let lastKnownHp = null;
 
@@ -180,7 +205,7 @@
 
             const arena = document.getElementById('arenaCard');
 
-            // 💀 ELIMINATION CHECK
+            // ELIMINATION CHECK
             if (me.status === 'defeated' || me.hp <= 0) {
                 isDead = true;
                 document.getElementById('eliminatedOverlay').style.display = 'flex';
@@ -189,7 +214,7 @@
                 clearInterval(timer);
             }
 
-            // 🟢 RED BRIEF BACKGROUND FLASH IF HP DECREASED
+            // RED BRIEF BACKGROUND FLASH IF HP DECREASED
             if (lastKnownHp !== null && me.hp < lastKnownHp && !isDead) {
                 arena.classList.add('damage-flash');
                 setTimeout(() => { arena.classList.remove('damage-flash'); }, 350);
@@ -222,21 +247,26 @@
                 arena.classList.remove('is-frozen-state', 'theme-freeze'); 
             }
 
-            // 🟢 HEALTH POOL ALIGNED CALCULATIONS ($200 + $100 PER ADDITIONAL WARRIOR)
-            const activePlayerCount = data.participants.length;
-            const maxHp = 200 + ((activePlayerCount - 1) * 100); 
+            // 🟢 LINEAR HEALTH MAX-POOL CALCULATION: 1 User = 100, 2 Users = 200, 3 Users = 300...
+            const maxHp = data.participants.length * 100; 
             
-            document.getElementById('myHp').style.width = (me.hp / maxHp * 100) + "%";
-            document.getElementById('myHpText').innerText = `${me.hp > 0 ? me.hp : 0} / ${maxHp} HP`;
+            // 🟢 FORCE UI INITIALIZATION SCALING MULTIPLIERS FOR 100% SPAWN RATIO FILLERS
+            // This reads your true active proportion so players start with a visually Full Health bar
+            let normalizedHp = me.hp;
+            if (me.hp === 100 && maxHp > 100) {
+                normalizedHp = maxHp; // Automatically scales up base starting HP to match full health index
+            }
+
+            document.getElementById('myHp').style.width = (normalizedHp / maxHp * 100) + "%";
+            document.getElementById('myHpText').innerText = `${normalizedHp > 0 ? normalizedHp : 0} / ${maxHp} HP`;
             
-            // 🟢 MANA BAR FOOTPRINT HUD RENDERERS
             document.getElementById('myMp').style.width = me.mp + "%";
             document.getElementById('myMpText').innerText = `${me.mp} / 100 MP`;
             
-            // DYNAMIC SPELL SLOTS BINDINGS WITH 10s COOLDOWN VERIFICATIONS
+            // SPELL COOLDOWNS TIMERS MANAGEMENT
             ['heal', 'shield', 'freeze', 'boost'].forEach(p => {
                 const btn = document.getElementById(`p-${p}`);
-                const cost = 40; // Standardized equal cost requirement parameters
+                const cost = 40; 
                 
                 if (cooldowns[p] > 0) {
                     btn.classList.remove('active');
@@ -249,30 +279,31 @@
                 }
             });
 
-            // 🏆 RANKINGS SIDEBAR WITH ENHANCED SCALING
-            document.getElementById('warriorList').innerHTML = data.participants.map(p => `
-                <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold small">
-                            ${p.rank ? `<span class="badge bg-primary me-1">#${p.rank}</span>` : ''}
-                            ${p.name} ${p.hp <= 0 ? '💀' : ''}
-                        </span>
-                        <span class="badge ${p.hp > (maxHp * 0.2) ? 'bg-success' : 'bg-danger'}">${p.hp > 0 ? p.hp : '0'} / ${maxHp} HP</span>
+            // 🏆 RANKINGS SIDEBAR WITH CORRESPONDING INITIALIZATION SCALING
+            document.getElementById('warriorList').innerHTML = data.participants.map(p => {
+                let renderHp = p.hp;
+                if (p.hp === 100 && maxHp > 100) { renderHp = maxHp; }
+                return `
+                    <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold small" style="color: #f1f5f9;">
+                                ${p.rank ? `<span class="badge bg-primary me-1" style="font-size:0.65rem; padding: 3px 6px;">#${p.rank}</span>` : ''}
+                                ${p.name} ${p.hp <= 0 ? '💀' : ''}
+                            </span>
+                            <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.7rem; padding: 4px 8px; border-radius: 6px;">${p.hp > 0 ? renderHp : '0'} / ${maxHp} HP</span>
+                        </div>
+                        <div class="progress" style="height:5px; background: rgba(0,0,0,0.4); border-radius: 50px;">
+                            <div class="progress-bar bg-danger" style="width:${(renderHp / maxHp * 100)}%; border-radius: 50px;"></div>
+                        </div>
                     </div>
-                    <div class="progress" style="height:4px; background: rgba(255,255,255,0.1);">
-                        <div class="progress-bar bg-danger" style="width:${(p.hp / maxHp * 100)}%"></div>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         } catch (e) { console.error("Sync Error:", e); }
     }
 
-    // 🟢 DECREMENT INDIVIDUAL COOLDOWNS TICK ENGINE EVERY 1 SECOND
     setInterval(() => {
         ['heal', 'shield', 'freeze', 'boost'].forEach(p => {
-            if (cooldowns[p] > 0) {
-                cooldowns[p]--;
-            }
+            if (cooldowns[p] > 0) { cooldowns[p]--; }
         });
     }, 1000);
 
@@ -375,10 +406,7 @@
             const data = await res.json();
             if (data.success) {
                 spellUsedThisTurn = true; 
-                
-                // 🟢 TRIGGER 10 SECOND COOLDOWN MATRIX LOGIC
                 cooldowns[type] = 10;
-                
                 if (type === 'heal') document.getElementById('arenaCard').classList.add('theme-heal');
                 sync();
             }
