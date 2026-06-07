@@ -6,21 +6,34 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         
-        body { background: #020617; color: white; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; padding-top: 10px; }
+        body { 
+            background: #020617; 
+            color: white; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            height: 100vh; 
+            overflow: hidden; 
+            padding-top: 10px; 
+        }
         
         /* 🏆 MAIN BATTLE STATION */
         .battle-card { 
-            background: #0f172a; border-radius: 30px; border: 4px solid #1e293b; padding: 20px 25px; 
-            position: relative; transition: background-color 0.15s ease-in-out, border-color 0.4s; 
-            height: 620px; display: flex; flex-direction: column;
+            background: #0f172a; 
+            border-radius: 30px; 
+            border: 4px solid #334155; 
+            padding: 20px 25px; 
+            position: relative; 
+            transition: background-color 0.15s ease-in-out, border-color 0.4s; 
+            height: 620px; 
+            display: flex; 
+            flex-direction: column;
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
         }
 
         /* 🔴 DAMAGE FLASH INDICATOR */
         .battle-card.damage-flash {
-            background-color: #450a0a !important;
+            background-color: #7f1d1d !important;
             border-color: #ef4444 !important;
         }
 
@@ -36,70 +49,101 @@
         .theme-shield { background: #064e3b !important; border-color: #10b981 !important; box-shadow: 0 0 40px rgba(16, 185, 129, 0.4); }
         .theme-boost { background: #450a0a !important; border-color: #ef4444 !important; box-shadow: 0 0 40px rgba(239, 68, 68, 0.4); }
         .theme-freeze { background: #0c4a6e !important; border-color: #3b82f6 !important; }
-        .theme-heal { background: #422006 !important; border-color: #fbbf24 !important; }
+        .theme-heal { background: #14532d !important; border-color: #22c55e !important; box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); }
 
         .power-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-        .pwr-btn { 
-            border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 2px; 
-            color: white; font-weight: 900; font-size: 0.65rem; transition: 0.2s; opacity: 0.15; 
-            pointer-events: none; background: rgba(255,255,255,0.05); text-transform: uppercase;
-            position: relative; overflow: hidden;
-        }
-        .pwr-btn.active { opacity: 1 !important; pointer-events: auto !important; transform: translateY(-2px); border-color: white; cursor: pointer; }
-        .pwr-btn.cooldown { opacity: 0.4 !important; pointer-events: none !important; transform: none !important; background: #1e293b !important; border-color: #475569 !important; }
         
-        .bg-heal { background: #fbbf24 !important; color: #000 !important; }
-        .bg-shield { background: #10b981 !important; }
-        .bg-boost { background: #ef4444 !important; }
-        .bg-freeze { background: #3b82f6 !important; }
+        /* 🎮 STUDENT FRIENDLY TEXTURE BUTTONS */
+        .pwr-btn { 
+            border: 2px solid rgba(255,255,255,0.15); 
+            border-radius: 14px; 
+            padding: 12px 2px; 
+            color: white; 
+            font-weight: 800; 
+            font-size: 0.75rem; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            opacity: 0.25; 
+            pointer-events: none; 
+            background: rgba(255,255,255,0.05); 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pwr-btn.active { 
+            opacity: 1 !important; 
+            pointer-events: auto !important; 
+            transform: translateY(-3px); 
+            border-color: #ffffff; 
+            cursor: pointer; 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+        .pwr-btn:active { transform: translateY(-1px); }
+        .pwr-btn.cooldown { opacity: 0.4 !important; pointer-events: none !important; transform: none !important; background: #1e293b !important; border-color: #475569 !important; color: #94a3b8 !important; }
+        
+        .bg-heal { background: #22c55e !important; color: #ffffff !important; }
+        .bg-shield { background: #3b82f6 !important; color: #ffffff !important; }
+        .bg-freeze { background: #06b6d4 !important; color: #ffffff !important; }
+        .bg-boost { background: #f43f5e !important; color: #ffffff !important; }
 
         #optionsGrid { overflow-y: auto; flex-grow: 1; max-height: 260px; padding-right: 8px; margin-bottom: 10px; }
         #optionsGrid::-webkit-scrollbar { width: 5px; }
-        #optionsGrid::-webkit-scrollbar-thumb { background: #fbbf24; border-radius: 10px; }
+        #optionsGrid::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
 
         .option-card { 
-            border: 2px solid #334155; border-radius: 15px; padding: 12px 20px; cursor: pointer; 
+            border: 2px solid #334155; border-radius: 15px; padding: 14px 20px; cursor: pointer; 
             transition: 0.2s; background: #1e293b; color: white; width: 100%; text-align: left; 
             margin-bottom: 8px; font-weight: 700; display: flex; align-items: center; font-size: 1rem;
         }
-        .option-card.selected { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+        .option-card.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); }
         .option-card.correct { border-color: #10b981 !important; background: rgba(16, 185, 129, 0.3) !important; }
         .option-card.incorrect { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.3) !important; }
 
-        .hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #b91c1c); transition: width 0.4s ease; border-radius: 50px; }
-        .mp-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); transition: width 0.4s ease; border-radius: 50px; }
-        .timer-line { height: 8px; background: #fbbf24; width: 100%; transition: width 1s linear; border-radius: 10px; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50px; }
+        .mp-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #2563eb); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50px; }
+        .timer-line { height: 8px; background: #3b82f6; width: 100%; transition: width 1s linear; border-radius: 10px; }
 
-        /* 👑 WARRIOR STANDINGS UPGRADED DESIGNED BACKGROUND */
+        /* 👑 HIGHLY VISIBLE WARRIOR STANDINGS SIDEBAR DESIGN */
         .designed-sidebar {
-            background-color: #0b0f19 !important;
+            background-color: #0b1329 !important;
             background-image: 
-                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-            background-size: 20px 20px;
-            border: 2px solid #1e293b !important;
-            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05), 0 15px 50px rgba(0,0,0,0.6) !important;
+                linear-gradient(rgba(59, 130, 246, 0.06) 1.5px, transparent 1.5px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.06) 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            border: 3px solid #1e293b !important;
+            box-shadow: inset 0 0 25px rgba(59, 130, 246, 0.1), 0 15px 50px rgba(0,0,0,0.7) !important;
             border-radius: 24px !important;
             height: 100%;
             overflow-y: auto;
         }
 
-        .rank-item { 
-            background: rgba(30, 41, 59, 0.4); 
-            backdrop-filter: blur(4px);
-            border-radius: 14px; 
-            padding: 12px; 
-            margin-bottom: 10px; 
-            border: 1px solid rgba(255,255,255,0.05);
-            border-left: 5px solid #3b82f6; 
-            transition: all 0.3s ease; 
+        .rank-title {
+            color: #60a5fa !important;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 12px;
         }
-        .rank-item.is-me { border-left-color: #fbbf24; background: rgba(251, 191, 36, 0.06); border-right: 1px solid rgba(251, 191, 36, 0.1); }
-        .rank-item.is-dead { border-left-color: #ef4444; opacity: 0.4; filter: grayscale(1); background: rgba(0,0,0,0.2); }
+
+        .rank-item { 
+            background: #1e293b !important; 
+            border: 2px solid #334155 !important;
+            border-radius: 16px; 
+            padding: 14px; 
+            margin-bottom: 12px; 
+            border-left: 6px solid #3b82f6 !important; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+        .rank-item.is-me { 
+            border-left-color: #3b82f6 !important; 
+            background: rgba(30, 41, 59, 0.9) !important;
+            border: 2px solid #60a5fa !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+        }
+        .rank-item.is-dead { border-left-color: #ef4444 !important; opacity: 0.35; filter: grayscale(1); background: rgba(0,0,0,0.3) !important; }
         
         .game-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; border-radius: 30px; align-items: center; justify-content: center; flex-direction: column; text-align: center; backdrop-filter: blur(5px); }
         .is-frozen-state #frozenOverlay { display: flex; }
-        .fib-ans { background: rgba(0,0,0,0.5); color: #fbbf24; text-align: center; border: 3px solid #334155; padding: 12px; border-radius: 20px; font-size: 2.2rem; width: 100%; font-weight: 900; outline: none; }
+        .fib-ans { background: rgba(0,0,0,0.5); color: #ffffff; text-align: center; border: 3px solid #334155; padding: 12px; border-radius: 20px; font-size: 2.2rem; width: 100%; font-weight: 900; outline: none; }
     </style>
 </head>
 <body>
@@ -122,9 +166,8 @@
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="text-warning fw-black mb-0">{{ strtoupper(Auth::user()->name) }}</h3>
+                    <h3 class="text-white fw-bold mb-0" style="letter-spacing: -0.5px;">{{ strtoupper(Auth::user()->name) }}</h3>
                     <div class="text-end">
-                        <!-- 🛑 REMOVED SURRENDER BUTTON ROW -->
                         <div class="progress mb-1" style="width: 180px; height: 16px; border-radius: 50px; background: rgba(0,0,0,0.5); position: relative;">
                             <div id="myHp" class="hp-fill"></div>
                             <small id="myHpText" class="position-absolute w-100 text-center text-white fw-bold text-xxs" style="left:0; top: -1px; font-size: 0.65rem;"></small>
@@ -147,22 +190,21 @@
                 <div class="text-center my-1 fw-black small">TIME: <span id="timeSec" class="text-warning">60</span>S | <span id="qTypeBadge" class="badge bg-primary"></span></div>
 
                 <div id="qArea">
-                    <h4 id="qText" class="fw-bold text-center mb-3 px-2" style="min-height: 45px; font-size: 1.1rem;"></h4>
+                    <h4 id="qText" class="fw-bold text-center mb-3 px-2" style="min-height: 45px; font-size: 1.1rem; color: #f1f5f9;"></h4>
                     <div id="optionsGrid" class="row row-cols-1 g-2"></div>
                     <div id="fibArea" class="mb-3"></div>
 
-                    <button id="submitBtn" onclick="submitAns()" class="btn btn-warning w-100 py-3 mt-auto fw-black rounded-pill shadow-lg border-0 fs-5">
+                    <button id="submitBtn" onclick="submitAns()" class="btn btn-warning w-100 py-3 mt-auto fw-black rounded-pill shadow-lg border-0 fs-5 text-dark font-weight-bold">
                         EXECUTE STRIKE ⚡
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 🛡️ UPGRADED DESIGNED SIDEBAR ELEMENT -->
         <div class="col-lg-4">
             <div class="p-3 designed-sidebar">
-                <h6 class="text-primary mb-3 fw-black" style="letter-spacing: 0.5px;">
-                    <i class="fas fa-shield-halved me-2 text-warning"></i>WARRIOR STANDINGS
+                <h6 class="text-primary mb-3 fw-black rank-title">
+                    <i class="fas fa-trophy me-2 text-warning"></i>WARRIOR STANDINGS
                 </h6>
                 <div id="warriorList"></div>
             </div>
@@ -214,7 +256,7 @@
                 clearInterval(timer);
             }
 
-            // RED BRIEF BACKGROUND FLASH IF HP DECREASED
+            // 🟢 ACCURATE DAMAGE TINT FLASH (Ignores synchronization spikes)
             if (lastKnownHp !== null && me.hp < lastKnownHp && !isDead) {
                 arena.classList.add('damage-flash');
                 setTimeout(() => { arena.classList.remove('damage-flash'); }, 350);
@@ -247,18 +289,12 @@
                 arena.classList.remove('is-frozen-state', 'theme-freeze'); 
             }
 
-            // 🟢 LINEAR HEALTH MAX-POOL CALCULATION: 1 User = 100, 2 Users = 200, 3 Users = 300...
+            // 🟢 LINEAR HEALTH FORMULA: 1 User = 100, 2 Users = 200, 3 Users = 300...
             const maxHp = data.participants.length * 100; 
-            
-            // 🟢 FORCE UI INITIALIZATION SCALING MULTIPLIERS FOR 100% SPAWN RATIO FILLERS
-            // This reads your true active proportion so players start with a visually Full Health bar
-            let normalizedHp = me.hp;
-            if (me.hp === 100 && maxHp > 100) {
-                normalizedHp = maxHp; // Automatically scales up base starting HP to match full health index
-            }
 
-            document.getElementById('myHp').style.width = (normalizedHp / maxHp * 100) + "%";
-            document.getElementById('myHpText').innerText = `${normalizedHp > 0 ? normalizedHp : 0} / ${maxHp} HP`;
+            // 🟢 FIXED SPYING DROP DAMAGE BUG: Full structural compliance match
+            document.getElementById('myHp').style.width = (me.hp / maxHp * 100) + "%";
+            document.getElementById('myHpText').innerText = `${me.hp > 0 ? me.hp : 0} / ${maxHp} HP`;
             
             document.getElementById('myMp').style.width = me.mp + "%";
             document.getElementById('myMpText').innerText = `${me.mp} / 100 MP`;
@@ -275,29 +311,25 @@
                 } else {
                     btn.classList.remove('cooldown');
                     btn.innerText = `${p.toUpperCase()} (40)`;
-                    btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !spellUsedThisTurn && !isDead && !isFrozen);
+                    btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !feedbackActive && !isDead && !isFrozen);
                 }
             });
 
-            // 🏆 RANKINGS SIDEBAR WITH CORRESPONDING INITIALIZATION SCALING
-            document.getElementById('warriorList').innerHTML = data.participants.map(p => {
-                let renderHp = p.hp;
-                if (p.hp === 100 && maxHp > 100) { renderHp = maxHp; }
-                return `
-                    <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold small" style="color: #f1f5f9;">
-                                ${p.rank ? `<span class="badge bg-primary me-1" style="font-size:0.65rem; padding: 3px 6px;">#${p.rank}</span>` : ''}
-                                ${p.name} ${p.hp <= 0 ? '💀' : ''}
-                            </span>
-                            <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.7rem; padding: 4px 8px; border-radius: 6px;">${p.hp > 0 ? renderHp : '0'} / ${maxHp} HP</span>
-                        </div>
-                        <div class="progress" style="height:5px; background: rgba(0,0,0,0.4); border-radius: 50px;">
-                            <div class="progress-bar bg-danger" style="width:${(renderHp / maxHp * 100)}%; border-radius: 50px;"></div>
-                        </div>
+            // 🏆 HIGH-VISIBILITY WARRIOR STANDINGS SIDEBAR CARD RENDERER
+            document.getElementById('warriorList').innerHTML = data.participants.map(p => `
+                <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold small" style="color: #ffffff; font-size: 0.9rem;">
+                            ${p.rank ? `<span class="badge bg-primary me-1" style="font-size:0.7rem; padding: 4px 7px;">#${p.rank}</span>` : ''}
+                            ${p.name} ${p.hp <= 0 ? '💀' : ''}
+                        </span>
+                        <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; font-weight:700;">${p.hp > 0 ? p.hp : '0'} / ${maxHp} HP</span>
                     </div>
-                `;
-            }).join('');
+                    <div class="progress" style="height:6px; background: rgba(0,0,0,0.4); border-radius: 50px; margin-top: 6px;">
+                        <div class="progress-bar bg-danger" style="width:${(p.hp / maxHp * 100)}%; border-radius: 50px;"></div>
+                    </div>
+                </div>
+            `).join('');
         } catch (e) { console.error("Sync Error:", e); }
     }
 
@@ -310,10 +342,8 @@
     function renderQ() {
         if (isDead) return; 
         feedbackActive = false; 
-        spellUsedThisTurn = false; 
         
         const arena = document.getElementById('arenaCard');
-        arena.classList.remove('theme-heal'); 
         
         const q = getQ();
         document.getElementById('qText').innerText = q.question_text;
@@ -396,7 +426,7 @@
     }
 
     async function castPower(type) {
-        if (spellUsedThisTurn || isDead || isFrozen || cooldowns[type] > 0) return;
+        if (spellUsedThisTurn || isDead || isFrozen || cooldowns[type] > 0 || feedbackActive) return;
         try {
             const res = await fetch(`${baseURL}/power`, { 
                 method: 'POST', 
@@ -405,9 +435,13 @@
             });
             const data = await res.json();
             if (data.success) {
-                spellUsedThisTurn = true; 
                 cooldowns[type] = 10;
-                if (type === 'heal') document.getElementById('arenaCard').classList.add('theme-heal');
+                
+                // 🟢 FIXED: Smooth visual confirmation state triggers
+                if (type === 'heal') {
+                    document.getElementById('arenaCard').classList.add('theme-heal');
+                    setTimeout(() => { document.getElementById('arenaCard').classList.remove('theme-heal'); }, 800);
+                }
                 sync();
             }
         } catch (e) {}
