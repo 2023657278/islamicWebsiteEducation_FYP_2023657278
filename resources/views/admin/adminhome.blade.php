@@ -27,17 +27,16 @@
     body {
       font-family: 'Inter', sans-serif;
       color: var(--text-main);
-      background-color: #fdfbf7;
-      background-image: url('{{ asset("admin/dist/img/pngbgimage.png") }}');
+      background-image: linear-gradient(rgba(253, 251, 247, 0.35), rgba(253, 251, 247, 0.35)), url('{{ asset("admin/dist/img/pngbgimage.png") }}');
       background-repeat: no-repeat;
       background-position: center center;
       background-attachment: fixed;
       background-size: cover; 
     }
 
+    /* 🟢 FIXED: Removed white opaque background to let your main asset show behind */
     .content-wrapper {
-      background: rgba(253, 251, 247, 0.92) !important;
-      backdrop-filter: blur(5px);
+      background: transparent !important;
       min-height: 100vh;
     }
     
@@ -56,39 +55,39 @@
       padding: 1.5rem 1rem;
     }
 
-    /* ✅ Updated: Rectangular Profile Image Styling */
-.user-panel {
-    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-    margin: 15px 10px;
-    padding: 0;
-    text-align: center;
-}
+    /* Rectangular Profile Image Styling */
+    .user-panel {
+        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+        margin: 15px 10px;
+        padding: 0;
+        text-align: center;
+    }
 
-.sidebar-profile-img {
-    width: 100% !important;
-    max-width: 180px !important; /* Increased width */
-    height: 120px !important;    /* Increased height for a better rectangle */
-    object-fit: cover !important; 
-    border-radius: 12px !important; /* Modern rounded corners, not a circle */
-    border: 3px solid rgba(255,255,255,0.2) !important;
-    display: block !important;
-    margin: 10px auto !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
-}
+    .sidebar-profile-img {
+        width: 100% !important;
+        max-width: 180px !important; 
+        height: 120px !important;    
+        object-fit: cover !important; 
+        border-radius: 12px !important; 
+        border: 3px solid rgba(255,255,255,0.2) !important;
+        display: block !important;
+        margin: 10px auto !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    }
 
-.sidebar-profile-placeholder {
-    width: 180px;
-    height: 120px;
-    background: linear-gradient(135deg, #7f1d1d, #b91c1c);
-    color: white;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    font-weight: bold;
-    margin: 0 auto;
-}
+    .sidebar-profile-placeholder {
+        width: 180px;
+        height: 120px;
+        background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+        color: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto;
+    }
 
     /* Nav Items */
     .nav-sidebar .nav-item { margin-bottom: 2px; }
@@ -120,9 +119,13 @@
       padding: 1.5rem 1rem 0.5rem;
       opacity: 0.7;
     }
+
+    /* 🟢 FIXED: Translucent frosted glass look for the main navbar link bar */
     .main-header {
-      background: rgba(255, 255, 255, 0.95) !important;
-      border-bottom: 1px solid #eee !important;
+      background: rgba(255, 255, 255, 0.75) !important;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
     }
   </style>
 </head>
@@ -130,7 +133,7 @@
 <body class="hold-transition layout-fixed layout-navbar-fixed">
 <div class="wrapper">
 
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+  <nav class="main-header navbar navbar-expand navbar-light">
     <ul class="navbar-nav">
       <li class="nav-item">
         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars text-dark"></i></a>
@@ -178,18 +181,17 @@
     </a>
 
     <div class="sidebar">
-      
       <div class="user-panel mt-3 pb-3 mb-3 border-0">
-    @if(Auth::user()->profile_image)
-        <img src="{{ asset('storage/profile_images/' . Auth::user()->profile_image) }}" 
-             class="sidebar-profile-img" 
-             alt="User Image">
-    @else
-        <div class="sidebar-profile-placeholder">
-            {{ substr(Auth::user()->name, 0, 1) }}
-        </div>
-    @endif
-</div>
+        @if(Auth::user()->profile_image)
+            <img src="{{ asset('storage/profile_images/' . Auth::user()->profile_image) }}" 
+                 class="sidebar-profile-img" 
+                 alt="User Image">
+        @else
+            <div class="sidebar-profile-placeholder">
+                {{ substr(Auth::user()->name, 0, 1) }}
+            </div>
+        @endif
+      </div>
 
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
