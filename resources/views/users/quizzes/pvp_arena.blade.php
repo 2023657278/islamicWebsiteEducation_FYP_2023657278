@@ -13,9 +13,15 @@
         /* 🏆 MAIN BATTLE STATION */
         .battle-card { 
             background: #0f172a; border-radius: 30px; border: 4px solid #1e293b; padding: 20px 25px; 
-            position: relative; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative; transition: background-color 0.15s ease-in-out, border-color 0.4s; 
             height: 620px; display: flex; flex-direction: column;
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+
+        /* 🔴 RED BRIEF DAMAGE FLASH INDICATOR */
+        .battle-card.damage-flash {
+            background-color: #450a0a !important;
+            border-color: #ef4444 !important;
         }
 
         /* 💀 ELIMINATION OVERLAY */
@@ -37,8 +43,11 @@
             border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 2px; 
             color: white; font-weight: 900; font-size: 0.65rem; transition: 0.2s; opacity: 0.15; 
             pointer-events: none; background: rgba(255,255,255,0.05); text-transform: uppercase;
+            position: relative; overflow: hidden;
         }
         .pwr-btn.active { opacity: 1 !important; pointer-events: auto !important; transform: translateY(-2px); border-color: white; cursor: pointer; }
+        .pwr-btn.cooldown { opacity: 0.4 !important; pointer-events: none !important; transform: none !important; background: #1e293b !important; border-color: #475569 !important; }
+        
         .bg-heal { background: #fbbf24 !important; color: #000 !important; }
         .bg-shield { background: #10b981 !important; }
         .bg-boost { background: #ef4444 !important; }
@@ -93,20 +102,22 @@
                     <h3 class="text-warning fw-black mb-0">{{ strtoupper(Auth::user()->name) }}</h3>
                     <div class="text-end">
                         <a href="{{ route('student.quizzes.pvp.surrender', $room->room_code) }}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-0 mb-1 fw-black" style="font-size: 0.7rem;">SURRENDER</a>
-                        <div class="progress mb-1" style="width: 180px; height: 16px; border-radius: 50px; background: rgba(0,0,0,0.5);">
+                        <div class="progress mb-1" style="width: 180px; height: 16px; border-radius: 50px; background: rgba(0,0,0,0.5); position: relative;">
                             <div id="myHp" class="hp-fill"></div>
+                            <small id="myHpText" class="position-absolute w-100 text-center text-white fw-bold text-xxs" style="left:0; top: -1px; font-size: 0.65rem;"></small>
                         </div>
-                        <div class="progress" style="width: 180px; height: 8px; border-radius: 50px; background: rgba(0,0,0,0.5);">
+                        <div class="progress" style="width: 180px; height: 14px; border-radius: 50px; background: rgba(0,0,0,0.5); position: relative;">
                             <div id="myMp" class="mp-fill"></div>
+                            <small id="myMpText" class="position-absolute w-100 text-center text-white fw-bold" style="left:0; top: 0px; font-size: 0.6rem; z-index: 10; text-shadow: 0 1px 2px #000;"></small>
                         </div>
                     </div>
                 </div>
 
                 <div class="power-grid">
-                    <button id="p-heal" onclick="castPower('heal')" class="pwr-btn bg-heal">HEAL (80)</button>
-                    <button id="p-shield" onclick="castPower('shield')" class="pwr-btn bg-shield">SHIELD (60)</button>
+                    <button id="p-heal" onclick="castPower('heal')" class="pwr-btn bg-heal">HEAL (40)</button>
+                    <button id="p-shield" onclick="castPower('shield')" class="pwr-btn bg-shield">SHIELD (40)</button>
                     <button id="p-freeze" onclick="castPower('freeze')" class="pwr-btn bg-freeze">FREEZE (40)</button>
-                    <button id="p-boost" onclick="castPower('boost')" class="pwr-btn bg-boost">BOOST (20)</button>
+                    <button id="p-boost" onclick="castPower('boost')" class="pwr-btn bg-boost">BOOST (40)</button>
                 </div>
 
                 <div class="timer-line" id="timerFill"></div>
@@ -141,6 +152,10 @@
     let quizBank = @json($room->quiz->questions); 
     let currentIdx = 0, timer, timeLeft = 60, selectedIds = [];
     let isFrozen = false, feedbackActive = false, spellUsedThisTurn = false, isDead = false;
+    
+    // 🟢 FRONTEND INDIVIDUAL ABILITY COOLDOWN DICTIONARY MAPS
+    let cooldowns = { heal: 0, shield: 0, freeze: 0, boost: 0 };
+    let lastKnownHp = null;
 
     function getQ() { 
         if (currentIdx >= quizBank.length) { 
@@ -155,7 +170,6 @@
             const r = await fetch(`${baseURL}/status`);
             const data = await r.json();
             
-            // 1. VICTORY REDIRECT
             if (data.status === 'finished' && !feedbackActive) { 
                 window.location.href = resultsURL; 
                 return; 
@@ -172,13 +186,20 @@
                 document.getElementById('eliminatedOverlay').style.display = 'flex';
                 document.getElementById('myFinalRank').innerText = `#${me.rank || '?'}`;
                 document.getElementById('submitBtn').disabled = true;
-                clearInterval(timer); // Stop timer logic locally
+                clearInterval(timer);
             }
+
+            // 🟢 RED BRIEF BACKGROUND FLASH IF HP DECREASED
+            if (lastKnownHp !== null && me.hp < lastKnownHp && !isDead) {
+                arena.classList.add('damage-flash');
+                setTimeout(() => { arena.classList.remove('damage-flash'); }, 350);
+            }
+            lastKnownHp = me.hp;
 
             arena.classList.toggle('theme-shield', me.is_shielded);
             arena.classList.toggle('theme-boost', me.active_boost);
 
-            // 🔒 STRIKE LOCK UI
+            // STRIKE LOCK UI
             const sBtn = document.getElementById('submitBtn');
             if (me.strike_locked && !isDead) {
                 sBtn.disabled = true;
@@ -190,7 +211,7 @@
                 sBtn.classList.remove('strike-btn-locked');
             }
 
-            // ❄️ FREEZE COUNTDOWN UI
+            // FREEZE COUNTDOWN UI
             if (me.is_frozen) {
                 isFrozen = true; 
                 arena.classList.add('is-frozen-state', 'theme-freeze');
@@ -201,19 +222,34 @@
                 arena.classList.remove('is-frozen-state', 'theme-freeze'); 
             }
 
-            // HUD BARS (DYNAMIC SCALING)
-            const maxHp = data.participants.length * 50; 
-            document.getElementById('myHp').style.width = (me.hp / maxHp * 100) + "%";
-            document.getElementById('myMp').style.width = me.mp + "%";
+            // 🟢 HEALTH POOL ALIGNED CALCULATIONS ($200 + $100 PER ADDITIONAL WARRIOR)
+            const activePlayerCount = data.participants.length;
+            const maxHp = 200 + ((activePlayerCount - 1) * 100); 
             
+            document.getElementById('myHp').style.width = (me.hp / maxHp * 100) + "%";
+            document.getElementById('myHpText').innerText = `${me.hp > 0 ? me.hp : 0} / ${maxHp} HP`;
+            
+            // 🟢 MANA BAR FOOTPRINT HUD RENDERERS
+            document.getElementById('myMp').style.width = me.mp + "%";
+            document.getElementById('myMpText').innerText = `${me.mp} / 100 MP`;
+            
+            // DYNAMIC SPELL SLOTS BINDINGS WITH 10s COOLDOWN VERIFICATIONS
             ['heal', 'shield', 'freeze', 'boost'].forEach(p => {
                 const btn = document.getElementById(`p-${p}`);
-                const cost = parseInt(btn.innerText.match(/\d+/)[0]);
-                // Abilities locked if dead, frozen, cooldown active, or out of mana
-                btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !spellUsedThisTurn && !isDead && !isFrozen);
+                const cost = 40; // Standardized equal cost requirement parameters
+                
+                if (cooldowns[p] > 0) {
+                    btn.classList.remove('active');
+                    btn.classList.add('cooldown');
+                    btn.innerText = `${p.toUpperCase()} (${cooldowns[p]}s)`;
+                } else {
+                    btn.classList.remove('cooldown');
+                    btn.innerText = `${p.toUpperCase()} (40)`;
+                    btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !spellUsedThisTurn && !isDead && !isFrozen);
+                }
             });
 
-            // 🏆 RANKINGS SIDEBAR
+            // 🏆 RANKINGS SIDEBAR WITH ENHANCED SCALING
             document.getElementById('warriorList').innerHTML = data.participants.map(p => `
                 <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
                     <div class="d-flex justify-content-between align-items-center mb-1">
@@ -221,7 +257,7 @@
                             ${p.rank ? `<span class="badge bg-primary me-1">#${p.rank}</span>` : ''}
                             ${p.name} ${p.hp <= 0 ? '💀' : ''}
                         </span>
-                        <span class="badge ${p.hp > 20 ? 'bg-success' : 'bg-danger'}">${p.hp > 0 ? p.hp : '0'} HP</span>
+                        <span class="badge ${p.hp > (maxHp * 0.2) ? 'bg-success' : 'bg-danger'}">${p.hp > 0 ? p.hp : '0'} / ${maxHp} HP</span>
                     </div>
                     <div class="progress" style="height:4px; background: rgba(255,255,255,0.1);">
                         <div class="progress-bar bg-danger" style="width:${(p.hp / maxHp * 100)}%"></div>
@@ -231,8 +267,17 @@
         } catch (e) { console.error("Sync Error:", e); }
     }
 
+    // 🟢 DECREMENT INDIVIDUAL COOLDOWNS TICK ENGINE EVERY 1 SECOND
+    setInterval(() => {
+        ['heal', 'shield', 'freeze', 'boost'].forEach(p => {
+            if (cooldowns[p] > 0) {
+                cooldowns[p]--;
+            }
+        });
+    }, 1000);
+
     function renderQ() {
-        if (isDead) return; // Stop rendering for spectators
+        if (isDead) return; 
         feedbackActive = false; 
         spellUsedThisTurn = false; 
         
@@ -304,7 +349,6 @@
             });
             const result = await res.json();
 
-            // Correction Visuals
             if (q.question_type === 'text') {
                 document.getElementById('ansInput').classList.add(result.is_correct ? 'correct' : 'incorrect');
             } else {
@@ -321,7 +365,7 @@
     }
 
     async function castPower(type) {
-        if (spellUsedThisTurn || isDead || isFrozen) return;
+        if (spellUsedThisTurn || isDead || isFrozen || cooldowns[type] > 0) return;
         try {
             const res = await fetch(`${baseURL}/power`, { 
                 method: 'POST', 
@@ -331,13 +375,16 @@
             const data = await res.json();
             if (data.success) {
                 spellUsedThisTurn = true; 
+                
+                // 🟢 TRIGGER 10 SECOND COOLDOWN MATRIX LOGIC
+                cooldowns[type] = 10;
+                
                 if (type === 'heal') document.getElementById('arenaCard').classList.add('theme-heal');
                 sync();
             }
         } catch (e) {}
     }
     
-
     setInterval(sync, 1500); 
     renderQ();
 </script>
