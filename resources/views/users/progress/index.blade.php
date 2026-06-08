@@ -15,7 +15,7 @@
     </div>
 
     {{-- 1. KPI CARDS --}}
-    <div class="row g-4 mb-5">
+    <div class="row g-4 mb-4">
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm rounded-4 text-white h-100 hover-scale" style="background: linear-gradient(135deg, #00C853, #64DD17);">
                 <div class="card-body p-4 text-white">
@@ -58,15 +58,46 @@
                 </div>
             </div>
         </div>
-        
-        {{-- 🟢 ADDED ONLY: RECENT MOMENTUM CARD PLACED AS A NEW COMPONENT --}}
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm rounded-4 text-white h-100 hover-scale" 
-                 style="background: {{ str_contains($momentumStatus, 'Breakthrough') ? 'linear-gradient(135deg, #FF6F00, #FFB300)' : 'linear-gradient(135deg, #607D8B, #455A64)' }};">
-                <div class="card-body p-4 text-white">
-                    <h5 class="opacity-75 mb-1 text-white">Recent Momentum</h5>
-                    <h1 class="fw-bold mb-0 text-white" style="font-size: 1.5rem; line-height: 2.2rem;">{{ $momentumStatus }}</h1>
-                    <small class="opacity-75">Based on last 3 attempts</small>
+    </div>
+
+    {{-- 🟢 RECENT MOMENTUM BANNER DESIGN (Spans across full row length to balance layout) --}}
+    <div class="row mb-5">
+        <div class="col-12">
+            @php
+                $isBreakthrough = str_contains($momentumStatus, 'Breakthrough');
+                $isWarning = str_contains($momentumStatus, 'Attention');
+                
+                if ($isBreakthrough) {
+                    $bannerBg = 'linear-gradient(135deg, #FFF3E0, #FFE082)';
+                    $bannerBorder = '#FFB300';
+                    $accentColor = '#E65100';
+                    $icon = 'fa-rocket';
+                } elseif ($isWarning) {
+                    $bannerBg = 'linear-gradient(135deg, #FFEBEE, #FFCDD2)';
+                    $bannerBorder = '#EF5350';
+                    $accentColor = '#C62828';
+                    $icon = 'fa-exclamation-triangle';
+                } else {
+                    $bannerBg = 'linear-gradient(135deg, #ECEFF1, #CFD8DC)';
+                    $bannerBorder = '#B0BEC5';
+                    $accentColor = '#37474F';
+                    $icon = 'fa-chart-line';
+                }
+            @endphp
+            <div class="card border shadow-sm rounded-4 position-relative overflow-hidden" style="background: {{ $bannerBg }}; border-color: {{ $bannerBorder }} !important;">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-circle bg-white shadow-sm me-3 text-center d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas {{ $icon }} fa-xl" style="color: {{ $accentColor }};"></i>
+                        </div>
+                        <div>
+                            <span class="text-uppercase fw-bold tracking-wider small opacity-75" style="color: {{ $accentColor }}; letter-spacing: 1px;">Recent Pace Radar</span>
+                            <h4 class="fw-bold mb-0 text-dark mt-1">Current Velocity Status: <span style="color: {{ $accentColor }};">{{ $momentumStatus }}</span></h4>
+                        </div>
+                    </div>
+                    <div class="text-md-end bg-white bg-opacity-50 py-2 px-3 rounded-pill border border-white">
+                        <small class="fw-semibold text-dark"><i class="fas fa-history me-1 text-secondary"></i> Dynamic evaluation calculated strictly from your last 3 attempts</small>
+                    </div>
                 </div>
             </div>
         </div>
