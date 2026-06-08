@@ -116,148 +116,44 @@
         </div>
     </div>
 
-    {{-- 2. ANALYTICS ROW WITH ROADMAP CONSOLE & PIE CHART --}}
+    {{-- 2. ANALYTICS ROW WITH PIE CHART --}}
     <div class="row g-4 mb-5">
-        
-        {{-- LEFT COLUMN: PROGRESS GRIDS + GAME EXPANSION ROADMAP (WIDTH: 7) --}}
-        <div class="col-lg-7">
+        <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0"><i class="fas fa-scroll text-success me-2"></i>Kurikulum Modul Al-Falah</h5>
-                        <small class="text-muted">Pantau tahap kefahaman ilmu syariat anda</small>
-                    </div>
-                    {{-- GAME VIEW TOGGLE BUTTON --}}
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" id="toggleMapModeBtn" onclick="toggleMapMode()">
-                        <i class="fas fa-map-marked-alt me-1"></i> Lihat Peta Laluan
-                    </button>
-                </div>
-                
-                <div class="card-body px-4 pb-4 pt-2">
-                    
-                    {{-- MODE A: COMPACT PROGRESS BARS (DEFAULT VIEW) --}}
-                    <div id="defaultProgressView" class="row g-3">
-                        @foreach($subjectProgress as $sub)
-                        <div class="col-md-6">
-                            <div class="card border border-light shadow-sm rounded-3 h-100" style="background: rgba(255,255,255,0.85);">
-                                <div class="card-body p-3 text-start">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <div class="d-flex align-items-center" style="max-width: 65%;">
-                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 36px; height: 36px; flex-shrink:0;">
-                                                <i class="fas {{ $sub->icon }} fa-md" style="color: {{ $sub->color }};"></i>
-                                            </div>
-                                            <h6 class="fw-bold text-dark mb-0 text-truncate" title="{{ $sub->name }}">{{ $sub->name }}</h6>
-                                        </div>
-                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2 py-1 small fw-bold" style="font-size: 0.6rem; letter-spacing: 0.5px;">
-                                            {{ $sub->rank }}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="d-flex justify-content-between align-items-end mb-1 mt-3 small text-muted">
-                                        <span>Tahap Ilmu</span>
-                                        <span class="fw-bold text-dark">{{ $sub->avg_score }}%</span>
-                                    </div>
-                                    
-                                    <div class="progress rounded-pill" style="height: 8px; background-color: rgba(0,0,0,0.04);">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated rounded-pill" 
-                                             role="progressbar" 
-                                             style="width: {{ max(5, $sub->avg_score) }}%; background-color: {{ $sub->color }};"
-                                             aria-valuenow="{{ $sub->avg_score }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                    <div class="text-end mt-2">
-                                        <small class="text-muted" style="font-size: 0.65rem;">Latihan: {{ $sub->attempts_count }} kali</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-
-                    {{-- MODE B: INTERACTIVE EXPANDED QUEST ROADMAP TREE VIEW (HIDDEN BY DEFAULT) --}}
-                    <div id="expandedRoadmapView" class="roadmap-tree-container d-none py-3">
-                        <div class="roadmap-spine"></div>
-                        
-                        @foreach($subjectProgress as $index => $sub)
-                        <div class="roadmap-node-row d-flex align-items-center mb-4 {{ $index % 2 == 0 ? 'flex-row' : 'flex-row-reverse' }}">
-                            
-                            {{-- Checkpoint Bubble Node --}}
-                            <div class="roadmap-node-bubble text-white shadow d-flex align-items-center justify-content-center rounded-circle" 
-                                 style="background: linear-gradient(135deg, {{ $sub->color }}, #333); z-index: 10; width: 60px; height: 60px; border: 4px solid #fff;">
-                                <i class="fas {{ $sub->icon }} fa-lg"></i>
-                            </div>
-
-                            {{-- Mission Description Card --}}
-                            <div class="card border-0 shadow-sm mx-3 flex-grow-1 text-start rounded-4" style="max-width: 75%; background: #fdfdfd; border-left: 5px solid {{ $sub->color }} !important;">
-                                <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <h6 class="fw-bold text-dark mb-0">Misi {{ $index + 1 }}: {{ $sub->name }}</h6>
-                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2" style="font-size: 0.6rem;">
-                                            {{ $sub->rank }}
-                                        </span>
-                                    </div>
-                                    <div class="progress rounded-pill mb-1" style="height: 6px;">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ $sub->avg_score }}%; background-color: {{ $sub->color }};"></div>
-                                    </div>
-                                    <div class="d-flex justify-content-between small text-muted" style="font-size: 0.75rem;">
-                                        <span>Status Kelayakan Misi</span>
-                                        <span class="fw-bold text-dark">{{ $sub->avg_score }}% Kuasai</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                        @endforeach
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        {{-- RIGHT COLUMN: PIE CHART AND ACCOUNT STATS STACK (WIDTH: 5) --}}
-        <div class="col-lg-5">
-            <div class="d-flex flex-column h-100">
-                
-                {{-- LECTURER PIE CHART BOX --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4 flex-grow-1">
-                    <div class="card-body p-4">
-                        <div class="text-start mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 text-start">
+                        <div>
                             <h5 class="fw-bold text-dark mb-0">Subject-wise Performance</h5>
                             <small class="text-muted">Real data analysis</small>
                         </div>
-                        <div style="height: 240px; position: relative;">
-                            <canvas id="performancePieChart"></canvas>
-                        </div>
+                    </div>
+                    <div style="height: 400px; position: relative;">
+                        <canvas id="performancePieChart"></canvas>
                     </div>
                 </div>
-
-                {{-- LECTURER STUDY SUMMARY BOX --}}
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4 text-start">
-                        <h5 class="fw-bold text-dark mb-3">Study Summary</h5>
-                        <div class="row align-items-center g-0">
-                            <div class="col-4 border-end">
-                                <h1 class="fw-bold mb-0 text-dark" style="font-size: 2.8rem;">{{ $totalQuizzes ?? 0 }}</h1>
-                                <p class="text-muted small mb-0">Quizzes Completed</p>
-                            </div>
-                            <div class="col-8 ps-3">
-                                <div class="d-flex justify-content-between align-items-end mb-1">
-                                    <h3 class="fw-bold mb-0 text-dark">{{ round($averageScore ?? 0, 1) }}%</h3>
-                                    <small class="text-muted">Avg Score</small>
-                                </div>
-                                <div class="progress rounded-pill" style="height: 10px;">
-                                    <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {{ $averageScore ?? 0 }}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
 
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4 text-start">
+                    <h5 class="fw-bold text-dark mb-4">Study Summary</h5>
+                    <div class="mb-4">
+                        <h1 class="fw-bold mb-0 text-dark" style="font-size: 3rem;">{{ $totalQuizzes ?? 0 }}</h1>
+                        <p class="text-muted">Quizzes Completed</p>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-end mb-1">
+                            <h2 class="fw-bold mb-0 text-dark">{{ round($averageScore ?? 0, 1) }}%</h2>
+                            <small class="text-muted">Avg Score</small>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 10px;">
+                            <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {{ $averageScore ?? 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- 3. GOOGLE CALENDAR --}}
@@ -266,9 +162,9 @@
             <h5 class="fw-bold text-dark"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
         </div>
         <div class="card-body p-4">
-            <div style="width: 100%; height: 450px; overflow: hidden; border-radius: 12px; border: 1px solid #eee;">
+            <div style="width: 100%; height: 600px; overflow: hidden; border-radius: 12px; border: 1px solid #eee;">
                 <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FKuala_Lumpur&src=ZW4ubWFsYXlzaWEjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%230B8043&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0" 
-                    style="border:0" width="100%" height="450" frameborder="0" scrolling="no">
+                    style="border:0" width="100%" height="600" frameborder="0" scrolling="no">
                 </iframe>
             </div>
         </div>
@@ -308,38 +204,11 @@
     .prayer-list-card { width: 220px; animation: slideUp 0.3s ease-out; }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .text-start { text-align: left !important; }
-
-    /* 🎮 ADVANCED ROADMAP STYLING MODULE */
-    .roadmap-tree-container { position: relative; max-height: 480px; overflow-y: auto; overflow-x: hidden; padding-left: 10px; padding-right: 10px; }
-    .roadmap-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #e0e0e0; transform: translateX(-50%); z-index: 1; }
-    @media (max-width: 768px) {
-        .roadmap-spine { left: 34px; transform: none; }
-        .roadmap-node-row { flex-direction: row !important; }
-    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // 🟢 INTERACTIVE ROADMAP MODE TOGGLE CONTROLLER
-    function toggleMapMode() {
-        const pView = document.getElementById('defaultProgressView');
-        const rView = document.getElementById('expandedRoadmapView');
-        const btn = document.getElementById('toggleMapModeBtn');
-
-        if (rView.classList.contains('d-none')) {
-            pView.classList.add('d-none');
-            rView.classList.remove('d-none');
-            btn.innerHTML = '<i class="fas fa-th me-1"></i> Lihat Senarai Ringkas';
-            btn.classList.replace('btn-outline-primary', 'btn-primary');
-        } else {
-            pView.classList.remove('d-none');
-            rView.classList.add('d-none');
-            btn.innerHTML = '<i class="fas fa-map-marked-alt me-1"></i> Lihat Peta Laluan';
-            btn.classList.replace('btn-primary', 'btn-outline-primary');
-        }
-    }
-
     // ✅ PIE CHART LOGIC
     const pieCtx = document.getElementById('performancePieChart').getContext('2d');
     new Chart(pieCtx, {
@@ -348,7 +217,7 @@
             labels: {!! json_encode(array_keys($subjectPerformance)) !!},
             datasets: [{
                 data: {!! json_encode(array_values($subjectPerformance)) !!},
-                backgroundColor: ['#2962FF', '#F59E0B', '#10B981', '#D93025', '#8B5CF6', '#FF6B6B'],
+                backgroundColor: ['#2962FF', '#F59E0B', '#10B981', '#D93025', '#8B5CF6'],
                 borderWidth: 2,
                 borderColor: '#ffffff'
             }]
@@ -357,22 +226,12 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } }
+                legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } }
             }
         }
     });
 
-    // ✅ LIVE SYSTEM CLOCK ENGINES
-    function initLiveClock() {
-        function updateClock() {
-            const timeString = moment().format('HH:mm:ss');
-            const element = document.getElementById('dashCurrentTime');
-            if (element) element.innerText = timeString;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-    }
-
+    // ✅ Map coordinates to friendly location labels to match profile view names
     const zoneLabels = {
         '2.2775,102.1466': 'Melaka (Sg. Udang MRSM)',
         '3.1319,101.6841': 'Kuala Lumpur / Putrajaya',
@@ -391,20 +250,41 @@
         '5.2831,115.2443': 'Labuan'
     };
 
+    // ✅ LIVE DASHBOARD CLOCK ENGINES
+    function initLiveClock() {
+        function updateClock() {
+            const timeString = moment().format('HH:mm:ss');
+            const element = document.getElementById('dashCurrentTime');
+            if (element) element.innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    }
+
+    // ✅ CALIBRATED PRAYER WIDGET FETCH ENGINES (SYNCED TO PROFILE LOCALSTORAGE)
     function fetchPrayerTimes() {
         const savedLoc = localStorage.getItem('prayerLoc') || '2.2775,102.1466';
         const [lat, long] = savedLoc.split(',');
         
+        // Dynamic location naming verification check
         const locationName = zoneLabels[savedLoc] || 'Melaka (Sg. Udang MRSM)';
         document.getElementById('activeZoneDisplay').innerText = locationName;
         document.getElementById('widgetZoneHeader').innerText = `Solat: ${locationName.split(' ')[0]}`;
 
+        // JAKIM Calibrated Query Params API pipeline mapping
         const apiUrl = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=3&fajrAngle=20&ishaAngle=18&tune=0,3,0,0,0,0,0,0,0`;
 
         fetch(apiUrl).then(res => res.json()).then(data => {
             const t = data.data.timings;
-            const prayers = { "Subuh": t.Fajr, "Zohor": t.Dhuhr, "Asar": t.Asr, "Maghrib": t.Maghrib, "Isyak": t.Isha };
+            const prayers = {
+                "Subuh": t.Fajr,
+                "Zohor": t.Dhuhr,
+                "Asar": t.Asr,
+                "Maghrib": t.Maghrib,
+                "Isyak": t.Isha
+            };
 
+            // Inject current active timetable indices to floating cards
             document.getElementById('time-Fajr').innerText = t.Fajr;
             document.getElementById('time-Dhuhr').innerText = t.Dhuhr;
             document.getElementById('time-Asr').innerText = t.Asr;
@@ -412,6 +292,7 @@
             document.getElementById('time-Isha').innerText = t.Isha;
 
             updateNextPrayer(prayers);
+            
             if (window.dashboardPrayerInterval) clearInterval(window.dashboardPrayerInterval);
             window.dashboardPrayerInterval = setInterval(() => updateNextPrayer(prayers), 1000);
         }).catch(err => console.error("Error reading regional JAKIM timeline coordinates:", err));
@@ -424,7 +305,11 @@
 
         for (let name in prayers) {
             let time = moment(prayers[name], "HH:mm");
-            if (time.isAfter(now)) { nextName = name; nextTime = time; break; }
+            if (time.isAfter(now)) {
+                nextName = name;
+                nextTime = time;
+                break;
+            }
         }
 
         if (!nextTime) {
@@ -432,12 +317,15 @@
             nextTime = moment(prayers["Subuh"], "HH:mm").add(1, 'days');
         }
 
+        // Update floating overlay action button components
         document.getElementById('nextPrayerName').innerText = nextName;
         document.getElementById('nextPrayerTime').innerText = nextTime.format("HH:mm");
     }
 
+    // Trigger engine startup execution components
     initLiveClock();
     fetchPrayerTimes();
+    
     function togglePrayerList() { document.getElementById('prayerList').classList.toggle('d-none'); }
 </script>
 @endsection
