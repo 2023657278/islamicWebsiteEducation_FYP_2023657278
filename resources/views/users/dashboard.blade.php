@@ -278,7 +278,6 @@
             <i class="far fa-clock fa-lg"></i>
         </div>
     </div>
-</div>
 
 </div>
 
