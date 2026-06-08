@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    {{-- FULL MENU CARDS --}}
+    {{-- 1. FULL MENU CARDS --}}
     <div class="row g-4 mb-5">
         <div class="col-md-4">
             <a href="{{ route('student.progress.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
@@ -116,84 +116,73 @@
         </div>
     </div>
 
-    {{-- MIDDLE AREA LAYOUT GRID ROW --}}
+    {{-- MIDDLE CONTAINER BLOCK --}}
     <div class="row g-4 mb-5">
         
-        {{-- AL-FALAH CURRICULUM PANEL (CONTAINS ISOLATED ROADMAP AREA) --}}
+        {{-- AL-FALAH CURRICULUM CORE BOX (HOLDS INTEGRATED ROADMAP TREE DIRECTLY) --}}
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative" style="overflow: hidden;">
-                <div id="innerRoadmapBgDesign" class="roadmap-grid-bg d-none"></div>
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative" style="overflow: hidden; background: #ffffff;">
+                
+                {{-- RADIAL BACKGROUND ART GRID DESIGN --}}
+                <div class="roadmap-grid-bg"></div>
 
-                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start position-relative" style="z-index: 10;">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0" id="curriculumPanelTitle">Al-Falah Module Curriculum</h5>
-                        <small class="text-muted" id="curriculumPanelSubtitle">Track your performance mapping logs across 6 core Islamic study fields.</small>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold d-none" id="closeRoadmapViewBtn" onclick="hideSubjectRoadmap()">
-                        <i class="fas fa-arrow-left me-1"></i> Back to List
-                    </button>
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 text-start position-relative" style="z-index: 10;">
+                    <span class="badge rounded-pill bg-primary text-uppercase px-2 py-1 mb-1 shadow-sm" style="font-size:0.6rem; letter-spacing: 0.5px;">Solo Training Center</span>
+                    <h5 class="fw-bold text-dark mb-0">Al-Falah Module Solo Roadmap</h5>
+                    <small class="text-muted">Winding progress tracking map of active topics. Nodes are locked for security validation logs.</small>
                 </div>
 
                 <div class="card-body px-4 pb-4 pt-2 position-relative" style="z-index: 5;">
                     
-                    {{-- VIEW A: STANDARD SYSTEM CARD LIST --}}
-                    <div id="subjectGridListView" class="row g-3">
-                        @foreach($subjectProgress as $sub)
-                        <div class="col-md-6">
-                            {{-- 🟢 FIXED: Single quotes escape syntax inside dataset boundaries prevents script compilation drops --}}
-                            <div class="card border border-light shadow-sm rounded-3 h-100 island-trigger-card" 
-                                 data-name="{{ $sub->name }}"
-                                 data-color="{{ $sub->color }}"
-                                 data-quizzes='{{ json_encode($sub->quizzes) }}'
-                                 style="background: #ffffff; cursor: pointer; transition: transform 0.2s;">
-                                <div class="card-body p-3 text-start">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <div class="d-flex align-items-center" style="max-width: 65%;">
-                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 36px; height: 36px; flex-shrink:0;">
-                                                <i class="fas {{ $sub->icon }} fa-md" style="color: {{ $sub->color }};"></i>
-                                            </div>
-                                            <h6 class="fw-bold text-dark mb-0 text-truncate">{{ $sub->name }}</h6>
-                                        </div>
-                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2 py-1 small fw-bold" style="font-size: 0.6rem;">
-                                            {{ $sub->rank }}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="d-flex justify-content-between align-items-end mb-1 mt-3 small text-muted">
-                                        <span>Mastery Score</span>
-                                        <span class="fw-bold text-dark">{{ $sub->avg_score }}%</span>
-                                    </div>
-                                    
-                                    <div class="progress rounded-pill" style="height: 8px; background-color: rgba(0,0,0,0.04);">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated rounded-pill" 
-                                             role="progressbar" 
-                                             style="width: {{ max(5, $sub->avg_score) }}%; background-color: {{ $sub->color }};"
-                                             aria-valuenow="{{ $sub->avg_score }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="d-flex justify-content-between align-items-center mt-2">
-                                        <small class="text-muted" style="font-size: 0.65rem;">Attempts: {{ $sub->attempts_count }} times</small>
-                                        <span class="text-primary font-weight-bold" style="font-size: 0.7rem;"><i class="fas fa-gamepad me-1"></i> Open Roadmap</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
+                    {{-- 🎮 SCROLLABLE INNER CANDY CRUSH ROADMAP (NON-CLICKABLE STATIC PATHWAY) --}}
+                    <div class="roadmap-scroll-wrapper">
+                        <div class="candy-crush-spine-box" id="candyCrushSpineBox">
+                            
+                            <svg class="spine-svg-layer">
+                                <path id="roadmapSpineVector" d="" fill="none" stroke="#e3e6f0" stroke-width="6" stroke-dasharray="10,10" />
+                            </svg>
+                            
+                            {{-- Flatten and map all quiz topics sequentially across the snaking tree grid track --}}
+                            @php $nodeCounter = 0; @endphp
+                            @foreach($subjectProgress as $sub)
+                                @foreach($sub->quizzes as $quiz)
+                                    @php 
+                                        $alignmentIndex = $nodeCounter % 4; 
+                                        $nodeBgColor = $quiz['is_answered'] ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #EF4444, #DC2626)';
+                                        $shadowColor = $quiz['is_answered'] ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)';
+                                        $iconSymbol = $quiz['is_answered'] ? 'fa-check' : 'fa-lock';
+                                        $statusText = $quiz['is_answered'] ? 'COMPLETED' : 'LOCKED';
+                                        $nodeCounter++;
+                                    @endphp
 
-                    {{-- VIEW B: SCROLLABLE CANDY CRUSH WORKSPACE AREA --}}
-                    <div id="subjectRoadmapTrackView" class="d-none py-4 position-relative">
-                        <div class="roadmap-scroll-wrapper">
-                            <div class="candy-crush-spine-box" id="candyCrushSpineBox">
-                                <svg class="spine-svg-layer">
-                                    <path id="roadmapSpineVector" d="" fill="none" stroke="#e3e6f0" stroke-width="6" stroke-dasharray="10,10" />
-                                </svg>
-                                
-                                <div id="dynamicNodesTargetContainer"></div>
-                            </div>
+                                    <div class="candy-node-row node-pos-{{ $alignmentIndex }}">
+                                        {{-- 🟢 FIXED: Removed any href or click events to make the nodes completely static --}}
+                                        <div class="candy-checkpoint-bubble shadow text-white d-node-bubble" 
+                                             style="background: {{ $nodeBgColor }}; box-shadow: 0 0 15px {{ $shadowColor }}; cursor: default;">
+                                            
+                                            <i class="fas {{ $iconSymbol }}"></i>
+                                            <div class="checkpoint-tag" style="background: {{ $quiz['is_answered'] ? '#059669' : '#DC2626' }}">
+                                                {{ $sub->name }}
+                                            </div>
+                                            
+                                            {{-- HOVER DESCRIPTIVE POPUP CHIPS --}}
+                                            <div class="checkpoint-popup-card card border-0 shadow p-2 text-start">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="badge bg-secondary font-weight-bold" style="font-size:0.55rem;">Tier: {{ $quiz['difficulty'] }}</span>
+                                                    <span class="badge {{ $quiz['is_answered'] ? 'bg-success' : 'bg-danger' }}" style="font-size:0.55rem;">{{ $statusText }}</span>
+                                                </div>
+                                                <h6 class="fw-bold text-dark mb-1" style="font-size: 0.75rem;">{{ $quiz['topic'] }}</h6>
+                                                <p class="text-muted mb-0 small" style="font-size: 0.65rem;">Title: {{ $quiz['title'] }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endforeach
+
+                            @if($nodeCounter === 0)
+                                <div class="text-center text-muted py-5" style="cursor: default;">No quiz records assigned in the database repository pool.</div>
+                            @endif
+
                         </div>
                     </div>
 
@@ -201,9 +190,10 @@
             </div>
         </div>
 
-        {{-- PIE CHART AND PERFORMANCE TRACKER SYSTEM DECK CARD BOXES (WIDTH: 4) --}}
+        {{-- PIE CHART AND PERFORMANCE RATIO PANEL BOXES (WIDTH: 4) --}}
         <div class="col-lg-4">
             <div class="d-flex flex-column h-100">
+                
                 <div class="card border-0 shadow-sm rounded-4 mb-4 flex-grow-1">
                     <div class="card-body p-4">
                         <div class="text-start mb-3">
@@ -241,7 +231,7 @@
 
     </div>
 
-    {{-- GOOGLE CALENDAR AT bottom ROW --}}
+    {{-- GOOGLE CALENDAR AT bottom LINE FRAME --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5">
         <div class="card-header bg-white border-0 pt-4 px-4 text-start">
             <h5 class="fw-bold text-dark mb-0"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
@@ -260,7 +250,6 @@
 <style>
     .hover-scale { transition: transform 0.2s; }
     .hover-scale:hover { transform: translateY(-5px); }
-    .island-trigger-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.08) !important; }
     .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; display: flex; flex-direction: column; align-items: end; }
     .prayer-icon { width: 60px; height: 60px; }
     .prayer-list-card { width: 220px; }
@@ -273,8 +262,9 @@
         background-size: 20px 20px; opacity: 0.9; pointer-events: none; z-index: 1;
     }
 
-    .roadmap-scroll-wrapper { max-height: 480px; overflow-y: auto; overflow-x: hidden; padding: 30px 10px; scroll-behavior: smooth; }
-    .candy-crush-spine-box { position: relative; width: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 70px; }
+    /* INDEPENDENT ROADMAP AREA VERTICAL SCROLL WRAPPER GRID LIMITATION */
+    .roadmap-scroll-wrapper { max-height: 490px; overflow-y: auto; overflow-x: hidden; padding: 25px 10px; scroll-behavior: smooth; }
+    .candy-crush-spine-box { position: relative; width: 100%; max-width: 430px; margin: 0 auto; display: flex; flex-direction: column; gap: 75px; }
     .spine-svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
     
     .candy-node-row { display: flex; width: 100%; position: relative; z-index: 10; }
@@ -284,11 +274,11 @@
     .node-pos-3 { justify-content: center; }
 
     .candy-checkpoint-bubble {
-        width: 60px; height: 60px; border-radius: 50%; border: 4px solid #fff;
+        width: 58px; height: 58px; border-radius: 50%; border: 4px solid #fff;
         display: flex; align-items: center; justify-content: center; position: relative;
-        transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; z-index: 5;
+        transition: transform 0.2s ease; z-index: 5;
     }
-    .candy-checkpoint-bubble:hover { transform: scale(1.15); }
+    .candy-checkpoint-bubble:hover { transform: scale(1.1); }
     
     .checkpoint-tag {
         position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
@@ -297,7 +287,7 @@
 
     .checkpoint-popup-card {
         position: absolute; top: -75px; left: 50%; transform: translateX(-50%) scale(0.9);
-        width: 200px; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 200; border-radius: 12px;
+        width: 210px; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 200; border-radius: 12px; background: #fff;
     }
     .candy-checkpoint-bubble:hover .checkpoint-popup-card { opacity: 1; transform: translateX(-50%) scale(1); }
 </style>
@@ -305,83 +295,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // 🟢 SECURE EVENT BINDING ENGINE AT DOM LEVEL PREVENTS INLINE CRASHES
+    // 🟢 SECURE VECTOR GENERATION ROUTINE BOUNDED ON DOM INITIALIZATION
     document.addEventListener("DOMContentLoaded", function() {
-        const cards = document.querySelectorAll('.island-trigger-card');
-        cards.forEach(card => {
-            card.addEventListener('click', function() {
-                const sName = this.getAttribute('data-name');
-                const rawQuizzes = this.getAttribute('data-quizzes');
-                let parsedQuizzes = [];
-                try {
-                    parsedQuizzes = JSON.parse(rawQuizzes);
-                } catch(e) {
-                    console.error("Payload decoding failure:", e);
-                }
-                showSubjectRoadmap(sName, parsedQuizzes);
-            });
-        });
+        calculateIslandSpineVectors();
+        
+        // Redraw vector alignments if viewport undergoes desktop layout scaling shifts
+        window.addEventListener('resize', calculateIslandSpineVectors);
     });
-
-    function showSubjectRoadmap(subjectName, quizzes) {
-        document.getElementById('curriculumPanelTitle').innerText = `${subjectName} Roadmap`;
-        document.getElementById('curriculumPanelSubtitle').innerText = `Progress path for quiz topics inside this module.`;
-        
-        document.getElementById('subjectGridListView').classList.add('d-none');
-        document.getElementById('subjectRoadmapTrackView').classList.remove('d-none');
-        document.getElementById('closeRoadmapViewBtn').classList.remove('d-none');
-        document.getElementById('innerRoadmapBgDesign').classList.remove('d-none');
-
-        const targetContainer = document.getElementById('dynamicNodesTargetContainer');
-        targetContainer.innerHTML = ''; 
-
-        if (!quizzes || quizzes.length === 0) {
-            targetContainer.innerHTML = '<div class="text-center text-muted py-5">No topics configured for this module yet.</div>';
-            document.getElementById('roadmapSpineVector').setAttribute('d', '');
-            return;
-        }
-
-        quizzes.forEach((q, index) => {
-            const alignmentIndex = index % 4; 
-            const nodeBgColor = q.is_answered ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #EF4444, #DC2626)';
-            const shadowColor = q.is_answered ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)';
-            const iconSymbol = q.is_answered ? 'fa-check' : 'fa-play';
-            const statusLabel = q.is_answered ? 'COMPLETED' : 'UNANSWERED';
-
-            const htmlNode = `
-                <div class="candy-node-row node-pos-${alignmentIndex}">
-                    <div class="candy-checkpoint-bubble shadow text-white d-node-bubble" 
-                         id="nodeBtnTask_${index}" 
-                         onclick="window.location.href='/student/quizzes/${q.id}/take'"
-                         style="background: ${nodeBgColor}; box-shadow: 0 0 15px ${shadowColor};">
-                        <i class="fas ${iconSymbol}"></i>
-                        <div class="checkpoint-tag" style="background: ${q.is_answered ? '#059669' : '#DC2626'}">Topic ${index + 1}</div>
-                        
-                        <div class="checkpoint-popup-card card border-0 shadow p-2 text-start">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-secondary font-weight-bold" style="font-size:0.55rem;">Tier: ${q.difficulty}</span>
-                                <span class="badge ${q.is_answered ? 'bg-success' : 'bg-danger'}" style="font-size:0.55rem;">${statusLabel}</span>
-                            </div>
-                            <h6 class="fw-bold text-dark mb-1" style="font-size: 0.75rem;">${q.topic}</h6>
-                            <p class="text-muted mb-0 small" style="font-size: 0.65rem;">Title: ${q.title}</p>
-                        </div>
-                    </div>
-                </div>`;
-            targetContainer.insertAdjacentHTML('beforeend', htmlNode);
-        });
-
-        setTimeout(calculateIslandSpineVectors, 100);
-    }
-
-    function hideSubjectRoadmap() {
-        document.getElementById('curriculumPanelTitle').innerText = 'Al-Falah Module Curriculum';
-        document.getElementById('curriculumPanelSubtitle').innerText = 'Track your performance mapping logs across 6 core Islamic study fields.';
-        
-        document.getElementById('subjectGridListView').classList.remove('d-none');
-        document.getElementById('subjectRoadmapTrackView').classList.add('d-none');
-        document.getElementById('closeRoadmapViewBtn').classList.add('d-none');
-        document.getElementById('innerRoadmapBgDesign').classList.add('d-none');
-    }
 
     function calculateIslandSpineVectors() {
         const bubbles = document.querySelectorAll('.d-node-bubble');
@@ -409,7 +329,7 @@
         line.setAttribute('d', pathString);
     }
 
-    // ✅ PIE CHART LOGIC
+    // ✅ PIE CHART METRIC LOGIC - RENDER CHANNELS STABILIZED
     const pieCtx = document.getElementById('performancePieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
@@ -442,7 +362,6 @@
         updateClock();
     }
 
-    // ✅ FIXED CALIBRATED GEOLOCATION SYNC FALLBACK TARGET
     function fetchPrayerTimes() {
         const apiUrl = `https://api.aladhan.com/v1/timings?latitude=2.2775&longitude=102.1466&method=3&fajrAngle=20&ishaAngle=18`;
         fetch(apiUrl).then(res => res.json()).then(data => {
@@ -453,17 +372,9 @@
             document.getElementById('time-Maghrib').innerText = t.Maghrib;
             document.getElementById('time-Isha').innerText = t.Isha;
             
-            // Forces label text to override status strings cleanly
-            const zoneDisplay = document.getElementById('activeZoneDisplay');
-            if (zoneDisplay) {
-                zoneDisplay.innerText = "Melaka (Sg. Udang MRSM)";
-            }
             document.getElementById('nextPrayerName').innerText = "Subuh";
             document.getElementById('nextPrayerTime').innerText = t.Fajr;
-        }).catch(err => {
-            console.error("API Fetch Error:", err);
-            document.getElementById('activeZoneDisplay').innerText = "Melaka (Sg. Udang MRSM)";
-        });
+        }).catch(err => console.error("Network interface sync exception:", err));
     }
 
     initLiveClock();
