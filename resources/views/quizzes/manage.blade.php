@@ -72,7 +72,7 @@
                                 </div>
                             </div>
 
-                            <button type="button" class="btn btn-sm btn-info mt-2" id="addOptionBtn">
+                            <button type="button" class="btn btn-info btn-sm mt-2" id="addOptionBtn">
                                 <i class="fas fa-plus"></i> Add Another Option
                             </button>
                         </div>
@@ -106,16 +106,10 @@
                                 <span class="badge badge-secondary">{{ ucfirst($q->question_type) }}</span>
                                 <span class="badge badge-warning text-dark">{{ $q->points }} pts</span>
                                 
-                                {{-- 🟢 PROPER COMPLIANT ESCAPING MAPS USING OUTER SINGLE QUOTES --}}
-                                <button type="button" 
-                                        class="btn btn-sm text-primary border-0 bg-transparent p-0 ml-2 edit-question-btn"
-                                        data-id="{{ $q->id }}"
-                                        data-text="{{ addslashes($q->question_text) }}"
-                                        data-points="{{ $q->points }}"
-                                        data-type="{{ $q->question_type }}"
-                                        data-options='{!! json_encode($q->options) !!}'>
+                                {{-- 🟢 MOVED TO DIRECT HYPERLINK REFACTOR --}}
+                                <a href="{{ route('questions.edit', $q->id) }}" class="btn btn-sm text-primary p-0 ml-2">
                                     <i class="fas fa-pen"></i>
-                                </button>
+                                </a>
 
                                 <form action="{{ route('questions.destroy', $q->id) }}" method="POST" class="d-inline ml-2">
                                     @csrf @method('DELETE')
@@ -149,64 +143,6 @@
     </div>
 </div>
 
-{{-- BOOTSTRAP EDIT QUESTION MODAL BOX OVERLAY --}}
-<div class="modal fade" id="editQuestionModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-md" role="document">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title font-weight-bold"><i class="fas fa-pen mr-2"></i>Edit Question</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="editQuestionForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-body">
-                    <div class="form-group mb-3">
-                        <label class="small font-weight-bold text-uppercase">Question Text</label>
-                        <textarea name="question_text" id="edit_question_text" class="form-control" rows="2" required></textarea>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="small font-weight-bold text-uppercase">Points</label>
-                            <input type="number" name="points" id="edit_points" class="form-control" min="1">
-                        </div>
-                        <div class="col-md-8">
-                            <label class="small font-weight-bold text-uppercase">Question Type</label>
-                            <select name="question_type" id="editTypeSelector" class="form-control">
-                                <option value="single">Single Choice (Radio)</option>
-                                <option value="multiple">Multiple Correct (Checkbox)</option>
-                                <option value="text">Fill in the Blanks</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div id="editChoicesSection">
-                        <label class="small font-weight-bold text-uppercase mb-2">Options</label>
-                        <div id="editOptionsContainer"></div>
-                        <button type="button" class="btn btn-sm btn-info mt-2" id="editAddOptionBtn">
-                            <i class="fas fa-plus"></i> Add Another Option
-                        </button>
-                    </div>
-
-                    <div id="editTextSection" style="display: none;">
-                        <label class="small font-weight-bold text-uppercase mb-2">Correct Answer</label>
-                        <input type="text" name="text_answer" id="edit_text_answer" class="form-control">
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Update Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const typeSelector = document.getElementById('typeSelector');
@@ -216,23 +152,20 @@
         const addOptionBtn = document.getElementById('addOptionBtn');
 
         typeSelector.addEventListener('change', function() {
-            handleTypeShift(this.value, choicesSection, textSection);
-        });
-
-        function handleTypeShift(type, choiceBlock, textBlock) {
+            let type = this.value;
             if (type === 'text') {
-                choiceBlock.style.display = 'none';
-                textBlock.style.display = 'block';
-                toggleInputs(choiceBlock, true); 
-                toggleInputs(textBlock, false);
+                choicesSection.style.display = 'none';
+                textSection.style.display = 'block';
+                toggleInputs(choicesSection, true); 
+                toggleInputs(textSection, false);
             } else {
-                choiceBlock.style.display = 'block';
-                textBlock.style.display = 'none';
-                toggleInputs(choiceBlock, false);
-                toggleInputs(textBlock, true);
+                choicesSection.style.display = 'block';
+                textSection.style.display = 'none';
+                toggleInputs(choicesSection, false);
+                toggleInputs(textSection, true);
 
-                let radios = choiceBlock.querySelectorAll('.type-radio');
-                let checks = choiceBlock.querySelectorAll('.type-check');
+                let radios = document.querySelectorAll('.type-radio');
+                let checks = document.querySelectorAll('.type-check');
                 
                 if (type === 'multiple') {
                     radios.forEach(el => el.style.display = 'none');
@@ -242,7 +175,7 @@
                     checks.forEach(el => el.style.display = 'none');
                 }
             }
-        }
+        });
 
         function toggleInputs(section, disable) {
             section.querySelectorAll('input, textarea, select').forEach(el => el.disabled = disable);
@@ -270,114 +203,19 @@
             if (e.target.closest('.remove-btn')) {
                 if (optionsContainer.children.length > 1) {
                     e.target.closest('.option-row').remove();
-                    reindexOptions(optionsContainer);
+                    reindexOptions();
                 }
             }
         });
 
-        function reindexOptions(container) {
-            let rows = container.querySelectorAll('.option-row');
+        function reindexOptions() {
+            let rows = optionsContainer.querySelectorAll('.option-row');
             rows.forEach((row, index) => {
-                let r = row.querySelector('.type-radio');
-                let c = row.querySelector('.type-check');
-                if(r) r.value = index;
-                if(c) c.value = index;
+                row.querySelector('.type-radio').value = index;
+                row.querySelector('.type-check').value = index;
                 row.querySelector('input[type="text"]').placeholder = `Option ${index + 1}`;
             });
         }
-
-        // --- EDIT MODAL CORE INTERACTION CONTROL JQUERY ENGINE ---
-        const editModal = $('#editQuestionModal');
-        const editForm = document.getElementById('editQuestionForm');
-        const editTypeSelector = document.getElementById('editTypeSelector');
-        const editChoicesSection = document.getElementById('editChoicesSection');
-        const editTextSection = document.getElementById('editTextSection');
-        const editOptionsContainer = document.getElementById('editOptionsContainer');
-        const editAddOptionBtn = document.getElementById('editAddOptionBtn');
-
-        editTypeSelector.addEventListener('change', function() {
-            handleTypeShift(this.value, editChoicesSection, editTextSection);
-        });
-
-        $('.edit-question-btn').on('click', function() {
-            let id = $(this).data('id');
-            let text = $(this).data('text');
-            let points = $(this).data('points');
-            let type = $(this).data('type');
-            
-            // 🟢 ATTR FALLBACK PARSING SAFELY CAPTURES THE STRING ARRAYS
-            let optionsRaw = $(this).attr('data-options');
-            let options = [];
-            try {
-                options = typeof optionsRaw === 'string' ? JSON.parse(optionsRaw) : optionsRaw;
-            } catch(e) {
-                console.error("JSON Deserialization Exception caught:", e);
-            }
-
-            // Sets action URL route path explicitly to match your web.php config
-            editForm.action = `/questions/${id}/update`;
-
-            document.getElementById('edit_question_text').value = text;
-            document.getElementById('edit_points').value = points;
-            editTypeSelector.value = type;
-
-            editOptionsContainer.innerHTML = '';
-            document.getElementById('edit_text_answer').value = '';
-
-            if (type === 'text') {
-                if(options && options.length > 0) {
-                    document.getElementById('edit_text_answer').value = options[0].option_text;
-                }
-            } else if (options) {
-                options.forEach((opt, idx) => {
-                    let displayRadio = (type === 'single') ? 'inline-block' : 'none';
-                    let displayCheck = (type === 'multiple') ? 'inline-block' : 'none';
-                    let isCheckedRadio = (type === 'single' && opt.is_correct) ? 'checked' : '';
-                    let isCheckedCheck = (type === 'multiple' && opt.is_correct) ? 'checked' : '';
-
-                    let html = `
-                        <div class="input-group mb-2 option-row">
-                            <div class="input-group-text bg-white">
-                                <input type="radio" name="correct_single" value="${idx}" class="type-radio" style="display:${displayRadio}" ${isCheckedRadio}>
-                                <input type="checkbox" name="correct_multiple[]" value="${idx}" class="type-check" style="display:${displayCheck}" ${isCheckedCheck}>
-                            </div>
-                            <input type="text" name="options[]" class="form-control" value="${opt.option_text}" required>
-                            <button type="button" class="btn btn-outline-danger btn-sm remove-btn"><i class="fas fa-times"></i></button>
-                        </div>`;
-                    editOptionsContainer.insertAdjacentHTML('beforeend', html);
-                });
-            }
-
-            handleTypeShift(type, editChoicesSection, editTextSection);
-            editModal.modal('show');
-        });
-
-        editAddOptionBtn.addEventListener('click', function() {
-            let index = editOptionsContainer.children.length;
-            let type = editTypeSelector.value;
-            let displayRadio = (type === 'single') ? 'inline-block' : 'none';
-            let displayCheck = (type === 'multiple') ? 'inline-block' : 'none';
-
-            let html = `
-                <div class="input-group mb-2 option-row">
-                    <div class="input-group-text bg-white">
-                        <input type="radio" name="correct_single" value="${index}" class="type-radio" style="display:${displayRadio}">
-                        <input type="checkbox" name="correct_multiple[]" value="${index}" class="type-check" style="display:${displayCheck}">
-                    </div>
-                    <input type="text" name="options[]" class="form-control" placeholder="Option ${index + 1}" required>
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-btn"><i class="fas fa-times"></i></button>
-                </div>`;
-            editOptionsContainer.insertAdjacentHTML('beforeend', html);
-        });
-
-        editOptionsContainer.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-btn')) {
-                if (editOptionsContainer.children.length > 1) {
-                    e.target.closest('.option-row').remove();
-                    reindexOptions(editOptionsContainer);
-                }
-            }
-        });
     });
 </script>
 @endsection

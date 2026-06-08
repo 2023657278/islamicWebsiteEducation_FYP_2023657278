@@ -15,7 +15,7 @@ use App\Services\AnalyticsService;
 class QuizController extends Controller
 {
     // =========================================================
-    // PART A: STUDENT FUNCTIONS (Solo Quiz Taking & Analytics)
+    // PART A: STUDENT FUNCTIONS
     // =========================================================
 
     public function show($id)
@@ -65,7 +65,7 @@ class QuizController extends Controller
     }
 
     // =========================================================
-    // PART B: TEACHER FUNCTIONS (Shared Global Pool)
+    // PART B: TEACHER FUNCTIONS
     // =========================================================
 
     public function index()
@@ -154,8 +154,6 @@ class QuizController extends Controller
         ]);
 
         $quiz = Quiz::findOrFail($quiz_id);
-
-        // Sanitize any structural code traces ($ symbols)
         $cleanQuestionText = str_replace('$', '', $request->question_text);
 
         $questionData = [
@@ -201,8 +199,15 @@ class QuizController extends Controller
     }
 
     // =================================================================
-    // 🟢 PART C: EDIT HANDLER MECHANICS (PUT Updates)
+    // 🟢 PART C: SEPARATE SCREEN DESIGN PATHWAY MECHANICS
     // =================================================================
+    
+    public function editQuestion($id)
+    {
+        $question = Question::with('options', 'quiz')->findOrFail($id);
+        return view('quizzes.edit_question', compact('question'));
+    }
+
     public function updateQuestion(Request $request, $id)
     {
         $request->validate([
@@ -227,7 +232,7 @@ class QuizController extends Controller
         }
 
         $question->update($questionData);
-        $question->options()->delete(); // Wipe out old children relationship lines safely
+        $question->options()->delete();
 
         if ($request->question_type === 'text') {
             $question->options()->create([
@@ -256,7 +261,8 @@ class QuizController extends Controller
             }
         }
 
-        return back()->with('success', 'Question updated successfully!');
+        // Return straight to the primary manager workspace view
+        return redirect()->route('quizzes.manage', $question->quiz_id)->with('success', 'Question updated successfully!');
     }
 
     public function destroyQuestion($id)
@@ -266,8 +272,5 @@ class QuizController extends Controller
         return back()->with('success', 'Question deleted successfully.');
     }
 
-    public function shadowPvpBypass() 
-    {
-        // Tracker wrapper placeholder 
-    }
+    public function shadowPvpBypass() {}
 }
