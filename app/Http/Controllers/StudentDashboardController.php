@@ -5,97 +5,78 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QuizAttempt;
-use App\Models\Subject;
+use App\Models\Subject; // 🟢 Minimal addition to query subject definitions cleanly
 use App\Services\AnalyticsService;
 
 class StudentDashboardController extends Controller
 {
     /**
-     * Display the Gamified Student Dashboard (Quest Hub)
+     * Display the Student Dashboard
      */
     public function index()
     {
         $user = Auth::user();
 
-        // 1. FETCH ALL ATTEMPTS DATA (Ordered by Date)
+        // 1. FETCH ALL DATA (Ordered by Date) - KEEP AS IS
         $attempts = QuizAttempt::with(['quiz.subject'])
                         ->where('user_id', $user->id)
                         ->orderBy('created_at', 'asc')
                         ->get();
 
-        // 2. BASIC STATS
+        // 2. BASIC STATS - KEEP AS IS
         $totalQuizzes = $attempts->count();
         $averageScore = $attempts->avg('score') ?? 0;
 
-        // 3. LIVE ANALYTICS CALCULATION
+        // 3. LIVE ANALYTICS CALCULATION - KEEP AS IS
         $analyticsService = new AnalyticsService();
         $slope = $analyticsService->calculateSlope($attempts->pluck('score')->toArray());
         $status = $analyticsService->getInterpretation($slope);
 
-        // 4. ✅ DYNAMIC SUBJECT PROGRESS & PIE CHART DATA ENGINE
-        // Ambil semua subjek sedia ada daripada database (Al-Quran, Hadith, Akidah, Fiqh, Sirah, Akhlak)
+        // 4. ✅ CALCULATE SUBJECT PERFORMANCE FOR PIE CHART - KEEP AS IS
+        $subjectPerformance = $attempts->groupBy(function($item) {
+            return $item->quiz->subject->subject_name ?? 'General';
+        })->map(function($group) {
+            return round($group->avg('score'), 1);
+        })->toArray();
+
+        if (empty($subjectPerformance)) {
+            $subjectPerformance = ['No Data' => 0];
+        }
+
+        // 5. CHART DATA (Last 10 quizzes) - KEEP AS IS
+        $quizHistory = $attempts->take(-10); 
+
+        // 🟢 MINIMAL TARGETED ADDITION: Map your history into the 6 gamified progress metrics
         $allSubjects = Subject::all();
         $subjectProgress = [];
-        $subjectPerformance = [];
-
         foreach ($allSubjects as $sub) {
-            // Ambil semua percubaan kuiz bagi subjek ini
-            $subAttempts = $attempts->filter(function($attempt) use ($sub) {
-                return $attempt->quiz && $attempt->quiz->subject_id == $sub->id;
+            $subAttempts = $attempts->filter(function($item) use ($sub) {
+                return $item->quiz && $item->quiz->subject_id == $sub->id;
             });
+            $subAvgScore = $subAttempts->count() > 0 ? round($subAttempts->avg('score')) : 0;
 
-            $subAvgScore = $subAttempts->count() > 0 ? round($subAttempts->avg('score'), 1) : 0;
-
-            // Gamified Milestone Rank Assignment Matrix
             if ($subAvgScore >= 75) {
-                $rankTitle = 'Al-Fatih';
-                $badgeClass = 'badge-success bg-success';
-                $colorTheme = '#10B981'; // Hijau Mutiara
-                $iconShape = 'fa-crown';
+                $rank = 'Al-Fatih'; $badge = 'badge-success bg-success'; $color = '#10B981'; $icon = 'fa-crown';
             } elseif ($subAvgScore >= 40) {
-                $rankTitle = 'Pejuang';
-                $badgeClass = 'badge-warning bg-warning text-dark';
-                $colorTheme = '#F59E0B'; // Emas/Kuning
-                $iconShape = 'fa-shield-alt';
+                $rank = 'Pejuang'; $badge = 'badge-warning bg-warning text-dark'; $color = '#F59E0B'; $icon = 'fa-shield-alt';
             } else {
-                $rankTitle = 'Musafir';
-                $badgeClass = 'badge-danger bg-danger';
-                $colorTheme = '#D93025'; // Merah
-                $iconShape = 'fa-compass';
+                $rank = 'Musafir'; $badge = 'badge-danger bg-danger'; $color = '#D93025'; $icon = 'fa-compass';
             }
 
-            // Simpan ke dalam array progres untuk paparan Quest Tree di sebelah kiri
             $subjectProgress[] = (object) [
                 'name' => $sub->subject_name,
                 'avg_score' => $subAvgScore,
-                'rank' => $rankTitle,
-                'badge' => $badgeClass,
-                'color' => $colorTheme,
-                'icon' => $iconShape,
+                'rank' => $rank,
+                'badge' => $badge,
+                'color' => $color,
+                'icon' => $icon,
                 'attempts_count' => $subAttempts->count()
             ];
-
-            // Masukkan ke dalam array untuk kegunaan Carta Pai (Keperluan Pensyarah)
-            $subjectPerformance[$sub->subject_name] = $subAvgScore;
         }
 
-        // Fallback sekiranya pelajar baru langsung tidak mempunyai data kuiz
-        if (empty($attempts) || $totalQuizzes == 0) {
-            $subjectPerformance = ['Belum Ada Data' => 100];
-        }
-
-        // 5. CHART DATA (Last 10 quizzes)
-        $quizHistory = $attempts->take(-10); 
-
+        // 🟢 COMPACT ARRAY: Merged subjectProgress with all your original payload data boundaries safely
         return view('users.dashboard', compact(
-            'user', 
-            'totalQuizzes', 
-            'averageScore', 
-            'slope', 
-            'status', 
-            'quizHistory',
-            'subjectProgress',      // 🟢 Dihantar untuk Milestone Quest Tree
-            'subjectPerformance'   // 🟢 Dihantar untuk Carta Pai Pensyarah
+            'user', 'totalQuizzes', 'averageScore', 'slope', 'status', 'quizHistory', 'subjectPerformance', 'subjectProgress'
         ));
     }
 }
