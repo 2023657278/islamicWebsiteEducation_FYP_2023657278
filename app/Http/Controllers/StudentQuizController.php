@@ -51,7 +51,11 @@ class StudentQuizController extends Controller
         $subject = Subject::findOrFail($subject_id);
         $student = Auth::user();
 
-        $allQuizzes = Quiz::where('subject_id', $subject_id)->get();
+        // 🟢 FIX: Exclude PVP quizzes here so they don't break the total count calculation
+        $allQuizzes = Quiz::where('subject_id', $subject_id)
+                          ->whereNotIn('topic', ['PVP_ARENA_BATTLE', 'Global Battle', 'PVP Battle'])
+                          ->get();
+                          
         $attempts = DB::table('quiz_attempts')->where('user_id', $student->id)->get();
 
         $allowed = ['Easy'];
@@ -78,9 +82,12 @@ class StudentQuizController extends Controller
             ];
         }
 
+        // 🟢 If all Easy solo quizzes are done and average score is passing (>= 50%)
         if ($stats['Easy']['total'] > 0 && $stats['Easy']['done'] == $stats['Easy']['total'] && $stats['Easy']['avg'] >= 50) {
             $allowed[] = 'Medium';
         }
+        
+        // 🟢 If Medium is open, and all Medium solo quizzes are cleared with a passing average
         if (in_array('Medium', $allowed) && $stats['Medium']['total'] > 0 && $stats['Medium']['done'] == $stats['Medium']['total'] && $stats['Medium']['avg'] >= 50) {
             $allowed[] = 'Hard';
         }
