@@ -67,12 +67,12 @@ class StudentProgressController extends Controller
         $analyticsService = new AnalyticsService();
         $slope = $analyticsService->calculateSlope($historyScores);
         $status = $analyticsService->getInterpretation($slope);
-
-        // 🟢 INSERT OPTION B: Recent Momentum Calculation (Last 3 Quizzes)
+        
+        // 🟢 ADDED ONLY: OPTION B - Recent Momentum Calculation (Last 3 Quizzes)
         $recentScores = array_slice($historyScores, -3);
         $recentSlope = count($recentScores) > 1 ? $analyticsService->calculateSlope($recentScores) : $slope;
         $momentumStatus = ($recentSlope > 2.0) ? "Momentum Breakthrough! 🚀" : (($recentSlope < -2.0) ? "Needs Attention ⚠️" : "Stable");
-        
+
         $n = count($historyScores);
         $predictedNextScore = 0;
         if ($n > 1) {
@@ -121,8 +121,8 @@ class StudentProgressController extends Controller
         $filterSubjects = $allSubjects->pluck('subject_name');
 
         return view('users.progress.index', compact(
-            'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore',
-            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects', 'momentumStatus'
+            'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore', 'momentumStatus', // 🟢 Pass momentumStatus to view
+            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects'
         ));
     }
 }
