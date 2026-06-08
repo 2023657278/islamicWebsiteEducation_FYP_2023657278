@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QuizAttempt;
 use App\Models\Subject; 
-use App\Models\Quiz; // 🟢 Added to query quizzes directly
+use App\Models\Quiz;
 use App\Services\AnalyticsService;
 
 class StudentDashboardController extends Controller
@@ -24,7 +24,6 @@ class StudentDashboardController extends Controller
                         ->orderBy('created_at', 'asc')
                         ->get();
 
-        // Get an array of quiz IDs that the user has already answered/attempted
         $answeredQuizIds = $attempts->pluck('quiz_id')->unique()->toArray();
 
         // 2. BASIC STATS
@@ -45,7 +44,6 @@ class StudentDashboardController extends Controller
         $subjectPerformance = [];
 
         foreach ($allSubjects as $sub) {
-            // Filter user attempts for this specific subject
             $subAttempts = $attempts->filter(function($item) use ($sub) {
                 return $item->quiz && $item->quiz->subject_id == $sub->id;
             });
@@ -60,18 +58,19 @@ class StudentDashboardController extends Controller
                 $rank = 'Musafir'; $badge = 'badge-danger bg-danger'; $color = '#D93025'; $icon = 'fa-compass';
             }
 
-            // 🟢 GET ALL QUIZZES/TOPICS BELONGING TO THIS SUBJECT FOR THE ROADMAP
-            // Group topics by difficulty tier
-            $quizzes = Quiz::where('subject_id', $sub->id)->get();
+            // 🟢 CRITICAL FIX: Explicitly exclude 'PVP_ARENA_BATTLE' from the roadmap query pool
+            $quizzes = Quiz::where('subject_id', $sub->id)
+                           ->where('topic', '!=', 'PVP_ARENA_BATTLE')
+                           ->get();
+                           
             $roadmapQuizzes = [];
-            
             foreach ($quizzes as $quiz) {
                 $roadmapQuizzes[] = [
                     'id' => $quiz->id,
                     'title' => $quiz->title,
                     'topic' => $quiz->topic ?? 'General Concept',
-                    'difficulty' => $quiz->difficulty, // 'Easy', 'Medium', 'Hard'
-                    'is_answered' => in_array($quiz->id, $answeredQuizIds) // 🟢 Checks if already answered
+                    'difficulty' => $quiz->difficulty,
+                    'is_answered' => in_array($quiz->id, $answeredQuizIds)
                 ];
             }
 
@@ -84,7 +83,7 @@ class StudentDashboardController extends Controller
                 'color' => $color,
                 'icon' => $icon,
                 'attempts_count' => $subAttempts->count(),
-                'quizzes' => $roadmapQuizzes // 🟢 Passed into view context loop
+                'quizzes' => $roadmapQuizzes
             ];
 
             $subjectPerformance[$sub->subject_name] = $subAvgScore > 0 ? $subAvgScore : 0.1;
