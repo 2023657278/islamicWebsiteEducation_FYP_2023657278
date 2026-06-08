@@ -9,7 +9,7 @@
         <p class="text-muted">Welcome back! Here is your learning overview.</p>
     </div>
 
-    {{-- ✅ LIVE SYSTEM CLOCK CARD --}}
+    {{-- CALIBRATED LIVE SYSTEM CLOCK CARD --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
         <div class="card-body p-4 text-white position-relative text-start">
             <div class="row align-items-center">
@@ -19,7 +19,6 @@
                     
                     <div class="d-inline-flex align-items-center bg-white bg-opacity-25 rounded-pill px-3 py-1">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        {{-- 🟢 FIXED PLACEHOLDER TEXT IN CASE LOCALSTORAGE IS NULL --}}
                         <span class="fw-bold small" id="activeZoneDisplay">Melaka (Sg. Udang MRSM)</span>
                     </div>
                 </div>
@@ -117,10 +116,10 @@
         </div>
     </div>
 
-    {{-- MIDDLE ROW WORKSPACE LAYOUT --}}
+    {{-- MIDDLE AREA LAYOUT GRID ROW --}}
     <div class="row g-4 mb-5">
         
-        {{-- AL-FALAH CURRICULUM PANEL --}}
+        {{-- AL-FALAH CURRICULUM PANEL (CONTAINS ISOLATED ROADMAP AREA) --}}
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 h-100 position-relative" style="overflow: hidden;">
                 <div id="innerRoadmapBgDesign" class="roadmap-grid-bg d-none"></div>
@@ -137,12 +136,15 @@
 
                 <div class="card-body px-4 pb-4 pt-2 position-relative" style="z-index: 5;">
                     
-                    {{-- VIEW A: STANDARD CARD GRID VIEW --}}
+                    {{-- VIEW A: STANDARD SYSTEM CARD LIST --}}
                     <div id="subjectGridListView" class="row g-3">
                         @foreach($subjectProgress as $sub)
                         <div class="col-md-6">
+                            {{-- 🟢 FIXED: Single quotes escape syntax inside dataset boundaries prevents script compilation drops --}}
                             <div class="card border border-light shadow-sm rounded-3 h-100 island-trigger-card" 
-                                 onclick="showSubjectRoadmap('{{ addslashes($sub->name) }}', {!! json_encode($sub->quizzes) !!})"
+                                 data-name="{{ $sub->name }}"
+                                 data-color="{{ $sub->color }}"
+                                 data-quizzes='{{ json_encode($sub->quizzes) }}'
                                  style="background: #ffffff; cursor: pointer; transition: transform 0.2s;">
                                 <div class="card-body p-3 text-start">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -182,16 +184,14 @@
                         @endforeach
                     </div>
 
-                    {{-- VIEW B: 🎮 SCROLLABLE CANDY CRUSH ROADMAP INTERFACE --}}
+                    {{-- VIEW B: SCROLLABLE CANDY CRUSH WORKSPACE AREA --}}
                     <div id="subjectRoadmapTrackView" class="d-none py-4 position-relative">
-                        {{-- 🟢 CONTAINER SCROLL WRAPPER STYLED TO FIX THE HEIGHT ISSUE --}}
                         <div class="roadmap-scroll-wrapper">
                             <div class="candy-crush-spine-box" id="candyCrushSpineBox">
                                 <svg class="spine-svg-layer">
                                     <path id="roadmapSpineVector" d="" fill="none" stroke="#e3e6f0" stroke-width="6" stroke-dasharray="10,10" />
                                 </svg>
                                 
-                                {{-- Target injection site for inner dynamic Javascript mapping logs --}}
                                 <div id="dynamicNodesTargetContainer"></div>
                             </div>
                         </div>
@@ -201,7 +201,7 @@
             </div>
         </div>
 
-        {{-- PIE CHART AND PERFORMANCE DOCKS --}}
+        {{-- PIE CHART AND PERFORMANCE TRACKER SYSTEM DECK CARD BOXES (WIDTH: 4) --}}
         <div class="col-lg-4">
             <div class="d-flex flex-column h-100">
                 <div class="card border-0 shadow-sm rounded-4 mb-4 flex-grow-1">
@@ -241,7 +241,7 @@
 
     </div>
 
-    {{-- GOOGLE CALENDAR --}}
+    {{-- GOOGLE CALENDAR AT bottom ROW --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5">
         <div class="card-header bg-white border-0 pt-4 px-4 text-start">
             <h5 class="fw-bold text-dark mb-0"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
@@ -273,15 +273,7 @@
         background-size: 20px 20px; opacity: 0.9; pointer-events: none; z-index: 1;
     }
 
-    /* 🟢 STYLE OVERHAUL: MAKE ROADMAP CONTAINER INDEPENDENTLY SCROLLABLE */
-    .roadmap-scroll-wrapper {
-        max-height: 480px; 
-        overflow-y: auto; 
-        overflow-x: hidden; 
-        padding: 30px 10px;
-        scroll-behavior: smooth;
-    }
-    
+    .roadmap-scroll-wrapper { max-height: 480px; overflow-y: auto; overflow-x: hidden; padding: 30px 10px; scroll-behavior: smooth; }
     .candy-crush-spine-box { position: relative; width: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 70px; }
     .spine-svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
     
@@ -313,7 +305,24 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // 🟢 DYNAMIC TOPIC MAP LOADER ENGINE
+    // 🟢 SECURE EVENT BINDING ENGINE AT DOM LEVEL PREVENTS INLINE CRASHES
+    document.addEventListener("DOMContentLoaded", function() {
+        const cards = document.querySelectorAll('.island-trigger-card');
+        cards.forEach(card => {
+            card.addEventListener('click', function() {
+                const sName = this.getAttribute('data-name');
+                const rawQuizzes = this.getAttribute('data-quizzes');
+                let parsedQuizzes = [];
+                try {
+                    parsedQuizzes = JSON.parse(rawQuizzes);
+                } catch(e) {
+                    console.error("Payload decoding failure:", e);
+                }
+                showSubjectRoadmap(sName, parsedQuizzes);
+            });
+        });
+    });
+
     function showSubjectRoadmap(subjectName, quizzes) {
         document.getElementById('curriculumPanelTitle').innerText = `${subjectName} Roadmap`;
         document.getElementById('curriculumPanelSubtitle').innerText = `Progress path for quiz topics inside this module.`;
@@ -324,23 +333,20 @@
         document.getElementById('innerRoadmapBgDesign').classList.remove('d-none');
 
         const targetContainer = document.getElementById('dynamicNodesTargetContainer');
-        targetContainer.innerHTML = ''; // Reset workspace layout
+        targetContainer.innerHTML = ''; 
 
         if (!quizzes || quizzes.length === 0) {
-            targetContainer.innerHTML = '<div class="text-center text-muted py-5">No topics found in this subject module.</div>';
+            targetContainer.innerHTML = '<div class="text-center text-muted py-5">No topics configured for this module yet.</div>';
             document.getElementById('roadmapSpineVector').setAttribute('d', '');
             return;
         }
 
-        // 🟢 GENERATE NODES BASED ON TOPICS
         quizzes.forEach((q, index) => {
-            const alignmentIndex = index % 4; // Snaking path layout (Left -> Center -> Right -> Center)
-            
-            // 🟢 COLOR RULES: Green if already answered, Red if not answered yet
+            const alignmentIndex = index % 4; 
             const nodeBgColor = q.is_answered ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #EF4444, #DC2626)';
             const shadowColor = q.is_answered ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)';
             const iconSymbol = q.is_answered ? 'fa-check' : 'fa-play';
-            const statusLabel = q.is_answered ? 'COMPLETED' : 'UNLOCKED';
+            const statusLabel = q.is_answered ? 'COMPLETED' : 'UNANSWERED';
 
             const htmlNode = `
                 <div class="candy-node-row node-pos-${alignmentIndex}">
@@ -351,7 +357,6 @@
                         <i class="fas ${iconSymbol}"></i>
                         <div class="checkpoint-tag" style="background: ${q.is_answered ? '#059669' : '#DC2626'}">Topic ${index + 1}</div>
                         
-                        {{-- Hover Popup Tooltip Window --}}
                         <div class="checkpoint-popup-card card border-0 shadow p-2 text-start">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="badge bg-secondary font-weight-bold" style="font-size:0.55rem;">Tier: ${q.difficulty}</span>
@@ -365,7 +370,6 @@
             targetContainer.insertAdjacentHTML('beforeend', htmlNode);
         });
 
-        // Delay to allow DOM compilation tracking, then draw vector spine connector line
         setTimeout(calculateIslandSpineVectors, 100);
     }
 
@@ -438,7 +442,7 @@
         updateClock();
     }
 
-    // 🟢 FIXED: RELIABLE FALLBACK GEOLOCATION FETCH PIPELINE
+    // ✅ FIXED CALIBRATED GEOLOCATION SYNC FALLBACK TARGET
     function fetchPrayerTimes() {
         const apiUrl = `https://api.aladhan.com/v1/timings?latitude=2.2775&longitude=102.1466&method=3&fajrAngle=20&ishaAngle=18`;
         fetch(apiUrl).then(res => res.json()).then(data => {
@@ -449,15 +453,15 @@
             document.getElementById('time-Maghrib').innerText = t.Maghrib;
             document.getElementById('time-Isha').innerText = t.Isha;
             
-            // Safe fallback value injections
+            // Forces label text to override status strings cleanly
             const zoneDisplay = document.getElementById('activeZoneDisplay');
-            if (zoneDisplay && zoneDisplay.innerText === "Synchronizing Location...") {
+            if (zoneDisplay) {
                 zoneDisplay.innerText = "Melaka (Sg. Udang MRSM)";
             }
             document.getElementById('nextPrayerName').innerText = "Subuh";
             document.getElementById('nextPrayerTime').innerText = t.Fajr;
         }).catch(err => {
-            console.error("Prayer time sync error:", err);
+            console.error("API Fetch Error:", err);
             document.getElementById('activeZoneDisplay').innerText = "Melaka (Sg. Udang MRSM)";
         });
     }
