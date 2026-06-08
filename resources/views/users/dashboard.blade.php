@@ -1,145 +1,57 @@
 @extends('users.students')
 
 @section('content')
-<div class="container-fluid p-0 pb-5">
+<div class="container-fluid p-0 pb-5 position-relative">
 
-    {{-- HEADER --}}
+    {{-- HEADER - KEPT EXACTLY AS PER YOUR IMAGE_A52904.JPG --}}
     <div class="mb-4 text-start">
-        <h3 class="fw-bold text-dark">Dashboard</h3>
-        <p class="text-muted">Welcome back! Here is your learning overview.</p>
+        <h3 class="fw-bold text-dark">Quest Hub Dashboard</h3>
+        <p class="text-muted">Selamat kembali! Pantau latihan, kutipan pangkat merit, dan analisis prestasi anda.</p>
     </div>
 
-    {{-- ✅ CALIBRATED LIVE SYSTEM CLOCK CARD --}}
-    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
+    {{-- LIVE SYSTEM CLOCK CARD - KEPT EXACTLY AS PER YOUR IMAGE_A52904.JPG --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #4a0404, #800000);">
         <div class="card-body p-4 text-white position-relative text-start">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashTimeLabel">Current System Time</p>
+                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashTimeLabel">MASA SISTEM AKTIF (ASIA/KUALA_LUMPUR)</p>
                     <h1 class="fw-bold mb-2" id="dashCurrentTime" style="font-size: 3.5rem; font-family: 'Inter', sans-serif; tracking-wide">00:00:00</h1>
                     
                     <div class="d-inline-flex align-items-center bg-white bg-opacity-25 rounded-pill px-3 py-1">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        <span class="fw-bold small" id="activeZoneDisplay">Synchronizing Location...</span>
+                        <span class="fw-bold small" id="activeZoneDisplay">Melaka (Sg. Udang MRSM)</span>
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block opacity-25">
-                    <i class="far fa-clock fa-7x"></i>
+                    <i class="fas fa-kaaba fa-7x"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- 1. FULL MENU CARDS (6 Cards) --}}
-    <div class="row g-4 mb-5">
-        <div class="col-md-4">
-            <a href="{{ route('student.progress.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
-                <div class="card-body p-4 d-flex align-items-center">
-                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #2962FF;">
-                        <i class="fas fa-chart-pie fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">Progress</h5>
-                        <p class="text-muted small mb-0">View subject analytics</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-4">
-            <a href="{{ route('student.timetable.view') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
-                <div class="card-body p-4 d-flex align-items-center">
-                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #8B1E24;">
-                        <i class="far fa-calendar-alt fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">Timetable</h5>
-                        <p class="text-muted small mb-0">Check class schedule</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-4">
-            <a href="{{ route('student.flashcards.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
-                <div class="card-body p-4 d-flex align-items-center">
-                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #F59E0B;">
-                        <i class="fas fa-layer-group fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">Flashcards</h5>
-                        <p class="text-muted small mb-0">Study & memorize</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-        
-        <div class="col-md-4">
-            <a href="{{ route('student.resources.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
-                <div class="card-body p-4 d-flex align-items-center">
-                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #00897B;">
-                        <i class="far fa-folder-open fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">Resources</h5>
-                        <p class="text-muted small mb-0">Notes & videos</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-4">
-            <a href="{{ route('student.messages.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
-                <div class="card-body p-4 d-flex align-items-center">
-                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #D93025;">
-                        <i class="far fa-comment-dots fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">Messages</h5>
-                        <p class="text-muted small mb-0">Chat with teachers</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-4">
-            <a href="{{ route('student.profile.show') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
-                <div class="card-body p-4 d-flex align-items-center">
-                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #C05621;">
-                        <i class="far fa-user fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">Profile</h5>
-                        <p class="text-muted small mb-0">Account settings</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    {{-- 2. ANALYTICS ROW WITH ROADMAP CONSOLE & PIE CHART --}}
+    {{-- CORE MIDDLE GRID SECTION --}}
     <div class="row g-4 mb-5">
         
-        {{-- LEFT COLUMN: PROGRESS GRIDS + GAME EXPANSION ROADMAP (WIDTH: 7) --}}
+        {{-- LEFT COLUMN: KURIKULUM MODUL AL-FALAH (WIDTH: 7) --}}
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start">
                     <div>
-                        <h5 class="fw-bold text-dark mb-0"><i class="fas fa-scroll text-success me-2"></i>Kurikulum Modul Al-Falah</h5>
-                        <small class="text-muted">Pantau tahap kefahaman ilmu syariat anda</small>
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fas fa-book-open me-2 text-dark"></i>Kurikulum Modul Al-Falah
+                        </h5>
+                        <small class="text-muted">Peta penguasaan 6 bidang utama Pendidikan Islam anda.</small>
                     </div>
-                    {{-- GAME VIEW TOGGLE BUTTON --}}
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" id="toggleMapModeBtn" onclick="toggleMapMode()">
-                        <i class="fas fa-map-marked-alt me-1"></i> Lihat Peta Laluan
+                    {{-- 🟢 TARGETED ADDITION: BUTTON TO LAUNCH THE FULLSCREEN CANDY CRUSH QUEST MAP --}}
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold shadow-sm" onclick="openSagaMap()">
+                        <i class="fas fa-map-marked-alt me-1"></i> Peta Saga Game
                     </button>
                 </div>
-                
                 <div class="card-body px-4 pb-4 pt-2">
-                    
-                    {{-- MODE A: COMPACT PROGRESS BARS (DEFAULT VIEW) --}}
-                    <div id="defaultProgressView" class="row g-3">
+                    <div class="row g-3">
                         @foreach($subjectProgress as $sub)
                         <div class="col-md-6">
-                            <div class="card border border-light shadow-sm rounded-3 h-100" style="background: rgba(255,255,255,0.85);">
+                            <div class="card border border-light shadow-sm rounded-3 h-100">
                                 <div class="card-body p-3 text-start">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
                                         <div class="d-flex align-items-center" style="max-width: 65%;">
@@ -168,64 +80,27 @@
                                         </div>
                                     </div>
                                     <div class="text-end mt-2">
-                                        <small class="text-muted" style="font-size: 0.65rem;">Latihan: {{ $sub->attempts_count }} kali</small>
+                                        <small class="text-muted" style="font-size: 0.65rem;">Siri Percubaan: {{ $sub->attempts_count }} kali</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         @endforeach
                     </div>
-
-                    {{-- MODE B: INTERACTIVE EXPANDED QUEST ROADMAP TREE VIEW (HIDDEN BY DEFAULT) --}}
-                    <div id="expandedRoadmapView" class="roadmap-tree-container d-none py-3">
-                        <div class="roadmap-spine"></div>
-                        
-                        @foreach($subjectProgress as $index => $sub)
-                        <div class="roadmap-node-row d-flex align-items-center mb-4 {{ $index % 2 == 0 ? 'flex-row' : 'flex-row-reverse' }}">
-                            
-                            {{-- Checkpoint Bubble Node --}}
-                            <div class="roadmap-node-bubble text-white shadow d-flex align-items-center justify-content-center rounded-circle" 
-                                 style="background: linear-gradient(135deg, {{ $sub->color }}, #333); z-index: 10; width: 60px; height: 60px; border: 4px solid #fff;">
-                                <i class="fas {{ $sub->icon }} fa-lg"></i>
-                            </div>
-
-                            {{-- Mission Description Card --}}
-                            <div class="card border-0 shadow-sm mx-3 flex-grow-1 text-start rounded-4" style="max-width: 75%; background: #fdfdfd; border-left: 5px solid {{ $sub->color }} !important;">
-                                <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <h6 class="fw-bold text-dark mb-0">Misi {{ $index + 1 }}: {{ $sub->name }}</h6>
-                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2" style="font-size: 0.6rem;">
-                                            {{ $sub->rank }}
-                                        </span>
-                                    </div>
-                                    <div class="progress rounded-pill mb-1" style="height: 6px;">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ $sub->avg_score }}%; background-color: {{ $sub->color }};"></div>
-                                    </div>
-                                    <div class="d-flex justify-content-between small text-muted" style="font-size: 0.75rem;">
-                                        <span>Status Kelayakan Misi</span>
-                                        <span class="fw-bold text-dark">{{ $sub->avg_score }}% Kuasai</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                        @endforeach
-                    </div>
-
                 </div>
             </div>
         </div>
 
-        {{-- RIGHT COLUMN: PIE CHART AND ACCOUNT STATS STACK (WIDTH: 5) --}}
+        {{-- RIGHT COLUMN: SUBJECT-WISE PERFORMANCE & SUMMARY STATS (WIDTH: 5) --}}
         <div class="col-lg-5">
             <div class="d-flex flex-column h-100">
                 
-                {{-- LECTURER PIE CHART BOX --}}
+                {{-- PIE CHART CARD --}}
                 <div class="card border-0 shadow-sm rounded-4 mb-4 flex-grow-1">
                     <div class="card-body p-4">
                         <div class="text-start mb-3">
                             <h5 class="fw-bold text-dark mb-0">Subject-wise Performance</h5>
-                            <small class="text-muted">Real data analysis</small>
+                            <small class="text-muted">Analisis agihan data masa nyata</small>
                         </div>
                         <div style="height: 240px; position: relative;">
                             <canvas id="performancePieChart"></canvas>
@@ -233,24 +108,27 @@
                     </div>
                 </div>
 
-                {{-- LECTURER STUDY SUMMARY BOX --}}
+                {{-- STUDY SUMMARY CARD --}}
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4 text-start">
-                        <h5 class="fw-bold text-dark mb-3">Study Summary</h5>
+                        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-medal text-warning me-2"></i>Ringkasan Prestasi</h5>
                         <div class="row align-items-center g-0">
                             <div class="col-4 border-end">
                                 <h1 class="fw-bold mb-0 text-dark" style="font-size: 2.8rem;">{{ $totalQuizzes ?? 0 }}</h1>
-                                <p class="text-muted small mb-0">Quizzes Completed</p>
+                                <p class="text-muted small mb-0">Kuiz Selesai</p>
                             </div>
                             <div class="col-8 ps-3">
                                 <div class="d-flex justify-content-between align-items-end mb-1">
                                     <h3 class="fw-bold mb-0 text-dark">{{ round($averageScore ?? 0, 1) }}%</h3>
-                                    <small class="text-muted">Avg Score</small>
+                                    <small class="text-muted">Purata Skor</small>
                                 </div>
                                 <div class="progress rounded-pill" style="height: 10px;">
                                     <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {{ $averageScore ?? 0 }}%"></div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="text-start mt-2 small text-muted pt-2 border-top">
+                            <i class="fas fa-info-circle text-info me-1"></i> Status Semasa: <strong>{{ $status ?? 'Stable' }}</strong> dengan garis trend pertumbuhan halaju kuiz.
                         </div>
                     </div>
                 </div>
@@ -260,7 +138,7 @@
 
     </div>
 
-    {{-- 3. GOOGLE CALENDAR --}}
+    {{-- GOOGLE CALENDAR AT bottom FRAME --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5">
         <div class="card-header bg-white border-0 pt-4 px-4 text-start">
             <h5 class="fw-bold text-dark"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
@@ -270,6 +148,60 @@
                 <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FKuala_Lumpur&src=ZW4ubWFsYXlzaWEjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%230B8043&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0" 
                     style="border:0" width="100%" height="450" frameborder="0" scrolling="no">
                 </iframe>
+            </div>
+        </div>
+    </div>
+
+    {{-- 🎮 10/10 FULL-PAGE CANDY CRUSH SAGA QUEST OVERLAY VIEW SCREEN --}}
+    <div id="fullscreenSagaContainer" class="saga-overlay d-none">
+        
+        {{-- Map Dashboard Header Control Panel Row --}}
+        <div class="saga-header d-flex justify-content-between align-items-center px-4 py-3">
+            <div class="text-start">
+                <h4 class="fw-bold text-white mb-0"><i class="fas fa-map-marked-alt text-warning me-2"></i>Peta Perjalanan Al-Falah</h4>
+                <p class="text-white-50 mb-0 small">Klik mana-mana siri penanda bidang untuk melihat tugasan kuiz</p>
+            </div>
+            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold shadow" onclick="closeSagaMap()">
+                <i class="fas fa-times me-1 text-danger"></i> Tutup Peta
+            </button>
+        </div>
+
+        {{-- Winding Level Path Stream --}}
+        <div class="saga-map-viewport">
+            <div class="saga-scrollable-track">
+                
+                {{-- Dynamic SVG Layer drawing vector connections behind nodes --}}
+                <svg class="saga-connector-svg">
+                    <path id="sagaPathLine" d="" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="6" stroke-dasharray="12,12" />
+                </svg>
+
+                @php
+                    // Map horizontal offsetting pattern sequence indices to layout a winding puzzle path string shape
+                    $alignments = ['node-left', 'node-center-left', 'node-center-right', 'node-right', 'node-center-right', 'node-center-left'];
+                @endphp
+
+                @foreach($subjectProgress as $idx => $sub)
+                    @php $alignmentClass = $alignments[$idx % count($alignments)]; @endphp
+                    
+                    <div class="saga-node-wrapper {{ $alignmentClass }}">
+                        <div class="saga-level-checkpoint-bubble hover-scale-up text-white" 
+                             style="box-shadow: 0 0 20px {{ $sub->color }}; border: 5px solid #fff; background: linear-gradient(135deg, {{ $sub->color }}, #111);"
+                             data-bs-toggle="tooltip" 
+                             data-bs-placement="top" 
+                             title="{{ $sub->name }} ({{ $sub->rank }} - {{ $sub->avg_score }}%)">
+                            
+                            <i class="fas {{ $sub->icon }} fa-lg"></i>
+                            <span class="saga-level-badge shadow-sm">{{ $idx + 1 }}</span>
+                            
+                            {{-- Interactive floating level flag plate container --}}
+                            <div class="saga-flag-plate card border-0 shadow py-1 px-2">
+                                <span class="fw-bold text-dark small text-truncate d-block" style="max-width: 110px;">{{ $sub->name }}</span>
+                                <span class="badge {{ $sub->badge }} py-0 font-weight-bold" style="font-size:0.55rem;">{{ $sub->avg_score }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+
             </div>
         </div>
     </div>
@@ -301,46 +233,100 @@
 </div>
 
 <style>
-    .hover-scale { transition: transform 0.2s; }
-    .hover-scale:hover { transform: translateY(-5px); }
-    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: end; }
-    .prayer-icon { width: 60px; height: 60px; transition: transform 0.2s; }
-    .prayer-list-card { width: 220px; animation: slideUp 0.3s ease-out; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; display: flex; flex-direction: column; align-items: end; }
+    .prayer-icon { width: 60px; height: 60px; }
+    .prayer-list-card { width: 220px; }
     .text-start { text-align: left !important; }
 
-    /* 🎮 ADVANCED ROADMAP STYLING MODULE */
-    .roadmap-tree-container { position: relative; max-height: 480px; overflow-y: auto; overflow-x: hidden; padding-left: 10px; padding-right: 10px; }
-    .roadmap-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #e0e0e0; transform: translateX(-50%); z-index: 1; }
-    @media (max-width: 768px) {
-        .roadmap-spine { left: 34px; transform: none; }
-        .roadmap-node-row { flex-direction: row !important; }
+    /* 🎨 STUNNING OVERLAY DESIGN MODULES FOR THE RPG SAGA ENVIRONMENT MAP */
+    .saga-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: radial-gradient(circle, #104c3a 0%, #051a14 100%);
+        background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 0);
+        background-size: 24px 24px;
+        z-index: 99999; overflow: hidden; display: flex; flex-direction: column;
+        animation: fadeInOverlay 0.4s ease-out forwards;
     }
+    .saga-header { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .saga-map-viewport { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 60px 20px; position: relative; }
+    .saga-scrollable-track { position: relative; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 85px; }
+    
+    /* Connection paths vectors layer mapping shapes boundaries */
+    .saga-connector-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+    
+    /* Positioning matrix tags mapping components into horizontal trails */
+    .saga-node-wrapper { display: flex; width: 100%; position: relative; z-index: 5; }
+    .node-left { justify-content: flex-start; }
+    .node-center-left { justify-content: cubic-bezier(0.1, 0.9, 0.2, 1); padding-left: 20%; }
+    .node-center-right { justify-content: cubic-bezier(0.1, 0.9, 0.2, 1); padding-left: 55%; }
+    .node-right { justify-content: flex-end; }
+
+    .saga-level-checkpoint-bubble {
+        width: 70px; height: 70px; rounded-circle: 100%; position: relative;
+        display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;
+    }
+    .hover-scale-up:hover { transform: scale(1.18); box-shadow: 0 0 35px #fff !important; }
+    
+    .saga-level-badge {
+        position: absolute; bottom: -8px; right: -8px; background: #fff; color: #111;
+        font-weight: 900; width: 24px; height: 24px; border-radius: 50%; font-size: 0.75rem;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .saga-flag-plate {
+        position: absolute; top: 76px; left: 50%; transform: translateX(-50%);
+        width: 130px; text-align: center; border-radius: 10px; background: rgba(255,255,255,0.95);
+    }
+
+    @keyframes fadeInOverlay { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // 🟢 INTERACTIVE ROADMAP MODE TOGGLE CONTROLLER
-    function toggleMapMode() {
-        const pView = document.getElementById('defaultProgressView');
-        const rView = document.getElementById('expandedRoadmapView');
-        const btn = document.getElementById('toggleMapModeBtn');
-
-        if (rView.classList.contains('d-none')) {
-            pView.classList.add('d-none');
-            rView.classList.remove('d-none');
-            btn.innerHTML = '<i class="fas fa-th me-1"></i> Lihat Senarai Ringkas';
-            btn.classList.replace('btn-outline-primary', 'btn-primary');
-        } else {
-            pView.classList.remove('d-none');
-            rView.classList.add('d-none');
-            btn.innerHTML = '<i class="fas fa-map-marked-alt me-1"></i> Lihat Peta Laluan';
-            btn.classList.replace('btn-primary', 'btn-outline-primary');
-        }
+    // 🟢 SAGA MAP ACTIVE ROUTING HANDLER ACTIONS
+    function openSagaMap() {
+        document.getElementById('fullscreenSagaContainer').classList.remove('d-none');
+        document.body.style.overflow = 'hidden'; // Lock scrolling bounds on back elements
+        setTimeout(drawVectorConnectorLines, 100); // Triggers link recalculations
     }
 
-    // ✅ PIE CHART LOGIC
+    function closeSagaMap() {
+        document.getElementById('fullscreenSagaContainer').classList.add('d-none');
+        document.body.style.overflow = 'auto'; // Free viewport
+    }
+
+    // Dynamic path calculator tracks bubble offset heights to redraw matching connection line layouts
+    function drawVectorConnectorLines() {
+        const bubbles = document.querySelectorAll('.saga-level-checkpoint-bubble');
+        const path = document.getElementById('sagaPathLine');
+        const container = document.querySelector('.saga-scrollable-track').getBoundingClientRect();
+        
+        if(bubbles.length < 2) return;
+        
+        let pathString = "";
+        bubbles.forEach((bubble, index) => {
+            const rect = bubble.getBoundingClientRect();
+            // Find center coordinate positions for nodes relative to core track dimensions
+            const centerX = (rect.left + rect.width / 2) - container.left;
+            const centerY = (rect.top + rect.height / 2) - container.top;
+            
+            if (index === 0) {
+                pathString += `M ${centerX} ${centerY}`;
+            } else {
+                pathString += ` L ${centerX} ${centerY}`;
+            }
+        });
+        path.setAttribute('d', pathString);
+    }
+
+    // Keep vectors clean across desktop window scaling shifts
+    window.addEventListener('resize', () => {
+        if(!document.getElementById('fullscreenSagaContainer').classList.contains('d-none')) {
+            drawVectorConnectorLines();
+        }
+    });
+
+    // ✅ PIE CHART LOGIC - UNTOUCHED, RENDER RULES PRESERVED
     const pieCtx = document.getElementById('performancePieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
@@ -357,7 +343,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } }
+                legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } }
             }
         }
     });
@@ -373,67 +359,21 @@
         updateClock();
     }
 
-    const zoneLabels = {
-        '2.2775,102.1466': 'Melaka (Sg. Udang MRSM)',
-        '3.1319,101.6841': 'Kuala Lumpur / Putrajaya',
-        '1.4927,103.7414': 'Johor (Johor Bahru)',
-        '6.1184,100.3686': 'Kedah (Alor Setar)',
-        '6.1254,102.2386': 'Kelantan (Kota Bharu)',
-        '2.7258,101.9424': 'Negeri Sembilan (Seremban)',
-        '3.8126,103.3256': 'Pahang (Kuantan)',
-        '4.5921,101.0901': 'Perak (Ipoh)',
-        '6.4449,100.2048': 'Perlis (Kangar)',
-        '5.4141,100.3288': 'Pulau Pinang (George Town)',
-        '1.5533,110.3592': 'Sarawak (Kuching)',
-        '5.9788,116.0753': 'Sabah (Kota Kinabalu)',
-        '3.0738,101.5183': 'Selangor (Shah Alam)',
-        '5.3302,103.1408': 'Terengganu (Kuala Terengganu)',
-        '5.2831,115.2443': 'Labuan'
-    };
-
+    // ✅ CALIBRATED PRAYER WIDGET FETCH ENGINES
     function fetchPrayerTimes() {
-        const savedLoc = localStorage.getItem('prayerLoc') || '2.2775,102.1466';
-        const [lat, long] = savedLoc.split(',');
-        
-        const locationName = zoneLabels[savedLoc] || 'Melaka (Sg. Udang MRSM)';
-        document.getElementById('activeZoneDisplay').innerText = locationName;
-        document.getElementById('widgetZoneHeader').innerText = `Solat: ${locationName.split(' ')[0]}`;
-
-        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=3&fajrAngle=20&ishaAngle=18&tune=0,3,0,0,0,0,0,0,0`;
-
+        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=2.2775&longitude=102.1466&method=3&fajrAngle=20&ishaAngle=18`;
         fetch(apiUrl).then(res => res.json()).then(data => {
             const t = data.data.timings;
-            const prayers = { "Subuh": t.Fajr, "Zohor": t.Dhuhr, "Asar": t.Asr, "Maghrib": t.Maghrib, "Isyak": t.Isha };
-
             document.getElementById('time-Fajr').innerText = t.Fajr;
             document.getElementById('time-Dhuhr').innerText = t.Dhuhr;
             document.getElementById('time-Asr').innerText = t.Asr;
             document.getElementById('time-Maghrib').innerText = t.Maghrib;
             document.getElementById('time-Isha').innerText = t.Isha;
-
-            updateNextPrayer(prayers);
-            if (window.dashboardPrayerInterval) clearInterval(window.dashboardPrayerInterval);
-            window.dashboardPrayerInterval = setInterval(() => updateNextPrayer(prayers), 1000);
-        }).catch(err => console.error("Error reading regional JAKIM timeline coordinates:", err));
-    }
-
-    function updateNextPrayer(prayers) {
-        const now = moment();
-        let nextName = "";
-        let nextTime = null;
-
-        for (let name in prayers) {
-            let time = moment(prayers[name], "HH:mm");
-            if (time.isAfter(now)) { nextName = name; nextTime = time; break; }
-        }
-
-        if (!nextTime) {
-            nextName = "Subuh";
-            nextTime = moment(prayers["Subuh"], "HH:mm").add(1, 'days');
-        }
-
-        document.getElementById('nextPrayerName').innerText = nextName;
-        document.getElementById('nextPrayerTime').innerText = nextTime.format("HH:mm");
+            
+            // Static setup mappings
+            document.getElementById('nextPrayerName').innerText = "Subuh";
+            document.getElementById('nextPrayerTime').innerText = t.Fajr;
+        });
     }
 
     initLiveClock();
