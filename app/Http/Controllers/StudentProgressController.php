@@ -15,7 +15,7 @@ class StudentProgressController extends Controller
     {
         $user = Auth::user();
         
-        // 1. FETCH ALL ATTEMPTS
+        // 1. FETCH ALL ATTEMPTS (For Global Stats & Trend Chart)
         $allAttempts = DB::table('quiz_attempts')
                       ->join('quizzes', 'quiz_attempts.quiz_id', '=', 'quizzes.id')
                       ->join('subjects', 'quizzes.subject_id', '=', 'subjects.id')
@@ -24,29 +24,32 @@ class StudentProgressController extends Controller
                       ->orderBy('quiz_attempts.created_at', 'asc')
                       ->get();
 
-        // 🟢 NEW: Detect Weak Topics (Targeted Focus Areas for the View)
-        $weakTopics = DB::table('quiz_attempts')
-                      ->join('quizzes', 'quiz_attempts.quiz_id', '=', 'quizzes.id')
-                      ->where('quiz_attempts.user_id', $user->id)
-                      ->where('quiz_attempts.score', '<', 50)
-                      ->select('quizzes.title', 'quiz_attempts.score')
-                      ->orderBy('quiz_attempts.score', 'asc')
-                      ->limit(3)
-                      ->get();
-
-        // 2. FETCH FILTERED ATTEMPTS (For Log Table)
+        // 2. FETCH FILTERED ATTEMPTS (Specifically for the Detailed Log Table)
         $query = DB::table('quiz_attempts')
                       ->join('quizzes', 'quiz_attempts.quiz_id', '=', 'quizzes.id')
                       ->join('subjects', 'quizzes.subject_id', '=', 'subjects.id')
                       ->where('quiz_attempts.user_id', $user->id);
 
-        if ($request->filled('search')) $query->where('quizzes.title', 'like', '%' . $request->search . '%');
-        if ($request->filled('result_status')) {
-            $query->where('quiz_attempts.score', $request->result_status == 'pass' ? '>=' : '<', 50);
+        // ✅ FILTER: Search Quiz Title
+        if ($request->filled('search')) {
+            $query->where('quizzes.title', 'like', '%' . $request->search . '%');
         }
+
+        // ✅ FILTER: Pass/Fail Result
+        if ($request->filled('result_status')) {
+            if ($request->result_status == 'pass') {
+                $query->where('quiz_attempts.score', '>=', 50);
+            } else {
+                $query->where('quiz_attempts.score', '<', 50);
+            }
+        }
+
+        // ✅ FILTER: Subject Name (Fixes the Akidah/Al-Quran bug)
         if ($request->filled('subject_filter') && $request->subject_filter !== 'all') {
             $query->where('subjects.subject_name', $request->subject_filter);
         }
+
+        // ✅ FILTER: Specific Date
         if ($request->filled('filter_date')) {
             $query->whereDate('quiz_attempts.created_at', $request->filter_date);
         }
@@ -55,21 +58,21 @@ class StudentProgressController extends Controller
                           ->orderBy('quiz_attempts.created_at', 'desc')
                           ->get();
 
-        // 3. GLOBAL STATS
+        // 3. GLOBAL STATS (Based on full history)
         $totalQuizzes = $allAttempts->unique('quiz_id')->count();
         $currentAvg = $allAttempts->avg('score') ?? 0;
 
-        // 4. ANALYTICS (Slope & Trend)
+        // 4. ANALYTICS (Slope & Trend Prediction)
         $historyScores = $allAttempts->pluck('score')->toArray();
         $analyticsService = new AnalyticsService();
         $slope = $analyticsService->calculateSlope($historyScores);
         $status = $analyticsService->getInterpretation($slope);
-        
-        // 🟢 OPTION B: Recent Momentum Calculation (Last 3 Quizzes)
+
+        // 🟢 INSERT OPTION B: Recent Momentum Calculation (Last 3 Quizzes)
         $recentScores = array_slice($historyScores, -3);
         $recentSlope = count($recentScores) > 1 ? $analyticsService->calculateSlope($recentScores) : $slope;
         $momentumStatus = ($recentSlope > 2.0) ? "Momentum Breakthrough! 🚀" : (($recentSlope < -2.0) ? "Needs Attention ⚠️" : "Stable");
-
+        
         $n = count($historyScores);
         $predictedNextScore = 0;
         if ($n > 1) {
@@ -101,19 +104,25 @@ class StudentProgressController extends Controller
             $subAttempts = $allAttempts->whereIn('quiz_id', $quizIds);
             $subAvgScore = $subAttempts->count() > 0 ? round($subAttempts->avg('score')) : 0;
             
-            $rank = ($subAvgScore >= 80) ? 'Expert' : (($subAvgScore >= 40) ? 'Intermediate' : 'Beginner');
-            $color = ($subAvgScore >= 80) ? '#00C853' : (($subAvgScore >= 40) ? '#2962FF' : '#FFAB00');
+            if ($subAvgScore >= 80) { $rank = 'Expert'; $color = '#00C853'; }
+            elseif ($subAvgScore >= 40) { $rank = 'Intermediate'; $color = '#2962FF'; }
+            else { $rank = 'Beginner'; $color = '#FFAB00'; }
 
             $subjectProgress[] = (object) [
-                'name' => $sub->subject_name, 'avg_score' => $subAvgScore, 'rank' => $rank, 'color' => $color
+                'name' => $sub->subject_name,
+                'total' => $quizIds->count(),
+                'completed' => $subAttempts->unique('quiz_id')->count(),
+                'avg_score' => $subAvgScore,
+                'rank' => $rank,
+                'color' => $color
             ];
         }
 
         $filterSubjects = $allSubjects->pluck('subject_name');
 
         return view('users.progress.index', compact(
-            'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore', 'momentumStatus',
-            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects', 'weakTopics'
+            'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore',
+            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects', 'momentumStatus'
         ));
     }
 }
