@@ -127,7 +127,7 @@ class StudentProgressController extends Controller
 
         return view('users.progress.index', compact(
             'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore',
-            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects'
+            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects', 'weakTopics'
         ));
     }
 }
