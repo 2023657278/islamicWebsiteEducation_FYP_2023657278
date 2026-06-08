@@ -25,19 +25,15 @@
                 </div>
             </div>
         </div>
-        
-        {{-- 🟢 PRETTY OPTION B KPI CARD INSIDE ORIGINAL POSITION --}}
         <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm rounded-4 text-white h-100 hover-scale" 
-                 style="background: {{ str_contains($momentumStatus, 'Breakthrough') ? 'linear-gradient(135deg, #FF6F00, #FFB300)' : 'linear-gradient(135deg, #2962FF, #448AFF)' }}; transition: background 0.3s ease;">
+            <div class="card border-0 shadow-sm rounded-4 text-white h-100 hover-scale" style="background: linear-gradient(135deg, #2962FF, #448AFF);">
                 <div class="card-body p-4 text-white">
-                    <h5 class="opacity-75 mb-1 text-white">Recent Momentum</h5>
-                    <h1 class="fw-bold mb-0 text-white" style="font-size: 1.45rem; line-height: 2.4rem;">{{ $momentumStatus }}</h1>
-                    <small class="opacity-75">Based on last 3 attempts</small>
+                    <h5 class="opacity-75 mb-1 text-white">Predicted Score</h5>
+                    <h1 class="fw-bold mb-0 text-white">{{ $predictedNextScore }}%</h1>
+                    <small class="opacity-75">Slope Index: {{ $slope }}</small>
                 </div>
             </div>
         </div>
-
         @php
             $statusColor = '#455A64';
             if ($slope >= 1.0) $statusColor = 'linear-gradient(135deg, #2962FF, #82B1FF)';
@@ -59,6 +55,18 @@
                     <h5 class="opacity-75 mb-1 text-white">Total Quizzes</h5>
                     <h1 class="fw-bold mb-0 text-white">{{ $totalQuizzes }}</h1>
                     <small class="opacity-75">Completed attempts</small>
+                </div>
+            </div>
+        </div>
+        
+        {{-- 🟢 ADDED ONLY: RECENT MOMENTUM CARD PLACED AS A NEW COMPONENT --}}
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 text-white h-100 hover-scale" 
+                 style="background: {{ str_contains($momentumStatus, 'Breakthrough') ? 'linear-gradient(135deg, #FF6F00, #FFB300)' : 'linear-gradient(135deg, #607D8B, #455A64)' }};">
+                <div class="card-body p-4 text-white">
+                    <h5 class="opacity-75 mb-1 text-white">Recent Momentum</h5>
+                    <h1 class="fw-bold mb-0 text-white" style="font-size: 1.5rem; line-height: 2.2rem;">{{ $momentumStatus }}</h1>
+                    <small class="opacity-75">Based on last 3 attempts</small>
                 </div>
             </div>
         </div>

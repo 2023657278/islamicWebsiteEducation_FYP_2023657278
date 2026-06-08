@@ -121,7 +121,7 @@ class StudentProgressController extends Controller
         $filterSubjects = $allSubjects->pluck('subject_name');
 
         return view('users.progress.index', compact(
-            'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore', 'momentumStatus', // 🟢 Pass momentumStatus to view
+            'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore', 'momentumStatus',
             'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects'
         ));
     }
