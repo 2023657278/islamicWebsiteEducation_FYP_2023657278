@@ -116,18 +116,27 @@
         </div>
     </div>
 
-    {{-- 2. REFACTORED 2-COLUMN DISPLAY (BLENDS LECTURER PIE CHART WITH GAMIFIED TREE) --}}
+    {{-- 2. ANALYTICS ROW WITH ROADMAP CONSOLE & PIE CHART --}}
     <div class="row g-4 mb-5">
         
-        {{-- 🟢 LEFT SIDE: INTERACTIVE PROGRESS MILESTONE TREE (WIDTH: 7) --}}
+        {{-- LEFT COLUMN: PROGRESS GRIDS + GAME EXPANSION ROADMAP (WIDTH: 7) --}}
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 text-start">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fas fa-scroll text-success me-2"></i>Kurikulum Modul Al-Falah</h5>
-                    <small class="text-muted">Selesaikan kuiz untuk meningkatkan pangkat penguasaan anda.</small>
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0"><i class="fas fa-scroll text-success me-2"></i>Kurikulum Modul Al-Falah</h5>
+                        <small class="text-muted">Pantau tahap kefahaman ilmu syariat anda</small>
+                    </div>
+                    {{-- GAME VIEW TOGGLE BUTTON --}}
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" id="toggleMapModeBtn" onclick="toggleMapMode()">
+                        <i class="fas fa-map-marked-alt me-1"></i> Lihat Peta Laluan
+                    </button>
                 </div>
+                
                 <div class="card-body px-4 pb-4 pt-2">
-                    <div class="row g-3">
+                    
+                    {{-- MODE A: COMPACT PROGRESS BARS (DEFAULT VIEW) --}}
+                    <div id="defaultProgressView" class="row g-3">
                         @foreach($subjectProgress as $sub)
                         <div class="col-md-6">
                             <div class="card border border-light shadow-sm rounded-3 h-100" style="background: rgba(255,255,255,0.85);">
@@ -158,7 +167,6 @@
                                              aria-valuemax="100">
                                         </div>
                                     </div>
-                                    
                                     <div class="text-end mt-2">
                                         <small class="text-muted" style="font-size: 0.65rem;">Latihan: {{ $sub->attempts_count }} kali</small>
                                     </div>
@@ -167,11 +175,48 @@
                         </div>
                         @endforeach
                     </div>
+
+                    {{-- MODE B: INTERACTIVE EXPANDED QUEST ROADMAP TREE VIEW (HIDDEN BY DEFAULT) --}}
+                    <div id="expandedRoadmapView" class="roadmap-tree-container d-none py-3">
+                        <div class="roadmap-spine"></div>
+                        
+                        @foreach($subjectProgress as $index => $sub)
+                        <div class="roadmap-node-row d-flex align-items-center mb-4 {{ $index % 2 == 0 ? 'flex-row' : 'flex-row-reverse' }}">
+                            
+                            {{-- Checkpoint Bubble Node --}}
+                            <div class="roadmap-node-bubble text-white shadow d-flex align-items-center justify-content-center rounded-circle" 
+                                 style="background: linear-gradient(135deg, {{ $sub->color }}, #333); z-index: 10; width: 60px; height: 60px; border: 4px solid #fff;">
+                                <i class="fas {{ $sub->icon }} fa-lg"></i>
+                            </div>
+
+                            {{-- Mission Description Card --}}
+                            <div class="card border-0 shadow-sm mx-3 flex-grow-1 text-start rounded-4" style="max-width: 75%; background: #fdfdfd; border-left: 5px solid {{ $sub->color }} !important;">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="fw-bold text-dark mb-0">Misi {{ $index + 1 }}: {{ $sub->name }}</h6>
+                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2" style="font-size: 0.6rem;">
+                                            {{ $sub->rank }}
+                                        </span>
+                                    </div>
+                                    <div class="progress rounded-pill mb-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ $sub->avg_score }}%; background-color: {{ $sub->color }};"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted" style="font-size: 0.75rem;">
+                                        <span>Status Kelayakan Misi</span>
+                                        <span class="fw-bold text-dark">{{ $sub->avg_score }}% Kuasai</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        @endforeach
+                    </div>
+
                 </div>
             </div>
         </div>
 
-        {{-- 🟢 RIGHT SIDE: PIE CHART AND ACCOUNT STATS STACK (WIDTH: 5) --}}
+        {{-- RIGHT COLUMN: PIE CHART AND ACCOUNT STATS STACK (WIDTH: 5) --}}
         <div class="col-lg-5">
             <div class="d-flex flex-column h-100">
                 
@@ -263,12 +308,39 @@
     .prayer-list-card { width: 220px; animation: slideUp 0.3s ease-out; }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .text-start { text-align: left !important; }
+
+    /* 🎮 ADVANCED ROADMAP STYLING MODULE */
+    .roadmap-tree-container { position: relative; max-height: 480px; overflow-y: auto; overflow-x: hidden; padding-left: 10px; padding-right: 10px; }
+    .roadmap-spine { position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #e0e0e0; transform: translateX(-50%); z-index: 1; }
+    @media (max-width: 768px) {
+        .roadmap-spine { left: 34px; transform: none; }
+        .roadmap-node-row { flex-direction: row !important; }
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // ✅ PIE CHART LOGIC - MAPPED SAFELY TO SCALE RENDER TO FIT COLUMN 5
+    // 🟢 INTERACTIVE ROADMAP MODE TOGGLE CONTROLLER
+    function toggleMapMode() {
+        const pView = document.getElementById('defaultProgressView');
+        const rView = document.getElementById('expandedRoadmapView');
+        const btn = document.getElementById('toggleMapModeBtn');
+
+        if (rView.classList.contains('d-none')) {
+            pView.classList.add('d-none');
+            rView.classList.remove('d-none');
+            btn.innerHTML = '<i class="fas fa-th me-1"></i> Lihat Senarai Ringkas';
+            btn.classList.replace('btn-outline-primary', 'btn-primary');
+        } else {
+            pView.classList.remove('d-none');
+            rView.classList.add('d-none');
+            btn.innerHTML = '<i class="fas fa-map-marked-alt me-1"></i> Lihat Peta Laluan';
+            btn.classList.replace('btn-primary', 'btn-outline-primary');
+        }
+    }
+
+    // ✅ PIE CHART LOGIC
     const pieCtx = document.getElementById('performancePieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
@@ -290,7 +362,7 @@
         }
     });
 
-    // ✅ LIVE SYSTEM CLOCK COMPONENT
+    // ✅ LIVE SYSTEM CLOCK ENGINES
     function initLiveClock() {
         function updateClock() {
             const timeString = moment().format('HH:mm:ss');
