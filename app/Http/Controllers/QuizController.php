@@ -15,7 +15,7 @@ use App\Services\AnalyticsService;
 class QuizController extends Controller
 {
     // =========================================================
-    // PART A: STUDENT FUNCTIONS
+    // PART A: STUDENT FUNCTIONS (Solo Quiz Taking & Analytics)
     // =========================================================
 
     public function show($id)
@@ -65,7 +65,7 @@ class QuizController extends Controller
     }
 
     // =========================================================
-    // PART B: TEACHER FUNCTIONS
+    // PART B: TEACHER FUNCTIONS (Shared Global Pool Management)
     // =========================================================
 
     public function index()
@@ -142,7 +142,14 @@ class QuizController extends Controller
     public function manage($id)
     {
         $quiz = Quiz::with('questions.options')->findOrFail($id);
-        return view('quizzes.manage', compact('quiz'));
+        
+        // 🟢 UPGRADED ON-PAGE DETECTOR ENGINE
+        $editingQuestion = null;
+        if (request()->has('edit_question_id')) {
+            $editingQuestion = Question::with('options')->find(request('edit_question_id'));
+        }
+
+        return view('quizzes.manage', compact('quiz', 'editingQuestion'));
     }
 
     public function storeQuestion(Request $request, $quiz_id)
@@ -195,19 +202,12 @@ class QuizController extends Controller
             }
         }
 
-        return back()->with('success', 'Question added successfully to this quiz!');
+        return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question added successfully to this quiz!');
     }
 
     // =================================================================
-    // 🟢 PART C: SEPARATE SCREEN DESIGN PATHWAY MECHANICS
+    // 🟢 PART C: ON-SCREEN DISPATCH UPDATE PROCESSOR ENGINE (PUT)
     // =================================================================
-    
-    public function editQuestion($id)
-    {
-        $question = Question::with('options', 'quiz')->findOrFail($id);
-        return view('quizzes.edit_question', compact('question'));
-    }
-
     public function updateQuestion(Request $request, $id)
     {
         $request->validate([
@@ -232,6 +232,8 @@ class QuizController extends Controller
         }
 
         $question->update($questionData);
+        
+        // Securely drop old option entities rows inside your tables
         $question->options()->delete();
 
         if ($request->question_type === 'text') {
@@ -261,16 +263,18 @@ class QuizController extends Controller
             }
         }
 
-        // Return straight to the primary manager workspace view
-        return redirect()->route('quizzes.manage', $question->quiz_id)->with('success', 'Question updated successfully!');
+        // Pull the pivot parent relation cleanly
+        $parentQuiz = $question->quizzes()->first();
+        $quizId = $parentQuiz ? $parentQuiz->id : $question->quiz_id;
+
+        return redirect()->route('quizzes.manage', $quizId)->with('success', 'Question updated successfully!');
     }
 
     public function destroyQuestion($id)
     {
         $question = Question::findOrFail($id);
         $question->delete();
+        
         return back()->with('success', 'Question deleted successfully.');
     }
-
-    public function shadowPvpBypass() {}
 }
