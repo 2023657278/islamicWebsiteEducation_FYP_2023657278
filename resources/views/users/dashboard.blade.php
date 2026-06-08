@@ -1,66 +1,148 @@
 @extends('users.students')
 
 @section('content')
-<div class="container-fluid p-0 pb-5 position-relative">
+<div class="container-fluid p-0 pb-5 position-relative" id="dashboardMainContentArea">
 
-    {{-- HEADER - KEPT EXACTLY AS PER YOUR IMAGE_A52904.JPG --}}
+    {{-- HEADER --}}
     <div class="mb-4 text-start">
-        <h3 class="fw-bold text-dark">Quest Hub Dashboard</h3>
-        <p class="text-muted">Selamat kembali! Pantau latihan, kutipan pangkat merit, dan analisis prestasi anda.</p>
+        <h3 class="fw-bold text-dark">Dashboard</h3>
+        <p class="text-muted">Welcome back! Here is your learning overview.</p>
     </div>
 
-    {{-- LIVE SYSTEM CLOCK CARD - KEPT EXACTLY AS PER YOUR IMAGE_A52904.JPG --}}
-    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #4a0404, #800000);">
+    {{-- ✅ CALIBRATED LIVE SYSTEM CLOCK CARD --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
         <div class="card-body p-4 text-white position-relative text-start">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashTimeLabel">MASA SISTEM AKTIF (ASIA/KUALA_LUMPUR)</p>
+                    <p class="text-uppercase small fw-bold opacity-75 mb-1" id="dashTimeLabel">Current System Time</p>
                     <h1 class="fw-bold mb-2" id="dashCurrentTime" style="font-size: 3.5rem; font-family: 'Inter', sans-serif; tracking-wide">00:00:00</h1>
                     
                     <div class="d-inline-flex align-items-center bg-white bg-opacity-25 rounded-pill px-3 py-1">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        <span class="fw-bold small" id="activeZoneDisplay">Melaka (Sg. Udang MRSM)</span>
+                        <span class="fw-bold small" id="activeZoneDisplay">Synchronizing Location...</span>
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block opacity-25">
-                    <i class="fas fa-kaaba fa-7x"></i>
+                    <i class="far fa-clock fa-7x"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- CORE MIDDLE GRID SECTION --}}
+    {{-- 1. FULL MENU CARDS - PRESERVED & SECURED --}}
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <a href="{{ route('student.progress.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #2962FF;">
+                        <i class="fas fa-chart-pie fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Progress</h5>
+                        <p class="text-muted small mb-0">View subject analytics</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.timetable.view') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #8B1E24;">
+                        <i class="far fa-calendar-alt fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Timetable</h5>
+                        <p class="text-muted small mb-0">Check class schedule</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.flashcards.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #F59E0B;">
+                        <i class="fas fa-layer-group fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Flashcards</h5>
+                        <p class="text-muted small mb-0">Study & memorize</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <a href="{{ route('student.resources.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #00897B;">
+                        <i class="far fa-folder-open fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Resources</h5>
+                        <p class="text-muted small mb-0">Notes & videos</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.messages.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #D93025;">
+                        <i class="far fa-comment-dots fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Messages</h5>
+                        <p class="text-muted small mb-0">Chat with teachers</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ route('student.profile.show') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="p-3 rounded-4 me-3 text-white" style="background-color: #C05621;">
+                        <i class="far fa-user fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Profile</h5>
+                        <p class="text-muted small mb-0">Account settings</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {{-- MIDDLE ROW WORKSPACE LAYOUT --}}
     <div class="row g-4 mb-5">
         
-        {{-- LEFT COLUMN: KURIKULUM MODUL AL-FALAH (WIDTH: 7) --}}
-        <div class="col-lg-7">
+        {{-- KURIKULUM MODUL AL-FALAH GRIDS --}}
+        <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0">
-                            <i class="fas fa-book-open me-2 text-dark"></i>Kurikulum Modul Al-Falah
-                        </h5>
-                        <small class="text-muted">Peta penguasaan 6 bidang utama Pendidikan Islam anda.</small>
-                    </div>
-                    {{-- 🟢 TARGETED ADDITION: BUTTON TO LAUNCH THE FULLSCREEN CANDY CRUSH QUEST MAP --}}
-                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold shadow-sm" onclick="openSagaMap()">
-                        <i class="fas fa-map-marked-alt me-1"></i> Peta Saga Game
-                    </button>
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 text-start">
+                    <h5 class="fw-bold text-dark mb-0">Kurikulum Modul Al-Falah</h5>
+                    <small class="text-muted">Peta penguasaan 6 bidang utama Pendidikan Islam anda.</small>
                 </div>
                 <div class="card-body px-4 pb-4 pt-2">
                     <div class="row g-3">
                         @foreach($subjectProgress as $sub)
                         <div class="col-md-6">
-                            <div class="card border border-light shadow-sm rounded-3 h-100">
+                            {{-- CARD CLICK LAUNCHES CORRESPONDING SEPARATE GAME ISLAND VIEW --}}
+                            <div class="card border border-light shadow-sm rounded-3 h-100 position-relative cursor-pointer island-trigger-card" 
+                                 onclick="launchIslandMap('{{ addslashes($sub->name) }}', '{{ $sub->color }}', '{{ $sub->icon }}', '{{ $sub->avg_score }}')"
+                                 style="background: #ffffff; cursor: pointer; transition: transform 0.2s;">
                                 <div class="card-body p-3 text-start">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
                                         <div class="d-flex align-items-center" style="max-width: 65%;">
                                             <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 36px; height: 36px; flex-shrink:0;">
                                                 <i class="fas {{ $sub->icon }} fa-md" style="color: {{ $sub->color }};"></i>
                                             </div>
-                                            <h6 class="fw-bold text-dark mb-0 text-truncate" title="{{ $sub->name }}">{{ $sub->name }}</h6>
+                                            <h6 class="fw-bold text-dark mb-0 text-truncate">{{ $sub->name }}</h6>
                                         </div>
-                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2 py-1 small fw-bold" style="font-size: 0.6rem; letter-spacing: 0.5px;">
+                                        <span class="badge {{ $sub->badge }} rounded-pill text-uppercase px-2 py-1 small fw-bold" style="font-size: 0.6rem;">
                                             {{ $sub->rank }}
                                         </span>
                                     </div>
@@ -79,8 +161,10 @@
                                              aria-valuemax="100">
                                         </div>
                                     </div>
-                                    <div class="text-end mt-2">
-                                        <small class="text-muted" style="font-size: 0.65rem;">Siri Percubaan: {{ $sub->attempts_count }} kali</small>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted" style="font-size: 0.65rem;">Latihan: {{ $sub->attempts_count }} kali</small>
+                                        <span class="text-danger font-weight-bold small" style="font-size: 0.7rem;"><i class="fas fa-gamepad me-1"></i> Buka Peta Laluan</span>
                                     </div>
                                 </div>
                             </div>
@@ -91,11 +175,10 @@
             </div>
         </div>
 
-        {{-- RIGHT COLUMN: SUBJECT-WISE PERFORMANCE & SUMMARY STATS (WIDTH: 5) --}}
-        <div class="col-lg-5">
+        {{-- PIE CHART AND ACCOUNT PERFORMANCE SUMMARY DOCKS --}}
+        <div class="col-lg-4">
             <div class="d-flex flex-column h-100">
                 
-                {{-- PIE CHART CARD --}}
                 <div class="card border-0 shadow-sm rounded-4 mb-4 flex-grow-1">
                     <div class="card-body p-4">
                         <div class="text-start mb-3">
@@ -108,10 +191,9 @@
                     </div>
                 </div>
 
-                {{-- STUDY SUMMARY CARD --}}
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4 text-start">
-                        <h5 class="fw-bold text-dark mb-3"><i class="fas fa-medal text-warning me-2"></i>Ringkasan Prestasi</h5>
+                        <h5 class="fw-bold text-dark mb-3">Ringkasan Prestasi</h5>
                         <div class="row align-items-center g-0">
                             <div class="col-4 border-end">
                                 <h1 class="fw-bold mb-0 text-dark" style="font-size: 2.8rem;">{{ $totalQuizzes ?? 0 }}</h1>
@@ -127,9 +209,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="text-start mt-2 small text-muted pt-2 border-top">
-                            <i class="fas fa-info-circle text-info me-1"></i> Status Semasa: <strong>{{ $status ?? 'Stable' }}</strong> dengan garis trend pertumbuhan halaju kuiz.
-                        </div>
                     </div>
                 </div>
 
@@ -138,10 +217,10 @@
 
     </div>
 
-    {{-- GOOGLE CALENDAR AT bottom FRAME --}}
+    {{-- GOOGLE CALENDAR FRAME CONTAINER ROW --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5">
         <div class="card-header bg-white border-0 pt-4 px-4 text-start">
-            <h5 class="fw-bold text-dark"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
+            <h5 class="fw-bold text-dark mb-0"><i class="far fa-calendar-alt me-2 text-danger"></i>Calendar Events</h5>
         </div>
         <div class="card-body p-4">
             <div style="width: 100%; height: 450px; overflow: hidden; border-radius: 12px; border: 1px solid #eee;">
@@ -152,63 +231,63 @@
         </div>
     </div>
 
-    {{-- 🎮 10/10 FULL-PAGE CANDY CRUSH SAGA QUEST OVERLAY VIEW SCREEN --}}
-    <div id="fullscreenSagaContainer" class="saga-overlay d-none">
-        
-        {{-- Map Dashboard Header Control Panel Row --}}
-        <div class="saga-header d-flex justify-content-between align-items-center px-4 py-3">
-            <div class="text-start">
-                <h4 class="fw-bold text-white mb-0"><i class="fas fa-map-marked-alt text-warning me-2"></i>Peta Perjalanan Al-Falah</h4>
-                <p class="text-white-50 mb-0 small">Klik mana-mana siri penanda bidang untuk melihat tugasan kuiz</p>
+    {{-- 🎮 THE INTERNAL CONTENT ROADMAP WRAPPER (ISOLATED INSIDE THE CONTENT PANEL ONLY) --}}
+    <div id="internalIslandRoadmapOverlay" class="internal-island-map d-none">
+        <div class="card border-0 shadow-lg h-100 rounded-4 overflow-hidden position-relative" style="background-color: #ffffff;">
+            
+            {{-- Winding background decorative patterns style map --}}
+            <div class="island-grid-design-bg"></div>
+
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4 position-relative" style="z-index: 100;">
+                <div class="text-start">
+                    <span class="badge rounded-pill bg-danger text-uppercase px-2 py-1 mb-1 shadow-sm" style="font-size:0.65rem;">Saga Mode Island</span>
+                    <h4 class="fw-bold text-dark mb-0" id="islandMapTitleHeader">Subject Island Map</h4>
+                </div>
+                <button type="button" class="btn btn-outline-dark rounded-pill px-4 fw-bold shadow-sm" onclick="closeIslandMap()">
+                    <i class="fas fa-arrow-left me-2"></i> Kembali Ke Dashboard
+                </button>
             </div>
-            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold shadow" onclick="closeSagaMap()">
-                <i class="fas fa-times me-1 text-danger"></i> Tutup Peta
-            </button>
-        </div>
 
-        {{-- Winding Level Path Stream --}}
-        <div class="saga-map-viewport">
-            <div class="saga-scrollable-track">
-                
-                {{-- Dynamic SVG Layer drawing vector connections behind nodes --}}
-                <svg class="saga-connector-svg">
-                    <path id="sagaPathLine" d="" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="6" stroke-dasharray="12,12" />
-                </svg>
-
-                @php
-                    // Map horizontal offsetting pattern sequence indices to layout a winding puzzle path string shape
-                    $alignments = ['node-left', 'node-center-left', 'node-center-right', 'node-right', 'node-center-right', 'node-center-left'];
-                @endphp
-
-                @foreach($subjectProgress as $idx => $sub)
-                    @php $alignmentClass = $alignments[$idx % count($alignments)]; @endphp
+            <div class="card-body position-relative d-flex align-items-center justify-content-center" style="z-index: 50; overflow-y: auto;">
+                <div class="candy-crush-track-spine">
                     
-                    <div class="saga-node-wrapper {{ $alignmentClass }}">
-                        <div class="saga-level-checkpoint-bubble hover-scale-up text-white" 
-                             style="box-shadow: 0 0 20px {{ $sub->color }}; border: 5px solid #fff; background: linear-gradient(135deg, {{ $sub->color }}, #111);"
-                             data-bs-toggle="tooltip" 
-                             data-bs-placement="top" 
-                             title="{{ $sub->name }} ({{ $sub->rank }} - {{ $sub->avg_score }}%)">
-                            
-                            <i class="fas {{ $sub->icon }} fa-lg"></i>
-                            <span class="saga-level-badge shadow-sm">{{ $idx + 1 }}</span>
-                            
-                            {{-- Interactive floating level flag plate container --}}
-                            <div class="saga-flag-plate card border-0 shadow py-1 px-2">
-                                <span class="fw-bold text-dark small text-truncate d-block" style="max-width: 110px;">{{ $sub->name }}</span>
-                                <span class="badge {{ $sub->badge }} py-0 font-weight-bold" style="font-size:0.55rem;">{{ $sub->avg_score }}%</span>
-                            </div>
+                    {{-- SVG vector line layer for connection strands --}}
+                    <svg class="spine-line-svg">
+                        <path id="spineVectorConnector" d="" fill="none" stroke="#ddd" stroke-width="6" stroke-dasharray="10,10" />
+                    </svg>
+
+                    {{-- Level Checkpoint Node 1: EASY --}}
+                    <div class="candy-node-row left-align-node">
+                        <div class="candy-checkpoint shadow-lg cursor-pointer easy-node-bubble" id="nodeCheckpointEasy" data-toggle="tooltip" title="Misi Mudah (Easy Quiz Tier)">
+                            <i class="fas fa-star text-white shadow-sm"></i>
+                            <span class="checkpoint-text-tag bg-white shadow-sm font-weight-bold text-dark">EASY</span>
                         </div>
                     </div>
-                @endforeach
 
+                    {{-- Level Checkpoint Node 2: MEDIUM --}}
+                    <div class="candy-node-row center-align-node">
+                        <div class="candy-checkpoint shadow-lg cursor-pointer medium-node-bubble" id="nodeCheckpointMedium" data-toggle="tooltip" title="Misi Sederhana (Medium Quiz Tier)">
+                            <i class="fas fa-shield-alt text-white shadow-sm"></i>
+                            <span class="checkpoint-text-tag bg-white shadow-sm font-weight-bold text-dark">MEDIUM</span>
+                        </div>
+                    </div>
+
+                    {{-- Level Checkpoint Node 3: HARD --}}
+                    <div class="candy-node-row right-align-node">
+                        <div class="candy-checkpoint shadow-lg cursor-pointer hard-node-bubble" id="nodeCheckpointHard" data-toggle="tooltip" title="Misi Sukar (Hard Quiz Tier)">
+                            <i class="fas fa-crown text-white shadow-sm"></i>
+                            <span class="checkpoint-text-tag bg-white shadow-sm font-weight-bold text-dark">HARD</span>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
 
 </div>
 
-{{-- PRAYER WIDGET (FLOATING) --}}
+{{-- PRAYER OVERLAYS --}}
 <div class="prayer-widget-container no-print">
     <div id="prayerList" class="card border-0 shadow mb-3 d-none prayer-list-card">
         <div class="card-body p-3 text-start">
@@ -233,100 +312,93 @@
 </div>
 
 <style>
-    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; display: flex; flex-direction: column; align-items: end; }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: translateY(-5px); }
+    .island-trigger-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.08) !important; }
+    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: end; }
     .prayer-icon { width: 60px; height: 60px; }
     .prayer-list-card { width: 220px; }
-    .text-start { text-align: left !important; }
 
-    /* 🎨 STUNNING OVERLAY DESIGN MODULES FOR THE RPG SAGA ENVIRONMENT MAP */
-    .saga-overlay {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: radial-gradient(circle, #104c3a 0%, #051a14 100%);
-        background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 0);
-        background-size: 24px 24px;
-        z-index: 99999; overflow: hidden; display: flex; flex-direction: column;
-        animation: fadeInOverlay 0.4s ease-out forwards;
+    /* 🎮 DYNAMIC CONSTRAINED INTERNAL OVERLAY CONTAINER STYLING MODULES */
+    .internal-island-map {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1000; padding: 0; animation: overlaySlideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
     }
-    .saga-header { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .saga-map-viewport { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 60px 20px; position: relative; }
-    .saga-scrollable-track { position: relative; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 85px; }
+    .island-grid-design-bg {
+        position: absolute; top:0; left:0; width:100%; height:100%;
+        background-color: #ffffff;
+        background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1.5px, transparent 0);
+        background-size: 20px 20px; opacity: 0.85; pointer-events: none; z-index: 1;
+    }
+    .candy-crush-track-spine { position: relative; width: 100%; max-width: 480px; height: 420px; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 0; }
+    .spine-line-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
     
-    /* Connection paths vectors layer mapping shapes boundaries */
-    .saga-connector-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
-    
-    /* Positioning matrix tags mapping components into horizontal trails */
-    .saga-node-wrapper { display: flex; width: 100%; position: relative; z-index: 5; }
-    .node-left { justify-content: flex-start; }
-    .node-center-left { justify-content: cubic-bezier(0.1, 0.9, 0.2, 1); padding-left: 20%; }
-    .node-center-right { justify-content: cubic-bezier(0.1, 0.9, 0.2, 1); padding-left: 55%; }
-    .node-right { justify-content: flex-end; }
+    .candy-node-row { display: flex; width: 100%; position: relative; z-index: 10; }
+    .left-align-node { justify-content: flex-start; padding-left: 10%; }
+    .center-align-node { justify-content: center; }
+    .right-align-node { justify-content: flex-end; padding-right: 10%; }
 
-    .saga-level-checkpoint-bubble {
-        width: 70px; height: 70px; rounded-circle: 100%; position: relative;
-        display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;
+    .candy-checkpoint {
+        width: 65px; height: 65px; border-radius: 50%; border: 4px solid #fff;
+        display: flex; align-items: center; justify-content: center; position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .hover-scale-up:hover { transform: scale(1.18); box-shadow: 0 0 35px #fff !important; }
+    .candy-checkpoint:hover { transform: scale(1.15); box-shadow: 0 0 20px rgba(0,0,0,0.2) !important; }
     
-    .saga-level-badge {
-        position: absolute; bottom: -8px; right: -8px; background: #fff; color: #111;
-        font-weight: 900; width: 24px; height: 24px; border-radius: 50%; font-size: 0.75rem;
-        display: flex; align-items: center; justify-content: center;
+    .checkpoint-text-tag {
+        position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+        font-size: 0.65rem; padding: 2px 10px; border-radius: 20px; font-weight: 800; letter-spacing: 0.5px;
     }
-    .saga-flag-plate {
-        position: absolute; top: 76px; left: 50%; transform: translateX(-50%);
-        width: 130px; text-align: center; border-radius: 10px; background: rgba(255,255,255,0.95);
-    }
-
-    @keyframes fadeInOverlay { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes overlaySlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // 🟢 SAGA MAP ACTIVE ROUTING HANDLER ACTIONS
-    function openSagaMap() {
-        document.getElementById('fullscreenSagaContainer').classList.remove('d-none');
-        document.body.style.overflow = 'hidden'; // Lock scrolling bounds on back elements
-        setTimeout(drawVectorConnectorLines, 100); // Triggers link recalculations
-    }
-
-    function closeSagaMap() {
-        document.getElementById('fullscreenSagaContainer').classList.add('d-none');
-        document.body.style.overflow = 'auto'; // Free viewport
-    }
-
-    // Dynamic path calculator tracks bubble offset heights to redraw matching connection line layouts
-    function drawVectorConnectorLines() {
-        const bubbles = document.querySelectorAll('.saga-level-checkpoint-bubble');
-        const path = document.getElementById('sagaPathLine');
-        const container = document.querySelector('.saga-scrollable-track').getBoundingClientRect();
+    // 🟢 SAGA ISLAND MAP ROUTING MANAGEMENT DISPATCHERS
+    function launchIslandMap(subjectName, subjectColor, subjectIcon, avgScore) {
+        document.getElementById('islandMapTitleHeader').innerText = `Bidang: ${subjectName}`;
+        const container = document.getElementById('internalIslandRoadmapOverlay');
+        container.classList.remove('d-none');
         
-        if(bubbles.length < 2) return;
+        // Render color configurations onto nodes dynamically
+        const bubbles = [
+            document.getElementById('nodeCheckpointEasy'),
+            document.getElementById('nodeCheckpointMedium'),
+            document.getElementById('nodeCheckpointHard')
+        ];
         
-        let pathString = "";
-        bubbles.forEach((bubble, index) => {
-            const rect = bubble.getBoundingClientRect();
-            // Find center coordinate positions for nodes relative to core track dimensions
-            const centerX = (rect.left + rect.width / 2) - container.left;
-            const centerY = (rect.top + rect.height / 2) - container.top;
-            
-            if (index === 0) {
-                pathString += `M ${centerX} ${centerY}`;
-            } else {
-                pathString += ` L ${centerX} ${centerY}`;
-            }
+        bubbles.forEach((b, idx) => {
+            b.style.background = `linear-gradient(135deg, ${subjectColor}, #222)`;
+            b.style.boxShadow = `0 0 15px ${subjectColor}66`;
         });
-        path.setAttribute('d', pathString);
+
+        setTimeout(calculateIslandSpineVectors, 150);
     }
 
-    // Keep vectors clean across desktop window scaling shifts
-    window.addEventListener('resize', () => {
-        if(!document.getElementById('fullscreenSagaContainer').classList.contains('d-none')) {
-            drawVectorConnectorLines();
-        }
-    });
+    function closeIslandMap() {
+        document.getElementById('internalIslandRoadmapOverlay').classList.add('d-none');
+    }
 
-    // ✅ PIE CHART LOGIC - UNTOUCHED, RENDER RULES PRESERVED
+    function calculateIslandSpineVectors() {
+        const easy = document.getElementById('nodeCheckpointEasy').getBoundingClientRect();
+        const medium = document.getElementById('nodeCheckpointMedium').getBoundingClientRect();
+        const hard = document.getElementById('nodeCheckpointHard').getBoundingClientRect();
+        const parent = document.querySelector('.candy-crush-track-spine').getBoundingClientRect();
+        const line = document.getElementById('spineVectorConnector');
+
+        // Draw direct vectors snaking across checkpoints
+        const eX = (easy.left + easy.width/2) - parent.left;
+        const eY = (easy.top + easy.height/2) - parent.top;
+        const mX = (medium.left + medium.width/2) - parent.left;
+        const mY = (medium.top + medium.height/2) - parent.top;
+        const hX = (hard.left + hard.width/2) - parent.left;
+        const hY = (hard.top + hard.height/2) - parent.top;
+
+        line.setAttribute('d', `M ${eX} ${eY} L ${mX} ${mY} L ${hX} ${hY}`);
+    }
+
+    // ✅ PIE CHART LOGIC - MAPPED SAFELY WITH 6 DISTINCT SUBJECT VALUE CODES
     const pieCtx = document.getElementById('performancePieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
@@ -334,7 +406,8 @@
             labels: {!! json_encode(array_keys($subjectPerformance)) !!},
             datasets: [{
                 data: {!! json_encode(array_values($subjectPerformance)) !!},
-                backgroundColor: ['#2962FF', '#F59E0B', '#10B981', '#D93025', '#8B5CF6', '#FF6B6B'],
+                // 🟢 PRE-CONFIGURED 6 RICH SEGMENTATION CODES FOR ALL THE CURRICULUM VALUES
+                backgroundColor: ['#2962FF', '#F59E0B', '#10B981', '#D93025', '#8B5CF6', '#EC4899'],
                 borderWidth: 2,
                 borderColor: '#ffffff'
             }]
@@ -343,12 +416,12 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } }
+                legend: { position: 'right', labels: { usePointStyle: true, padding: 12, font: { size: 10 } } }
             }
         }
     });
 
-    // ✅ LIVE SYSTEM CLOCK ENGINES
+    // Clock Engine Blocks
     function initLiveClock() {
         function updateClock() {
             const timeString = moment().format('HH:mm:ss');
@@ -359,7 +432,6 @@
         updateClock();
     }
 
-    // ✅ CALIBRATED PRAYER WIDGET FETCH ENGINES
     function fetchPrayerTimes() {
         const apiUrl = `https://api.aladhan.com/v1/timings?latitude=2.2775&longitude=102.1466&method=3&fajrAngle=20&ishaAngle=18`;
         fetch(apiUrl).then(res => res.json()).then(data => {
@@ -369,8 +441,6 @@
             document.getElementById('time-Asr').innerText = t.Asr;
             document.getElementById('time-Maghrib').innerText = t.Maghrib;
             document.getElementById('time-Isha').innerText = t.Isha;
-            
-            // Static setup mappings
             document.getElementById('nextPrayerName').innerText = "Subuh";
             document.getElementById('nextPrayerTime').innerText = t.Fajr;
         });
