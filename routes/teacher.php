@@ -55,6 +55,8 @@ Route::get('/youtube/fetch-data', [App\Http\Controllers\ResourcesController::cla
     // Quiz Questions
     Route::get('/quizzes/{id}/manage', [QuizController::class, 'manage'])->name('quizzes.manage');
     Route::post('/quizzes/{id}/questions', [QuizController::class, 'storeQuestion'])->name('questions.store');
+    // 🟢 ADD THIS LINE: Explicit route matching target for the modal form update action
+    Route::put('/questions/{id}/update', [QuizController::class, 'updateQuestion'])->name('questions.update');
     Route::delete('/questions/{id}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
     Route::get('/teacher/quizzes/{quiz_id}/create-room', [RoomController::class, 'create'])->name('teacher.quizzes.create_room');
 
