@@ -9,7 +9,7 @@
         <p class="text-muted">Welcome back! Here is your learning overview.</p>
     </div>
 
-    {{-- LIVE SYSTEM CLOCK CARD --}}
+    {{-- ✅ CALIBRATED LIVE SYSTEM CLOCK CARD --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
         <div class="card-body p-4 text-white position-relative text-start">
             <div class="row align-items-center">
@@ -19,7 +19,7 @@
                     
                     <div class="d-inline-flex align-items-center bg-white bg-opacity-25 rounded-pill px-3 py-1">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        <span class="fw-bold small" id="activeZoneDisplay">Melaka (Sg. Udang MRSM)</span>
+                        <span class="fw-bold small" id="activeZoneDisplay">Synchronizing Location...</span>
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block opacity-25">
@@ -28,6 +28,7 @@
             </div>
         </div>
     </div>
+
 
     {{-- FULL MENU CARDS --}}
     <div class="row g-4 mb-5">
@@ -429,22 +430,71 @@
         updateClock();
     }
 
+    // ✅ CALIBRATED PRAYER WIDGET FETCH ENGINES (SYNCED TO PROFILE LOCALSTORAGE)
     function fetchPrayerTimes() {
-        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=2.2775&longitude=102.1466&method=3&fajrAngle=20&ishaAngle=18`;
+        const savedLoc = localStorage.getItem('prayerLoc') || '2.2775,102.1466';
+        const [lat, long] = savedLoc.split(',');
+        
+        // Dynamic location naming verification check
+        const locationName = zoneLabels[savedLoc] || 'Melaka (Sg. Udang MRSM)';
+        document.getElementById('activeZoneDisplay').innerText = locationName;
+        document.getElementById('widgetZoneHeader').innerText = `Solat: ${locationName.split(' ')[0]}`;
+
+        // JAKIM Calibrated Query Params API pipeline mapping
+        const apiUrl = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=3&fajrAngle=20&ishaAngle=18&tune=0,3,0,0,0,0,0,0,0`;
+
         fetch(apiUrl).then(res => res.json()).then(data => {
             const t = data.data.timings;
+            const prayers = {
+                "Subuh": t.Fajr,
+                "Zohor": t.Dhuhr,
+                "Asar": t.Asr,
+                "Maghrib": t.Maghrib,
+                "Isyak": t.Isha
+            };
+
+            // Inject current active timetable indices to floating cards
             document.getElementById('time-Fajr').innerText = t.Fajr;
             document.getElementById('time-Dhuhr').innerText = t.Dhuhr;
             document.getElementById('time-Asr').innerText = t.Asr;
             document.getElementById('time-Maghrib').innerText = t.Maghrib;
             document.getElementById('time-Isha').innerText = t.Isha;
-            document.getElementById('nextPrayerName').innerText = "Subuh";
-            document.getElementById('nextPrayerTime').innerText = t.Fajr;
-        });
+
+            updateNextPrayer(prayers);
+            
+            if (window.dashboardPrayerInterval) clearInterval(window.dashboardPrayerInterval);
+            window.dashboardPrayerInterval = setInterval(() => updateNextPrayer(prayers), 1000);
+        }).catch(err => console.error("Error reading regional JAKIM timeline coordinates:", err));
     }
 
+    function updateNextPrayer(prayers) {
+        const now = moment();
+        let nextName = "";
+        let nextTime = null;
+
+        for (let name in prayers) {
+            let time = moment(prayers[name], "HH:mm");
+            if (time.isAfter(now)) {
+                nextName = name;
+                nextTime = time;
+                break;
+            }
+        }
+
+        if (!nextTime) {
+            nextName = "Subuh";
+            nextTime = moment(prayers["Subuh"], "HH:mm").add(1, 'days');
+        }
+
+        // Update floating overlay action button components
+        document.getElementById('nextPrayerName').innerText = nextName;
+        document.getElementById('nextPrayerTime').innerText = nextTime.format("HH:mm");
+    }
+
+    // Trigger engine startup execution components
     initLiveClock();
     fetchPrayerTimes();
+    
     function togglePrayerList() { document.getElementById('prayerList').classList.toggle('d-none'); }
 </script>
 @endsection
