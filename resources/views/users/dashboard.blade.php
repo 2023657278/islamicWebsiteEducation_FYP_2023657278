@@ -256,6 +256,30 @@
         </div>
     </div>
 
+    {{-- PRAYER WIDGET (FLOATING) --}}
+<div class="prayer-widget-container no-print">
+    <div id="prayerList" class="card border-0 shadow mb-3 d-none prayer-list-card">
+        <div class="card-body p-3 text-start">
+            <h6 class="fw-bold text-center border-bottom pb-2 mb-2" id="widgetZoneHeader">Waktu Solat (JAKIM)</h6>
+            <div class="d-flex justify-content-between small mb-1"><span>Subuh</span> <span id="time-Fajr" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Zohor</span> <span id="time-Dhuhr" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Asar</span> <span id="time-Asr" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Maghrib</span> <span id="time-Maghrib" class="fw-bold">--:--</span></div>
+            <div class="d-flex justify-content-between small mb-1"><span>Isyak</span> <span id="time-Isha" class="fw-bold">--:--</span></div>
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-end" onclick="togglePrayerList()" style="cursor: pointer;">
+        <div class="bg-white px-4 py-2 rounded-pill shadow-sm border me-3">
+            <div class="fw-bold small text-muted text-uppercase" id="nextPrayerName">Loading...</div>
+            <div class="fw-bold text-danger" id="nextPrayerTime">--:--</div>
+        </div>
+        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center shadow-lg prayer-icon">
+            <i class="far fa-clock fa-lg"></i>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <style>
