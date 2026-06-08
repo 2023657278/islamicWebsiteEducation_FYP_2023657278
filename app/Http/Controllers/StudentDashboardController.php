@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QuizAttempt;
 use App\Models\Subject; 
+use App\Models\Quiz; // 🟢 Added to query quizzes directly
 use App\Services\AnalyticsService;
 
 class StudentDashboardController extends Controller
@@ -17,25 +18,28 @@ class StudentDashboardController extends Controller
     {
         $user = Auth::user();
 
-        // 1. FETCH ALL DATA (Ordered by Date) - KEPT AS IS
+        // 1. FETCH ALL ATTEMPTS (Ordered by Date)
         $attempts = QuizAttempt::with(['quiz.subject'])
                         ->where('user_id', $user->id)
                         ->orderBy('created_at', 'asc')
                         ->get();
 
-        // 2. BASIC STATS - KEPT AS IS
+        // Get an array of quiz IDs that the user has already answered/attempted
+        $answeredQuizIds = $attempts->pluck('quiz_id')->unique()->toArray();
+
+        // 2. BASIC STATS
         $totalQuizzes = $attempts->count();
         $averageScore = $attempts->avg('score') ?? 0;
 
-        // 3. LIVE ANALYTICS CALCULATION - KEPT AS IS
+        // 3. LIVE ANALYTICS CALCULATION
         $analyticsService = new AnalyticsService();
         $slope = $analyticsService->calculateSlope($attempts->pluck('score')->toArray());
         $status = $analyticsService->getInterpretation($slope);
 
-        // 5. CHART DATA (Last 10 quizzes) - KEPT AS IS
+        // 4. CHART DATA (Last 10 quizzes)
         $quizHistory = $attempts->take(-10); 
 
-        // 🟢 MINIMAL TARGETED UPDATE: Initialize all subjects dynamically from the master database
+        // 5. FETCH ALL SUBJECTS & GENERATE THE PROGRESS DETAILS
         $allSubjects = Subject::all();
         $subjectProgress = [];
         $subjectPerformance = [];
@@ -48,49 +52,44 @@ class StudentDashboardController extends Controller
             
             $subAvgScore = $subAttempts->count() > 0 ? round($subAttempts->avg('score'), 1) : 0;
 
-            // Gamified rank calculation configuration matrix
             if ($subAvgScore >= 75) {
-                $rank = 'Al-Fatih'; 
-                $badge = 'badge-success bg-success'; 
-                $color = '#10B981'; 
-                $icon = 'fa-crown';
+                $rank = 'Al-Fatih'; $badge = 'badge-success bg-success'; $color = '#10B981'; $icon = 'fa-crown';
             } elseif ($subAvgScore >= 40) {
-                $rank = 'Pejuang'; 
-                $badge = 'badge-warning bg-warning text-dark'; 
-                $color = '#F59E0B'; 
-                $icon = 'fa-shield-alt';
+                $rank = 'Pejuang'; $badge = 'badge-warning bg-warning text-dark'; $color = '#F59E0B'; $icon = 'fa-shield-alt';
             } else {
-                $rank = 'Musafir'; 
-                $badge = 'badge-danger bg-danger'; 
-                $color = '#D93025'; 
-                $icon = 'fa-compass';
+                $rank = 'Musafir'; $badge = 'badge-danger bg-danger'; $color = '#D93025'; $icon = 'fa-compass';
             }
 
-            // Append structured dataset object for the in-card roadmap tree view
+            // 🟢 GET ALL QUIZZES/TOPICS BELONGING TO THIS SUBJECT FOR THE ROADMAP
+            // Group topics by difficulty tier
+            $quizzes = Quiz::where('subject_id', $sub->id)->get();
+            $roadmapQuizzes = [];
+            
+            foreach ($quizzes as $quiz) {
+                $roadmapQuizzes[] = [
+                    'id' => $quiz->id,
+                    'title' => $quiz->title,
+                    'topic' => $quiz->topic ?? 'General Concept',
+                    'difficulty' => $quiz->difficulty, // 'Easy', 'Medium', 'Hard'
+                    'is_answered' => in_array($quiz->id, $answeredQuizIds) // 🟢 Checks if already answered
+                ];
+            }
+
             $subjectProgress[] = (object) [
+                'id' => $sub->id,
                 'name' => $sub->subject_name,
                 'avg_score' => $subAvgScore,
                 'rank' => $rank,
                 'badge' => $badge,
                 'color' => $color,
                 'icon' => $icon,
-                'attempts_count' => $subAttempts->count()
+                'attempts_count' => $subAttempts->count(),
+                'quizzes' => $roadmapQuizzes // 🟢 Passed into view context loop
             ];
 
-            // 🟢 FIXED CHART MAPPER: Force allocation of all subject keys so colors render correctly on frontend legends
-            // If the score is 0, we give it a tiny value (like 0.1) so it shows up on the chart configuration list
             $subjectPerformance[$sub->subject_name] = $subAvgScore > 0 ? $subAvgScore : 0.1;
         }
 
-        // Fallback boundary handling safety metric loop if no data exists anywhere
-        if ($totalQuizzes === 0) {
-            $subjectPerformance = [];
-            foreach ($allSubjects as $sub) {
-                $subjectPerformance[$sub->subject_name] = 0.1;
-            }
-        }
-
-        // Return unified data payloads out securely to users.dashboard view
         return view('users.dashboard', compact(
             'user', 
             'totalQuizzes', 
