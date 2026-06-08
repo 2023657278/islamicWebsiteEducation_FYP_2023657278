@@ -442,7 +442,26 @@
         }
     });
 
-    // Clock Engine Block
+   // ✅ Map coordinates to friendly location labels to match profile view names
+    const zoneLabels = {
+        '2.2775,102.1466': 'Melaka (Sg. Udang MRSM)',
+        '3.1319,101.6841': 'Kuala Lumpur / Putrajaya',
+        '1.4927,103.7414': 'Johor (Johor Bahru)',
+        '6.1184,100.3686': 'Kedah (Alor Setar)',
+        '6.1254,102.2386': 'Kelantan (Kota Bharu)',
+        '2.7258,101.9424': 'Negeri Sembilan (Seremban)',
+        '3.8126,103.3256': 'Pahang (Kuantan)',
+        '4.5921,101.0901': 'Perak (Ipoh)',
+        '6.4449,100.2048': 'Perlis (Kangar)',
+        '5.4141,100.3288': 'Pulau Pinang (George Town)',
+        '1.5533,110.3592': 'Sarawak (Kuching)',
+        '5.9788,116.0753': 'Sabah (Kota Kinabalu)',
+        '3.0738,101.5183': 'Selangor (Shah Alam)',
+        '5.3302,103.1408': 'Terengganu (Kuala Terengganu)',
+        '5.2831,115.2443': 'Labuan'
+    };
+
+    // ✅ LIVE DASHBOARD CLOCK ENGINES
     function initLiveClock() {
         function updateClock() {
             const timeString = moment().format('HH:mm:ss');
