@@ -31,7 +31,7 @@ class StudentProgressController extends Controller
                       ->where('quiz_attempts.score', '<', 50)
                       ->select('quizzes.title', 'quiz_attempts.score')
                       ->orderBy('quiz_attempts.score', 'asc')
-                      ->limit(3)
+                      ->limit(5)
                       ->get();
 
         // 2. FETCH FILTERED ATTEMPTS (Specifically for the Detailed Log Table)

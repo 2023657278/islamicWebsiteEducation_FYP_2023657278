@@ -127,7 +127,7 @@
 
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start position-relative" style="z-index: 10;">
                     <div>
-                        <h5 class="fw-bold text-dark mb-0" id="curriculumPanelTitle">Al-Falah Module Curriculum</h5>
+                        <h5 class="fw-bold text-dark mb-0" id="curriculumPanelTitle">Module Curriculum</h5>
                         <small class="text-muted" id="curriculumPanelSubtitle">Track your performance mapping logs across 6 core Islamic study fields.</small>
                     </div>
                     {{-- 🟢 FIXED: BUTTON BACK RESTORED Cleanly here to toggle lists --}}
