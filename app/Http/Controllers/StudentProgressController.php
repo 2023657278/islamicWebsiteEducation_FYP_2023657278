@@ -24,16 +24,6 @@ class StudentProgressController extends Controller
                       ->orderBy('quiz_attempts.created_at', 'asc')
                       ->get();
 
-        // 🟢 NEW: Detect Weak Topics (Focus Areas)
-        $weakTopics = DB::table('quiz_attempts')
-                      ->join('quizzes', 'quiz_attempts.quiz_id', '=', 'quizzes.id')
-                      ->where('quiz_attempts.user_id', $user->id)
-                      ->where('quiz_attempts.score', '<', 50)
-                      ->select('quizzes.title', 'quiz_attempts.score')
-                      ->orderBy('quiz_attempts.score', 'asc')
-                      ->limit(5)
-                      ->get();
-
         // 2. FETCH FILTERED ATTEMPTS (Specifically for the Detailed Log Table)
         $query = DB::table('quiz_attempts')
                       ->join('quizzes', 'quiz_attempts.quiz_id', '=', 'quizzes.id')
@@ -127,7 +117,7 @@ class StudentProgressController extends Controller
 
         return view('users.progress.index', compact(
             'currentAvg', 'totalQuizzes', 'slope', 'status', 'predictedNextScore',
-            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects', 'weakTopics'
+            'dates', 'scores', 'trendPoints', 'subjectProgress', 'attempts', 'filterSubjects'
         ));
     }
 }

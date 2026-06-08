@@ -14,25 +14,6 @@
         </a>
     </div>
 
-    {{-- NEW SECTION: FOCUS AREA --}}
-<div class="row mb-5">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-4 p-4" style="background: #FFF8E1;">
-            <h5 class="fw-bold mb-3"><i class="fas fa-bullseye text-warning me-2"></i>Targeted Focus Areas</h5>
-            <div class="d-flex gap-3">
-                @forelse($weakTopics as $topic)
-                    <div class="bg-white border p-3 rounded-3 shadow-sm">
-                        <small class="text-muted d-block">Needs Review</small>
-                        <strong class="text-dark">{{ $topic->title }}</strong>
-                    </div>
-                @empty
-                    <p class="text-muted">No weak spots detected! Keep up the great work.</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-</div>
-
     {{-- 1. KPI CARDS --}}
     <div class="row g-4 mb-5">
         <div class="col-xl-3 col-md-6">
