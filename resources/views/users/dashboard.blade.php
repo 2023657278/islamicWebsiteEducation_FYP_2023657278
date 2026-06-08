@@ -1,7 +1,7 @@
 @extends('users.students')
 
 @section('content')
-<div class="container-fluid p-0 pb-5 position-relative" id="dashboardMainContentArea">
+<div class="container-fluid p-0 pb-5">
 
     {{-- HEADER --}}
     <div class="mb-4 text-start">
@@ -9,7 +9,7 @@
         <p class="text-muted">Welcome back! Here is your learning overview.</p>
     </div>
 
-    {{-- ✅ CALIBRATED LIVE SYSTEM CLOCK CARD --}}
+    {{-- CALIBRATED LIVE SYSTEM CLOCK CARD --}}
     <div class="card border-0 shadow-sm rounded-4 mb-5 overflow-hidden" style="background: linear-gradient(135deg, #008f78, #00bfa5);">
         <div class="card-body p-4 text-white position-relative text-start">
             <div class="row align-items-center">
@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    {{-- 1. FULL MENU CARDS - PRESERVED & SECURED --}}
+    {{-- 1. FULL MENU CARDS --}}
     <div class="row g-4 mb-5">
         <div class="col-md-4">
             <a href="{{ route('student.progress.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
@@ -119,20 +119,32 @@
     {{-- MIDDLE ROW WORKSPACE LAYOUT --}}
     <div class="row g-4 mb-5">
         
-        {{-- KURIKULUM MODUL AL-FALAH GRIDS --}}
+        {{-- AL-FALAH CURRICULUM PANEL (CONTAINS INTEGRATED ROADMAP INNER CONSOLE) --}}
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 text-start">
-                    <h5 class="fw-bold text-dark mb-0">Kurikulum Modul Al-Falah</h5>
-                    <small class="text-muted">Peta penguasaan 6 bidang utama Pendidikan Islam anda.</small>
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative" style="overflow: hidden;">
+                
+                {{-- DECORATIVE RADIAL GRID BACKGROUND (ONLY VISIBLE IN ROADMAP MODE) --}}
+                <div id="innerRoadmapBgDesign" class="roadmap-grid-bg d-none"></div>
+
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center text-start position-relative" style="z-index: 10;">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0" id="curriculumPanelTitle">Al-Falah Module Curriculum</h5>
+                        <small class="text-muted" id="curriculumPanelSubtitle">Track your performance mapping logs across 6 core Islamic study fields.</small>
+                    </div>
+                    {{-- Return view button shown in roadmap mode --}}
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold d-none" id="closeRoadmapViewBtn" onclick="hideSubjectRoadmap()">
+                        <i class="fas fa-arrow-left me-1"></i> Back to List
+                    </button>
                 </div>
-                <div class="card-body px-4 pb-4 pt-2">
-                    <div class="row g-3">
+
+                <div class="card-body px-4 pb-4 pt-2 position-relative" style="z-index: 5;">
+                    
+                    {{-- VIEW A: STANDARD OVERVIEW CARD LIST GRID --}}
+                    <div id="subjectGridListView" class="row g-3">
                         @foreach($subjectProgress as $sub)
                         <div class="col-md-6">
-                            {{-- CARD CLICK LAUNCHES CORRESPONDING SEPARATE GAME ISLAND VIEW --}}
-                            <div class="card border border-light shadow-sm rounded-3 h-100 position-relative cursor-pointer island-trigger-card" 
-                                 onclick="launchIslandMap('{{ addslashes($sub->name) }}', '{{ $sub->color }}', '{{ $sub->icon }}', '{{ $sub->avg_score }}')"
+                            <div class="card border border-light shadow-sm rounded-3 h-100 island-trigger-card" 
+                                 onclick="showSubjectRoadmap('{{ addslashes($sub->name) }}', '{{ $sub->color }}', '{{ $sub->icon }}')"
                                  style="background: #ffffff; cursor: pointer; transition: transform 0.2s;">
                                 <div class="card-body p-3 text-start">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -148,7 +160,7 @@
                                     </div>
                                     
                                     <div class="d-flex justify-content-between align-items-end mb-1 mt-3 small text-muted">
-                                        <span>Tahap Ilmu</span>
+                                        <span>Mastery Score</span>
                                         <span class="fw-bold text-dark">{{ $sub->avg_score }}%</span>
                                     </div>
                                     
@@ -163,14 +175,63 @@
                                     </div>
                                     
                                     <div class="d-flex justify-content-between align-items-center mt-2">
-                                        <small class="text-muted" style="font-size: 0.65rem;">Latihan: {{ $sub->attempts_count }} kali</small>
-                                        <span class="text-danger font-weight-bold small" style="font-size: 0.7rem;"><i class="fas fa-gamepad me-1"></i> Buka Peta Laluan</span>
+                                        <small class="text-muted" style="font-size: 0.65rem;">Attempts: {{ $sub->attempts_count }} times</small>
+                                        <span class="text-primary font-weight-bold" style="font-size: 0.7rem;"><i class="fas fa-gamepad me-1"></i> Open Roadmap</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         @endforeach
                     </div>
+
+                    {{-- VIEW B: INTEGRATED SAGA ROADMAP INTERFACE (LOADS INSIDE CARD ON-CLICK) --}}
+                    <div id="subjectRoadmapTrackView" class="d-none py-4 position-relative">
+                        <div class="candy-crush-spine-box">
+                            
+                            {{-- SVG Pathway Line Connector Layer --}}
+                            <svg class="spine-svg-layer">
+                                <path id="roadmapSpineVector" d="" fill="none" stroke="#e0e0e0" stroke-width="6" stroke-dasharray="10,10" />
+                            </svg>
+
+                            {{-- NODE 1: EASY CHECKPOINT --}}
+                            <div class="candy-node-row node-left-align">
+                                <div class="candy-checkpoint-bubble shadow" id="checkpointNodeEasy">
+                                    <i class="fas fa-star text-white"></i>
+                                    <div class="checkpoint-tag shadow-sm">EASY LEVEL</div>
+                                    <div class="checkpoint-popup-card card border-0 shadow p-2 text-start">
+                                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.75rem;"><i class="fas fa-graduation-cap me-1 text-success"></i>Basic Foundations</h6>
+                                        <p class="text-muted mb-0 small" style="font-size: 0.65rem;">Contains direct fundamental questions from Modul Al-Falah.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- NODE 2: MEDIUM CHECKPOINT --}}
+                            <div class="candy-node-row node-center-align">
+                                <div class="candy-checkpoint-bubble shadow" id="checkpointNodeMedium">
+                                    <i class="fas fa-shield-alt text-white"></i>
+                                    <div class="checkpoint-tag shadow-sm">MEDIUM LEVEL</div>
+                                    <div class="checkpoint-popup-card card border-0 shadow p-2 text-start">
+                                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.75rem;"><i class="fas fa-book-open me-1 text-warning"></i>Application Cases</h6>
+                                        <p class="text-muted mb-0 small" style="font-size: 0.65rem;">Includes context translations and comprehensive textbook application scenarios.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- NODE 3: HARD CHECKPOINT --}}
+                            <div class="candy-node-row node-right-align">
+                                <div class="candy-checkpoint-bubble shadow" id="checkpointNodeHard">
+                                    <i class="fas fa-crown text-white"></i>
+                                    <div class="checkpoint-tag shadow-sm">HARD LEVEL</div>
+                                    <div class="checkpoint-popup-card card border-0 shadow p-2 text-start">
+                                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.75rem;"><i class="fas fa-brain me-1 text-danger"></i>KBAT Challenges</h6>
+                                        <p class="text-muted mb-0 small" style="font-size: 0.65rem;">Features high-level synthesis questions and complex conceptual analysis prompts.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -183,7 +244,7 @@
                     <div class="card-body p-4">
                         <div class="text-start mb-3">
                             <h5 class="fw-bold text-dark mb-0">Subject-wise Performance</h5>
-                            <small class="text-muted">Analisis agihan data masa nyata</small>
+                            <small class="text-muted">Real-time data distribution maps</small>
                         </div>
                         <div style="height: 240px; position: relative;">
                             <canvas id="performancePieChart"></canvas>
@@ -193,16 +254,16 @@
 
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4 text-start">
-                        <h5 class="fw-bold text-dark mb-3">Ringkasan Prestasi</h5>
+                        <h5 class="fw-bold text-dark mb-3">Study Summary</h5>
                         <div class="row align-items-center g-0">
                             <div class="col-4 border-end">
                                 <h1 class="fw-bold mb-0 text-dark" style="font-size: 2.8rem;">{{ $totalQuizzes ?? 0 }}</h1>
-                                <p class="text-muted small mb-0">Kuiz Selesai</p>
+                                <p class="text-muted small mb-0">Quizzes Completed</p>
                             </div>
                             <div class="col-8 ps-3">
                                 <div class="d-flex justify-content-between align-items-end mb-1">
                                     <h3 class="fw-bold mb-0 text-dark">{{ round($averageScore ?? 0, 1) }}%</h3>
-                                    <small class="text-muted">Purata Skor</small>
+                                    <small class="text-muted">Avg Score</small>
                                 </div>
                                 <div class="progress rounded-pill" style="height: 10px;">
                                     <div class="progress-bar bg-success rounded-pill" role="progressbar" style="width: {{ $averageScore ?? 0 }}%"></div>
@@ -227,60 +288,6 @@
                 <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&bgcolor=%23ffffff&ctz=Asia%2FKuala_Lumpur&src=ZW4ubWFsYXlzaWEjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%230B8043&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0" 
                     style="border:0" width="100%" height="450" frameborder="0" scrolling="no">
                 </iframe>
-            </div>
-        </div>
-    </div>
-
-    {{-- 🎮 THE INTERNAL CONTENT ROADMAP WRAPPER (ISOLATED INSIDE THE CONTENT PANEL ONLY) --}}
-    <div id="internalIslandRoadmapOverlay" class="internal-island-map d-none">
-        <div class="card border-0 shadow-lg h-100 rounded-4 overflow-hidden position-relative" style="background-color: #ffffff;">
-            
-            {{-- Winding background decorative patterns style map --}}
-            <div class="island-grid-design-bg"></div>
-
-            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4 position-relative" style="z-index: 100;">
-                <div class="text-start">
-                    <span class="badge rounded-pill bg-danger text-uppercase px-2 py-1 mb-1 shadow-sm" style="font-size:0.65rem;">Saga Mode Island</span>
-                    <h4 class="fw-bold text-dark mb-0" id="islandMapTitleHeader">Subject Island Map</h4>
-                </div>
-                <button type="button" class="btn btn-outline-dark rounded-pill px-4 fw-bold shadow-sm" onclick="closeIslandMap()">
-                    <i class="fas fa-arrow-left me-2"></i> Kembali Ke Dashboard
-                </button>
-            </div>
-
-            <div class="card-body position-relative d-flex align-items-center justify-content-center" style="z-index: 50; overflow-y: auto;">
-                <div class="candy-crush-track-spine">
-                    
-                    {{-- SVG vector line layer for connection strands --}}
-                    <svg class="spine-line-svg">
-                        <path id="spineVectorConnector" d="" fill="none" stroke="#ddd" stroke-width="6" stroke-dasharray="10,10" />
-                    </svg>
-
-                    {{-- Level Checkpoint Node 1: EASY --}}
-                    <div class="candy-node-row left-align-node">
-                        <div class="candy-checkpoint shadow-lg cursor-pointer easy-node-bubble" id="nodeCheckpointEasy" data-toggle="tooltip" title="Misi Mudah (Easy Quiz Tier)">
-                            <i class="fas fa-star text-white shadow-sm"></i>
-                            <span class="checkpoint-text-tag bg-white shadow-sm font-weight-bold text-dark">EASY</span>
-                        </div>
-                    </div>
-
-                    {{-- Level Checkpoint Node 2: MEDIUM --}}
-                    <div class="candy-node-row center-align-node">
-                        <div class="candy-checkpoint shadow-lg cursor-pointer medium-node-bubble" id="nodeCheckpointMedium" data-toggle="tooltip" title="Misi Sederhana (Medium Quiz Tier)">
-                            <i class="fas fa-shield-alt text-white shadow-sm"></i>
-                            <span class="checkpoint-text-tag bg-white shadow-sm font-weight-bold text-dark">MEDIUM</span>
-                        </div>
-                    </div>
-
-                    {{-- Level Checkpoint Node 3: HARD --}}
-                    <div class="candy-node-row right-align-node">
-                        <div class="candy-checkpoint shadow-lg cursor-pointer hard-node-bubble" id="nodeCheckpointHard" data-toggle="tooltip" title="Misi Sukar (Hard Quiz Tier)">
-                            <i class="fas fa-crown text-white shadow-sm"></i>
-                            <span class="checkpoint-text-tag bg-white shadow-sm font-weight-bold text-dark">HARD</span>
-                        </div>
-                    </div>
-
-                </div>
             </div>
         </div>
     </div>
@@ -315,90 +322,102 @@
     .hover-scale { transition: transform 0.2s; }
     .hover-scale:hover { transform: translateY(-5px); }
     .island-trigger-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.08) !important; }
-    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: end; }
+    .prayer-widget-container { position: fixed; bottom: 30px; right: 30px; z-index: 999; display: flex; flex-direction: column; align-items: end; }
     .prayer-icon { width: 60px; height: 60px; }
     .prayer-list-card { width: 220px; }
 
-    /* 🎮 DYNAMIC CONSTRAINED INTERNAL OVERLAY CONTAINER STYLING MODULES */
-    .internal-island-map {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 1000; padding: 0; animation: overlaySlideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
-    }
-    .island-grid-design-bg {
+    /* 🎮 IN-CARD RADIAL PATTERN GRID LINES */
+    .roadmap-grid-bg {
         position: absolute; top:0; left:0; width:100%; height:100%;
         background-color: #ffffff;
-        background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1.5px, transparent 0);
-        background-size: 20px 20px; opacity: 0.85; pointer-events: none; z-index: 1;
+        background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1.5px, transparent 0);
+        background-size: 20px 20px; opacity: 0.9; pointer-events: none; z-index: 1;
     }
-    .candy-crush-track-spine { position: relative; width: 100%; max-width: 480px; height: 420px; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 0; }
-    .spine-line-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+
+    .candy-crush-spine-box { position: relative; width: 100%; max-width: 460px; height: 380px; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between; padding: 10px 0; }
+    .spine-svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
     
     .candy-node-row { display: flex; width: 100%; position: relative; z-index: 10; }
-    .left-align-node { justify-content: flex-start; padding-left: 10%; }
-    .center-align-node { justify-content: center; }
-    .right-align-node { justify-content: flex-end; padding-right: 10%; }
+    .node-left-align { justify-content: flex-start; padding-left: 12%; }
+    .node-center-align { justify-content: center; }
+    .node-right-align { justify-content: flex-end; padding-right: 12%; }
 
-    .candy-checkpoint {
-        width: 65px; height: 65px; border-radius: 50%; border: 4px solid #fff;
+    .candy-checkpoint-bubble {
+        width: 60px; height: 60px; border-radius: 50%; border: 4px solid #fff;
         display: flex; align-items: center; justify-content: center; position: relative;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; z-index: 5;
     }
-    .candy-checkpoint:hover { transform: scale(1.15); box-shadow: 0 0 20px rgba(0,0,0,0.2) !important; }
+    .candy-checkpoint-bubble:hover { transform: scale(1.15); box-shadow: 0 0 20px rgba(0,0,0,0.15) !important; }
     
-    .checkpoint-text-tag {
-        position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
-        font-size: 0.65rem; padding: 2px 10px; border-radius: 20px; font-weight: 800; letter-spacing: 0.5px;
+    .checkpoint-tag {
+        position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
+        font-size: 0.6rem; padding: 2px 8px; border-radius: 20px; font-weight: 800; letter-spacing: 0.5px; background: #333; color: #fff; white-space: nowrap;
     }
-    @keyframes overlaySlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Checkpoint Preview Cards on Hover */
+    .checkpoint-popup-card {
+        position: absolute; top: -85px; left: 50%; transform: translateX(-50%) scale(0.9);
+        width: 180px; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 200; border-radius: 12px;
+    }
+    .candy-checkpoint-bubble:hover .checkpoint-popup-card { opacity: 1; transform: translateX(-50%) scale(1); }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
-    // 🟢 SAGA ISLAND MAP ROUTING MANAGEMENT DISPATCHERS
-    function launchIslandMap(subjectName, subjectColor, subjectIcon, avgScore) {
-        document.getElementById('islandMapTitleHeader').innerText = `Bidang: ${subjectName}`;
-        const container = document.getElementById('internalIslandRoadmapOverlay');
-        container.classList.remove('d-none');
+    // 🟢 DYNAMIC IN-CARD ROADMAP MODAL SWITCH ENGINE
+    function showSubjectRoadmap(subjectName, subjectColor, subjectIcon) {
+        // Toggle titles to match island scope context
+        document.getElementById('curriculumPanelTitle').innerText = `${subjectName} Roadmap`;
+        document.getElementById('curriculumPanelSubtitle').innerText = `Separate quest tracks for foundation tasks inside the field.`;
         
-        // Render color configurations onto nodes dynamically
-        const bubbles = [
-            document.getElementById('nodeCheckpointEasy'),
-            document.getElementById('nodeCheckpointMedium'),
-            document.getElementById('nodeCheckpointHard')
+        document.getElementById('subjectGridListView').classList.add('d-none');
+        document.getElementById('subjectRoadmapTrackView').classList.remove('d-none');
+        document.getElementById('closeRoadmapViewBtn').classList.remove('d-none');
+        document.getElementById('innerRoadmapBgDesign').classList.remove('d-none');
+
+        // Apply dynamic thematic node gradients onto checking markers
+        const checkpoints = [
+            document.getElementById('checkpointNodeEasy'),
+            document.getElementById('checkpointNodeMedium'),
+            document.getElementById('checkpointNodeHard')
         ];
-        
-        bubbles.forEach((b, idx) => {
-            b.style.background = `linear-gradient(135deg, ${subjectColor}, #222)`;
-            b.style.boxShadow = `0 0 15px ${subjectColor}66`;
+        checkpoints.forEach(cp => {
+            cp.style.background = `linear-gradient(135deg, ${subjectColor}, #222)`;
+            cp.style.boxShadow = `0 0 15px ${subjectColor}55`;
         });
 
-        setTimeout(calculateIslandSpineVectors, 150);
+        setTimeout(calculateInnerRoadmapVectors, 100);
     }
 
-    function closeIslandMap() {
-        document.getElementById('internalIslandRoadmapOverlay').classList.add('d-none');
+    function hideSubjectRoadmap() {
+        document.getElementById('curriculumPanelTitle').innerText = 'Al-Falah Module Curriculum';
+        document.getElementById('curriculumPanelSubtitle').innerText = 'Track your performance mapping logs across 6 core Islamic study fields.';
+        
+        document.getElementById('subjectGridListView').classList.remove('d-none');
+        document.getElementById('subjectRoadmapTrackView').classList.add('d-none');
+        document.getElementById('closeRoadmapViewBtn').classList.add('d-none');
+        document.getElementById('innerRoadmapBgDesign').classList.add('d-none');
     }
 
-    function calculateIslandSpineVectors() {
-        const easy = document.getElementById('nodeCheckpointEasy').getBoundingClientRect();
-        const medium = document.getElementById('nodeCheckpointMedium').getBoundingClientRect();
-        const hard = document.getElementById('nodeCheckpointHard').getBoundingClientRect();
-        const parent = document.querySelector('.candy-crush-track-spine').getBoundingClientRect();
-        const line = document.getElementById('spineVectorConnector');
+    function calculateInnerRoadmapVectors() {
+        const easy = document.getElementById('checkpointNodeEasy').getBoundingClientRect();
+        const medium = document.getElementById('checkpointNodeMedium').getBoundingClientRect();
+        const hard = document.getElementById('checkpointNodeHard').getBoundingClientRect();
+        const frame = document.querySelector('.candy-crush-spine-box').getBoundingClientRect();
+        const vectorLine = document.getElementById('roadmapSpineVector');
 
-        // Draw direct vectors snaking across checkpoints
-        const eX = (easy.left + easy.width/2) - parent.left;
-        const eY = (easy.top + easy.height/2) - parent.top;
-        const mX = (medium.left + medium.width/2) - parent.left;
-        const mY = (medium.top + medium.height/2) - parent.top;
-        const hX = (hard.left + hard.width/2) - parent.left;
-        const hY = (hard.top + hard.height/2) - parent.top;
+        const eX = (easy.left + easy.width/2) - frame.left;
+        const eY = (easy.top + easy.height/2) - frame.top;
+        const mX = (medium.left + medium.width/2) - frame.left;
+        const mY = (medium.top + medium.height/2) - frame.top;
+        const hX = (hard.left + hard.width/2) - frame.left;
+        const hY = (hard.top + hard.height/2) - frame.top;
 
-        line.setAttribute('d', `M ${eX} ${eY} L ${mX} ${mY} L ${hX} ${hY}`);
+        vectorLine.setAttribute('d', `M ${eX} ${eY} L ${mX} ${mY} L ${hX} ${hY}`);
     }
 
-    // ✅ PIE CHART LOGIC - MAPPED SAFELY WITH 6 DISTINCT SUBJECT VALUE CODES
+    // ✅ PIE CHART LOGIC - MAPS 6 VIBRANT THEME COLOR CHANNELS SIMULTANEOUSLY
     const pieCtx = document.getElementById('performancePieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
@@ -406,7 +425,7 @@
             labels: {!! json_encode(array_keys($subjectPerformance)) !!},
             datasets: [{
                 data: {!! json_encode(array_values($subjectPerformance)) !!},
-                // 🟢 PRE-CONFIGURED 6 RICH SEGMENTATION CODES FOR ALL THE CURRICULUM VALUES
+                // 🟢 DISTINCT THEMATIC COLOR BANDS MAPPED FOR EACH SUB-SECTION INDEX
                 backgroundColor: ['#2962FF', '#F59E0B', '#10B981', '#D93025', '#8B5CF6', '#EC4899'],
                 borderWidth: 2,
                 borderColor: '#ffffff'
@@ -421,7 +440,7 @@
         }
     });
 
-    // Clock Engine Blocks
+    // Live clock scripts
     function initLiveClock() {
         function updateClock() {
             const timeString = moment().format('HH:mm:ss');
