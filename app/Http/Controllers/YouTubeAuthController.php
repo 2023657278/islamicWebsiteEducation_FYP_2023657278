@@ -28,7 +28,6 @@ class YouTubeAuthController extends Controller
             'subject_id' => $subjectId
         ]);
 
-        // 🟢 THE FIX: We use the dynamic configuration mapping to prevent mismatch validation blocks
         return Socialite::driver('google')
             ->scopes([
                 'https://www.googleapis.com/auth/youtube.readonly',
@@ -38,7 +37,8 @@ class YouTubeAuthController extends Controller
             ])
             ->with([
                 'access_type' => 'offline', 
-                'prompt' => 'consent',
+                // 🟢 THE FIX: Enforce account selection interface prompt alongside user scope consent requests
+                'prompt' => 'select_account consent', 
                 'state' => base64_encode($statePayload)
             ])
             ->redirect();
@@ -50,7 +50,6 @@ class YouTubeAuthController extends Controller
     public function callback(Request $request)
     {
         try {
-            // 🟢 THE CRITICAL FIX: Explicitly enforce stateless parsing to accept the encoded parameter states
             $googleUser = Socialite::driver('google')->stateless()->user();
             
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
@@ -90,13 +89,8 @@ class YouTubeAuthController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            // 🟢 TEMPORARY DEBUG: Stop the redirect and dump the exact error text on screen
-            dd([
-                'Message' => $e->getMessage(),
-                'File'    => $e->getFile(),
-                'Line'    => $e->getLine(),
-                'Trace'   => $e->getTraceAsString()
-            ]);
+            return redirect()->route('resources.index')
+                ->with('error', 'Authentication failed: ' . $e->getMessage());
         }
     }
 }
