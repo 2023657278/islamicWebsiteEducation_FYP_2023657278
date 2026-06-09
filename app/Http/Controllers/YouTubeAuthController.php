@@ -72,11 +72,12 @@ class YouTubeAuthController extends Controller
      */
     public function disconnect()
     {
-        // Wipe local tokens out of application runtime memory
+        // Wipe local token credentials out of your Laravel application runtime memory
         Session::forget(['youtube_access_token', 'sync_group_id', 'sync_subject_id']);
         Session::save();
 
-        // Redirect directly to Google's official logout portal, then redirect back to your app
-        return redirect('https://accounts.google.com/Logout?continue=' . urlencode(route('resources.index')));
+        // 🟢 THE FIX: Change the continue parameter to point directly to your clean root base domain URL.
+        // This stops Google's security engine from rejecting the address string as malformed!
+        return redirect('https://accounts.google.com/Logout?continue=' . urlencode('https://islamic-lms.online'));
     }
 }
