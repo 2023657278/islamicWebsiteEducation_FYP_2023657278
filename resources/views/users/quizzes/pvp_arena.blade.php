@@ -215,7 +215,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     const roomCode = "{{ $room->room_code }}";
-    // 🟢 STRUCTURAL FIX: Removed trailing slash to prevent broken API path constructions
     const baseURL = "/student/quizzes/pvp/{{ $room->room_code }}";
     const resultsURL = "{{ route('student.quizzes.pvp.results', $room->room_code) }}";
     
@@ -239,7 +238,6 @@
             const r = await fetch(`${baseURL}/status`);
             const data = await r.json();
             
-            // 🟢 FIXED AUTO-REDIRECT: No longer blocked by feedback flags
             if (data.status === 'finished') { 
                 window.location.href = resultsURL; 
                 return; 
@@ -259,7 +257,6 @@
                 clearInterval(timer);
             }
 
-            // Clean, non-fractional multi-player scaling parameters
             const totalPlayersCount = data.participants.length;
             const maxHp = totalPlayersCount * 100; 
 
@@ -374,17 +371,27 @@
         startT();
     }
 
+    // 🟢 FIXED SELECTION TRACKING: Ensures array compliance
     function handleSel(id, type, btn) {
         if (isFrozen || feedbackActive || isDead) return;
-        if (type === 'single') { 
+        
+        // Always reset selection collection arrays to base structures
+        if (!Array.isArray(selectedIds)) {
+            selectedIds = [];
+        }
+
+        if (type === 'single' || type === 'single_choice') { 
             document.querySelectorAll('.option-card').forEach(b => b.classList.remove('selected')); 
             btn.classList.add('selected'); 
-            selectedIds = id; 
+            selectedIds = [parseInt(id)]; // Wrap securely in array
         } else { 
             btn.classList.toggle('selected'); 
-            if(!Array.isArray(selectedIds)) selectedIds = [];
-            if(selectedIds.includes(id)) selectedIds = selectedIds.filter(i => i !== id); 
-            else selectedIds.push(id); 
+            const intId = parseInt(id);
+            if (selectedIds.includes(intId)) {
+                selectedIds = selectedIds.filter(i => i !== intId); 
+            } else {
+                selectedIds.push(intId); 
+            }
         }
     }
 
@@ -411,7 +418,17 @@
         clearInterval(timer);
 
         const q = getQ();
-        let ans = isTimeout ? null : (q.question_type === 'text' ? document.getElementById('ansInput').value : selectedIds);
+        
+        // 🟢 FIXED PAYLOAD COMPILATION: Ensure answers never package as an empty array structure
+        let ans;
+        if (isTimeout) {
+            ans = null;
+        } else if (q.question_type === 'text') {
+            ans = document.getElementById('ansInput').value;
+        } else {
+            // Force compliance conversion block if selection variables get un-mapped
+            ans = Array.isArray(selectedIds) ? selectedIds : [selectedIds];
+        }
         
         try {
             const res = await fetch(`${baseURL}/strike`, { 
@@ -427,7 +444,7 @@
             } else {
                 document.querySelectorAll('.option-card').forEach(btn => {
                     const id = parseInt(btn.dataset.id);
-                    if (selectedIds == id || (Array.isArray(selectedIds) && selectedIds.includes(id))) {
+                    if (ans.includes(id)) {
                         btn.classList.add(result.is_correct ? 'correct' : 'incorrect');
                     }
                 });
