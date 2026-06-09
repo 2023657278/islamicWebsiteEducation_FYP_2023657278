@@ -215,6 +215,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     const roomCode = "{{ $room->room_code }}";
+    // 🟢 STRUCTURAL FIX: Removed trailing slash to prevent broken API path constructions
     const baseURL = "/student/quizzes/pvp/{{ $room->room_code }}";
     const resultsURL = "{{ route('student.quizzes.pvp.results', $room->room_code) }}";
     
@@ -238,7 +239,7 @@
             const r = await fetch(`${baseURL}/status`);
             const data = await r.json();
             
-            // 🟢 FIXED: Auto-redirect triggers regardless of submission lock
+            // 🟢 FIXED AUTO-REDIRECT: No longer blocked by feedback flags
             if (data.status === 'finished') { 
                 window.location.href = resultsURL; 
                 return; 
@@ -258,11 +259,10 @@
                 clearInterval(timer);
             }
 
-            // 🟢 FIXED CALCULATION SYNC POOL: Always scale default HP pool
+            // Clean, non-fractional multi-player scaling parameters
             const totalPlayersCount = data.participants.length;
             const maxHp = totalPlayersCount * 100; 
 
-            // Calculate scaled HP relative to the base 100
             let scaledCurrentHp = Math.round((me.hp / 100) * maxHp);
             if (scaledCurrentHp > maxHp) scaledCurrentHp = maxHp;
 
@@ -318,7 +318,6 @@
                 } else {
                     btn.classList.remove('cooldown');
                     btn.innerText = `${p.toUpperCase()} (40)`;
-                    // 🟢 HEAL FIX: Check current scaled HP
                     let canHealCheck = (p === 'heal') ? (scaledCurrentHp < maxHp) : true;
                     btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !feedbackActive && !isDead && !isFrozen && canHealCheck);
                 }

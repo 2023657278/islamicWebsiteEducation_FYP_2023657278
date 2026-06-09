@@ -46,7 +46,7 @@ class PvpController extends Controller
                 }
             }
 
-            // 3. 🏁 VICTORY DETECTION
+            // 3. 🏁 VICTORY DETECTION (Triggers automatic redirect for everyone when match ends)
             $aliveAndActive = $participants->where('status', 'active')->where('hp', '>', 0);
             
             if ($room->status === 'active' && $aliveAndActive->count() <= 1) {
@@ -102,7 +102,7 @@ class PvpController extends Controller
         $timeLeft = (int)$request->time_left;
 
         if ($isCorrect) {
-            // 🟢 FIXED: Base damage stays clean out of 100 base HP pool (20 damage if time >= 30s, 10 if below)
+            // 🟢 FIXED: Base damage goes straight into the 100 base HP pool cleanly without fractional loss
             $normalizedDmg = ($timeLeft >= 30) ? 20 : 10;
 
             if ($me->active_boost) { 
@@ -122,7 +122,7 @@ class PvpController extends Controller
             $me->increment('mp', 15);
             if ($me->mp > 100) $me->update(['mp' => 100]);
         } else {
-            // 🟢 FIXED: Base penalty stays clean out of 100 base HP pool (20 if boosted, 10 if normal)
+            // 🟢 FIXED: Base penalty handles cleanly without dividing down to zero fraction elements
             $normalizedPenalty = $me->active_boost ? 20 : 10;
 
             $me->decrement('hp', $normalizedPenalty);
@@ -222,8 +222,16 @@ class PvpController extends Controller
     private function checkAnswer($qId, $submitted, $type) {
         $question = Question::find($qId);
         if ($type === 'text') return strtolower(trim($submitted ?? '')) === strtolower(trim($question->correct_answer_text));
+        
+        // Handle array conversion for multiple choice matching setups safely
         $correct = DB::table('options')->where('question_id', $qId)->where('is_correct', 1)->pluck('id')->toArray();
-        $sub = (array)$submitted; sort($correct); sort($sub);
+        $sub = is_array($submitted) ? $submitted : [$submitted];
+        
+        // Map elements to integers to bypass loose string comparison filters inside array evaluations
+        $correct = array_map('intval', $correct);
+        $sub = array_map('intval', array_filter($sub));
+        
+        sort($correct); sort($sub);
         return (!empty($sub) && $correct === $sub);
     }
 }
