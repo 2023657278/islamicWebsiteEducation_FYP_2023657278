@@ -145,11 +145,13 @@ class RoomController extends Controller
                 ], 400); 
             }
             
-            // 🟢 FIXED: Base database health scale must initialize at 100 for proper ratio evaluation
+            // 🟢 DYNAMIC HP SCALING: 100 HP per participant (e.g., 3 players = 300 HP starting pool)
+            $startHp = $count * 100;
+
             foreach ($participants as $p) {
                 $p->update([
                     'status' => 'active',
-                    'hp' => 100,
+                    'hp' => $startHp,
                     'mp' => 50,
                     'skills_locked_turns' => 0, 
                     'is_shielded' => false,
