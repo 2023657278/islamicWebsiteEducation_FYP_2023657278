@@ -41,7 +41,7 @@
             to { opacity: 1; transform: translateY(0) rotateX(0); }
         }
 
-        /* 👑 PODIUM THEMES */
+        /* 🏆 PODIUM THEMES */
         .rank-item { 
             background: rgba(255,255,255,0.03); 
             border-radius: 20px; 
@@ -126,9 +126,10 @@
         </div>
 
         <div class="leaderboard-scroll">
-            @foreach($participants as $p)
+            {{-- 🟢 SURGICAL FIX: Sort elements explicitly by health descending so index matching works flawlessly --}}
+            @foreach($participants->sortByDesc('hp')->values() as $index => $p)
                 @php
-                    $rank = $p->rank ?? ($loop->index + 1);
+                    $rank = $index + 1;
                     $isWinner = ($rank === 1);
                     $statusClass = '';
                     $statusLabel = '';
@@ -143,9 +144,44 @@
                         $statusClass = 'bg-winner';
                         $statusLabel = 'CHAMPION';
                     }
+
+                    // 🟢 SURGICAL FIX: Exact alignment with controller points-pooling logic rules
+                    $diff = strtolower($room->quiz->difficulty);
+                    $playerCount = $participants->count();
+                    $points = 0;
+
+                    // Pool Range Tier A: 1 to 4 Players
+                    if ($playerCount >= 1 && $playerCount <= 4) {
+                        if ($diff == 'easy') {
+                            $points = ($isWinner) ? 15 : -5;
+                        } elseif ($diff == 'medium') {
+                            $points = ($isWinner) ? 30 : -15;
+                        } elseif ($diff == 'hard') {
+                            $points = ($isWinner) ? 70 : -50;
+                        }
+                    } 
+                    // Pool Range Tier B: 5 to 20 Players
+                    else if ($playerCount >= 5 && $playerCount <= 20) {
+                        if ($diff == 'easy') {
+                            if ($rank === 1) $points = 20;
+                            elseif ($rank === 2) $points = 15;
+                            elseif ($rank === 3) $points = 10;
+                            else $points = -5;
+                        } elseif ($diff == 'medium') {
+                            if ($rank === 1) $points = 45;
+                            elseif ($rank === 2) $points = 30;
+                            elseif ($rank === 3) $points = 20;
+                            else $points = -15;
+                        } elseif ($diff == 'hard') {
+                            if ($rank === 1) $points = 100;
+                            elseif ($rank === 2) $points = 70;
+                            elseif ($rank === 3) $points = 50;
+                            else $points = -50;
+                        }
+                    }
                 @endphp
 
-                <div class="rank-item {{ $isWinner ? 'rank-1' : 'rank-' . $rank }}">
+                <div class="rank-item {{ $isWinner ? 'rank-1' : 'rank-' . ($rank <= 3 ? $rank : 'default') }}">
                     <div class="d-flex align-items-center">
                         <div class="rank-badge {{ $isWinner ? 'bg-warning text-dark' : 'bg-primary text-white' }}">
                             {{ $rank }}
@@ -166,15 +202,6 @@
                             {{ $statusLabel }}
                         </div>
                         <div class="small fw-bold text-info">
-                            {{-- Point calculation logic from your controller helper --}}
-                            @php
-                                // This matches your PvpController logic
-                                $diff = strtolower($room->quiz->difficulty);
-                                $points = 0;
-                                if($diff == 'easy') $points = ($isWinner) ? 15 : -5;
-                                elseif($diff == 'medium') $points = ($isWinner) ? 30 : -15;
-                                elseif($diff == 'hard') $points = ($isWinner) ? 70 : -50;
-                            @endphp
                             {{ $points > 0 ? '+' : '' }}{{ $points }} PTS
                         </div>
                     </div>
