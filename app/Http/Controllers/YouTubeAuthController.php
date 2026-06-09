@@ -19,12 +19,12 @@ class YouTubeAuthController extends Controller
         $groupId = $request->group_id;
         $subjectId = $request->subject_id;
 
-        // Explicitly force context retention in persistent session storage
+        // Force explicit fallback backup parameters into session driver
         Session::put('sync_group_id', $groupId);
         Session::put('sync_subject_id', $subjectId);
-        Session::save(); // Force absolute save commitment to storage driver
+        Session::save(); 
 
-        // 🟢 THE FIX: Package parameters into a state payload to survive the external redirection thread
+        // Serialize variables cleanly into a string layout payload
         $statePayload = json_encode([
             'group_id' => $groupId,
             'subject_id' => $subjectId
@@ -40,7 +40,7 @@ class YouTubeAuthController extends Controller
             ->with([
                 'access_type' => 'offline', 
                 'prompt' => 'consent',
-                'state' => base64_encode($statePayload) // 🟢 Safely wrap within standard OAuth state parameters
+                'state' => base64_encode($statePayload) // Keeps data passing through Google
             ])
             ->redirect();
     }
@@ -51,7 +51,10 @@ class YouTubeAuthController extends Controller
     public function callback(Request $request)
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            // 🟢 THE CRITICAL FIX: Add ->stateless() before calling ->user()
+            // This prevents Socialite from rejecting the custom state payload we packed.
+            $googleUser = Socialite::driver('google')->stateless()->user();
+            
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
 
             if (!$token) {
@@ -61,7 +64,7 @@ class YouTubeAuthController extends Controller
             // Save credentials where your AJAX handler expects it
             Session::put('youtube_access_token', $token);
 
-            // 🟢 THE FIX: Safely parse parameters from returned state payload if sessions fell out of sync
+            // Re-extract tracking parameters from returned state parameter
             $groupId = null;
             $subjectId = null;
 
@@ -73,16 +76,15 @@ class YouTubeAuthController extends Controller
                 }
             }
 
-            // Fallback to traditional session variables if state payload was dropped
+            // Fallback parameters evaluation loop
             if (!$groupId) $groupId = Session::get('sync_group_id');
             if (!$subjectId) $subjectId = Session::get('sync_subject_id');
 
-            // Re-commit variables firmly into tracking session memory
             Session::put('sync_group_id', $groupId);
             Session::put('sync_subject_id', $subjectId);
             Session::save();
 
-            // Force parameters directly back into the destination search array parameters
+            // Redirect back to search view with correct parameters on the first click
             return redirect()->route('resources.youtube.search', [
                 'group_id' => $groupId,
                 'subject_id' => $subjectId,
@@ -90,6 +92,7 @@ class YouTubeAuthController extends Controller
             ]);
             
         } catch (\Exception $e) {
+            // If it fails, show the exact error text on screen so we can read it!
             return redirect()->route('resources.index')
                 ->with('error', 'Authentication failed: ' . $e->getMessage());
         }
