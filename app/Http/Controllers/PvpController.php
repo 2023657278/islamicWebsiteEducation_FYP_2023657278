@@ -88,11 +88,20 @@ class PvpController extends Controller
      */
     public function submitStrike(Request $request, $code)
     {
+        // Log payload directly to verify array contents
+        \Log::info('Strike Received Payload:', $request->all());
+
         $room = QuizRoom::where('room_code', $code)->first();
-        $participants = RoomParticipant::where('room_id', $room->id)->get();
-        $me = $participants->where('user_id', Auth::id())->first();
+        if (!$room) return response()->json(['error' => 'Room not found'], 404);
+
+        // Fetch using direct Eloquent query builders to prevent dirty cache retention
+        $me = RoomParticipant::where('room_id', $room->id)
+                             ->where('user_id', Auth::id())
+                             ->first();
         
-        if ($me->status !== 'active') return response()->json(['error' => 'Defeated.'], 403);
+        if (!$me || $me->status !== 'active') {
+            return response()->json(['error' => 'Defeated.'], 403);
+        }
 
         if ($me->strike_locked_until && now()->lessThan($me->strike_locked_until)) {
             return response()->json(['error' => 'RECOVERING...'], 403);
@@ -102,7 +111,7 @@ class PvpController extends Controller
         $timeLeft = (int)$request->time_left;
 
         if ($isCorrect) {
-            // 🟢 FIXED: Base damage goes straight into the 100 base HP pool cleanly without fractional loss
+            // Base damage calculation
             $normalizedDmg = ($timeLeft >= 30) ? 20 : 10;
 
             if ($me->active_boost) { 
@@ -110,27 +119,51 @@ class PvpController extends Controller
                 $me->update(['active_boost' => false]); 
             }
 
-            $opponents = RoomParticipant::where('room_id', $room->id)->where('user_id', '!=', Auth::id())->where('status', 'active')->get();
-            foreach ($opponents as $opp) {
-                if ($opp->is_shielded) {
-                    $opp->update(['is_shielded' => false]);
-                } else {
-                    $opp->decrement('hp', $normalizedDmg);
-                    if ($opp->hp <= 0) $opp->update(['hp' => 0, 'status' => 'defeated']); 
-                }
-            }
+            // 🟢 SOLUTION FIX: Direct Database Query Execution
+            // This forces the database engine to decrement values instantly across 3+ player rows 
+            // bypassing separate instance cache locks.
+            
+            // First, process shielded opponents
+            DB::table('room_participants')
+                ->where('room_id', $room->id)
+                ->where('user_id', '!=', Auth::id())
+                ->where('status', 'active')
+                ->where('is_shielded', true)
+                ->update(['is_shielded' => false]);
+
+            // Second, decrement health for unshielded opponents straight at the database layer
+            DB::table('room_participants')
+                ->where('room_id', $room->id)
+                ->where('user_id', '!=', Auth::id())
+                ->where('status', 'active')
+                ->where('is_shielded', false)
+                ->decrement('hp', $normalizedDmg);
+
+            // Third, clean up any opponents whose health dropped to or below 0
+            DB::table('room_participants')
+                ->where('room_id', $room->id)
+                ->where('hp', '<=', 0)
+                ->update(['hp' => 0, 'status' => 'defeated']);
+
+            // Refresh local player state context data
             $me->increment('mp', 15);
-            if ($me->mp > 100) $me->update(['mp' => 100]);
+            if ($me->mp > 100) {
+                $me->update(['mp' => 100]);
+            }
         } else {
-            // 🟢 FIXED: Base penalty handles cleanly without dividing down to zero fraction elements
+            // Handle incorrect answer damage penalty straight at the database row layer
             $normalizedPenalty = $me->active_boost ? 20 : 10;
 
             $me->decrement('hp', $normalizedPenalty);
-            if ($me->hp <= 0) $me->update(['hp' => 0, 'status' => 'defeated']);
+            if ($me->hp <= 0) {
+                $me->update(['hp' => 0, 'status' => 'defeated']);
+            }
             $me->update(['active_boost' => false]);
         }
 
-        if ($me->skills_locked_turns > 0) $me->decrement('skills_locked_turns');
+        if ($me->skills_locked_turns > 0) {
+            $me->decrement('skills_locked_turns');
+        }
 
         return response()->json(['is_correct' => $isCorrect]);
     }
