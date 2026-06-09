@@ -16,10 +16,19 @@ class YouTubeAuthController extends Controller
      */
     public function redirect(Request $request)
     {
+        $groupId = $request->group_id;
+        $subjectId = $request->subject_id;
+
         // Explicitly force context retention in persistent session storage
-        Session::put('sync_group_id', $request->group_id);
-        Session::put('sync_subject_id', $request->subject_id);
+        Session::put('sync_group_id', $groupId);
+        Session::put('sync_subject_id', $subjectId);
         Session::save(); // Force absolute save commitment to storage driver
+
+        // 🟢 THE FIX: Package parameters into a state payload to survive the external redirection thread
+        $statePayload = json_encode([
+            'group_id' => $groupId,
+            'subject_id' => $subjectId
+        ]);
 
         return Socialite::driver('google')
             ->scopes([
@@ -30,7 +39,8 @@ class YouTubeAuthController extends Controller
             ])
             ->with([
                 'access_type' => 'offline', 
-                'prompt' => 'consent'
+                'prompt' => 'consent',
+                'state' => base64_encode($statePayload) // 🟢 Safely wrap within standard OAuth state parameters
             ])
             ->redirect();
     }
@@ -38,7 +48,7 @@ class YouTubeAuthController extends Controller
     /**
      * 2. Handle the Return payload from Google
      */
-    public function callback()
+    public function callback(Request $request)
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -51,14 +61,28 @@ class YouTubeAuthController extends Controller
             // Save credentials where your AJAX handler expects it
             Session::put('youtube_access_token', $token);
 
-            // 🟢 THE FIX: Explicitly pull saved context parameters back out of session memory
-            $groupId = Session::get('sync_group_id');
-            $subjectId = Session::get('sync_subject_id');
+            // 🟢 THE FIX: Safely parse parameters from returned state payload if sessions fell out of sync
+            $groupId = null;
+            $subjectId = null;
 
+            if ($request->has('state')) {
+                $decodedState = json_decode(base64_decode($request->state), true);
+                if (is_array($decodedState)) {
+                    $groupId = $decodedState['group_id'] ?? null;
+                    $subjectId = $decodedState['subject_id'] ?? null;
+                }
+            }
+
+            // Fallback to traditional session variables if state payload was dropped
+            if (!$groupId) $groupId = Session::get('sync_group_id');
+            if (!$subjectId) $subjectId = Session::get('sync_subject_id');
+
+            // Re-commit variables firmly into tracking session memory
+            Session::put('sync_group_id', $groupId);
+            Session::put('sync_subject_id', $subjectId);
             Session::save();
 
-            // 🟢 FORCE INJECTION: Re-append group_id and subject_id directly into the URL path!
-            // This guarantees that the final selection page receives the parameters on the very first landing.
+            // Force parameters directly back into the destination search array parameters
             return redirect()->route('resources.youtube.search', [
                 'group_id' => $groupId,
                 'subject_id' => $subjectId,

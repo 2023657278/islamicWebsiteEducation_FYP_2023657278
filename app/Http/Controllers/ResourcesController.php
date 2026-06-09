@@ -105,8 +105,9 @@ class ResourcesController extends Controller
      */
     public function youtubeSearch(Request $request)
     {
-        $group_id = $request->group_id;
-        $subject_id = $request->subject_id;
+        // 🟢 THE FIX: Handle incoming request or fallback context directly matching the state payloads
+        $group_id = $request->group_id ?? Session::get('sync_group_id');
+        $subject_id = $request->subject_id ?? Session::get('sync_subject_id');
         $type = $request->query('type', 'public'); // Detect if we are returning from OAuth
 
         return view('resources.sync_selection', compact('group_id', 'subject_id', 'type'));
@@ -155,47 +156,15 @@ class ResourcesController extends Controller
     {
         Session::put('sync_group_id', $request->group_id);
         Session::put('sync_subject_id', $request->subject_id);
+        Session::save();
 
-        $query = http_build_query([
-            'client_id' => env('GOOGLE_CLIENT_ID'),
-            'redirect_uri' => env('GOOGLE_REDIRECT_URL'),
-            'response_type' => 'code',
-            'scope' => 'https://www.googleapis.com/auth/youtube.readonly',
-            'access_type' => 'offline',
-            'prompt' => 'consent'
+        // 🟢 THE FIX: Redirect using parameters through your actual Socialite control route handler
+        return redirect()->route('auth.youtube', [
+            'group_id' => $request->group_id,
+            'subject_id' => $request->subject_id
         ]);
-        return redirect('https://accounts.google.com/o/oauth2/v2/auth?' . $query);
     }
 
-    /**
-     * OAuth: Handle Return from Google.
-     */
-    public function handleYouTubeCallback(Request $request)
-    {
-        $response = Http::post('https://oauth2.googleapis.com/token', [
-            'code' => $request->code,
-            'client_id' => env('GOOGLE_CLIENT_ID'),
-            'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-            'redirect_uri' => env('GOOGLE_REDIRECT_URL'),
-            'grant_type' => 'authorization_code',
-        ]);
-
-        if ($response->successful()) {
-            $accessToken = $response->json()['access_token'];
-            Session::put('youtube_access_token', $accessToken);
-            
-            return redirect()->route('resources.youtube.search', [
-                'group_id' => Session::get('sync_group_id'),
-                'subject_id' => Session::get('sync_subject_id'),
-                'type' => 'mine' // Automatically switch to "My Channel" tab
-            ]);
-        }
-        return redirect()->route('resources.index')->with('error', 'Authentication failed.');
-    }
-
-    /**
-     * Final step: Save selected videos to DB.
-     */
     /**
      * Final step: Save selected videos to DB.
      */
@@ -206,10 +175,11 @@ class ResourcesController extends Controller
             return back()->with('error', 'Please select at least one video to import.');
         }
 
-        $subject_id = $request->subject_id ?? session('sync_subject_id');
+        // 🟢 THE FIX: Robust contextual extraction matching input arrays or backup sessions
+        $subject_id = $request->subject_id ?? Session::get('sync_subject_id');
         $group_id = ($request->group_id && $request->group_id !== 'null') 
                     ? $request->group_id 
-                    : session('sync_group_id');
+                    : Session::get('sync_group_id');
 
         if (!$subject_id) {
             return redirect()->route('resources.index')->with('error', 'Subject ID context missing.');
