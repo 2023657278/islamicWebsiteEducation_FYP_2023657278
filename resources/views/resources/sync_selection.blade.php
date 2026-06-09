@@ -25,7 +25,7 @@
                                placeholder="Search for lessons (e.g. 'Tarawih', 'Puasa')..." value="{{ $query ?? '' }}">
                         <div class="input-group-append">
                             <button class="btn btn-danger px-5 font-weight-bold" type="button" onclick="newSearch('public')">
-                                SEARCH
+                                 SEARCH
                             </button>
                         </div>
                     </div>
@@ -52,7 +52,6 @@
         <input type="hidden" name="group_id" value="{{ $group_id }}">
         <input type="hidden" name="subject_id" value="{{ $subject_id }}">
 
-        {{-- 🟢 Initial State (Kept OUTSIDE the container to prevent JS crash) --}}
         <div class="text-center py-5 text-muted" id="initialState">
             <i class="fab fa-youtube fa-4x mb-3 opacity-25"></i>
             <h5>Type keywords and click search to find videos...</h5>
@@ -118,7 +117,6 @@
             return;
         }
 
-        // 🟢 FIX: Hide the initial message before clearing container
         const state = document.getElementById('initialState');
         if (state) state.classList.add('d-none');
 
@@ -139,10 +137,11 @@
             const url = `/youtube/fetch-data?q=${encodeURIComponent(currentQuery)}&pageToken=${nextPageToken}&type=${currentType}`;
             const res = await fetch(url);
             
-            // 🔒 SYNC HANDLER: If not logged in to Google
+            // 🔒 FIXED HANDLER CALLBACK LOGIC LINK
             if (res.status === 401) {
                 if(confirm("To see your channel's videos, you need to sync your account. Sync now?")) {
-                    window.location.href = "{{ route('resources.sync.auth') }}";
+                    // 🟢 THE FIX: Explicitly append context variables into query string parameters to trigger the selector
+                    window.location.href = "{{ route('resources.sync.auth') }}?group_id={{ $group_id }}&subject_id={{ $subject_id }}";
                 }
                 loader.classList.add('d-none');
                 return;
