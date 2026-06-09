@@ -111,21 +111,23 @@ class PvpController extends Controller
         $timeLeft = (int)$request->time_left;
 
         if ($isCorrect) {
-            // 🟢 DAMAGE RULE: 20 damage if time >= 30s, 10 damage if below 30s
-            $normalizedDmg = ($timeLeft >= 30) ? 20 : 10;
+            // 🟢 FIXED DAMAGE RULES (No Percentages): 
+            // 40 flat damage if time left is between 60 and 30 seconds (inclusive)
+            // 20 flat damage if time left is below 30 seconds
+            $normalizedDmg = ($timeLeft >= 30) ? 40 : 20;
 
-            // 🟢 BOOST RULE: 2x damage if correct
+            // 🟢 BOOST MULTIPLIER: Double the fixed damage value (80 or 40)
             if ($me->active_boost) { 
                 $normalizedDmg *= 2; 
                 $me->update(['active_boost' => false]); 
             }
 
-            // 🟢 SHIELD RULE: Attacking while shielded deals half damage to opponents
+            // 🟢 SHIELD NERF: Halve the fixed damage value if attacker is shielded
             if ($me->is_shielded) {
                 $normalizedDmg = (int)round($normalizedDmg / 2);
             }
             
-            // 🟢 SHIELD DAMAGE BLOCK: Shield blocks damage 1 time from an opponent, then breaks
+            // Break opponent shields (blocks this 1 strike)
             DB::table('room_participants')
                 ->where('room_id', $room->id)
                 ->where('user_id', '!=', Auth::id())
@@ -133,7 +135,7 @@ class PvpController extends Controller
                 ->where('is_shielded', true)
                 ->update(['is_shielded' => false]);
 
-            // Decrement health for unshielded active opponents
+            // Decrement opponents health directly by the fixed numerical damage
             DB::table('room_participants')
                 ->where('room_id', $room->id)
                 ->where('user_id', '!=', Auth::id())
@@ -141,7 +143,7 @@ class PvpController extends Controller
                 ->where('is_shielded', false)
                 ->decrement('hp', $normalizedDmg);
 
-            // Clean up rows that hit 0 HP
+            // Mark eliminated players
             DB::table('room_participants')
                 ->where('room_id', $room->id)
                 ->where('hp', '<=', 0)
@@ -150,12 +152,11 @@ class PvpController extends Controller
             $me->increment('mp', 15);
             if ($me->mp > 100) $me->update(['mp' => 100]);
         } else {
-            // 🟢 DAMAGE PENALTY RULE: Base 10 health reduction if false
+            // 🟢 FIXED FALSE PENALTY (No Percentages): Decrease user health by exactly 10 flat points
             $normalizedPenalty = 10;
 
-            // 🟢 BOOST PENALTY RULE: 2x damage to user if wrong (20 health reduction)
             if ($me->active_boost) {
-                $normalizedPenalty *= 2;
+                $normalizedPenalty *= 2; // Increases to 20 flat points if boosted
                 $me->update(['active_boost' => false]);
             }
 
@@ -165,7 +166,6 @@ class PvpController extends Controller
             }
         }
 
-        // 🟢 FREEZE RULE: Decrement power lock turns tracker upon answering a question
         if ($me->skills_locked_turns > 0) {
             $me->decrement('skills_locked_turns');
         }

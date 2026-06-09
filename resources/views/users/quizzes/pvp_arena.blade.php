@@ -257,18 +257,17 @@
                 clearInterval(timer);
             }
 
-            const totalPlayersCount = data.participants.length;
-            const maxHp = totalPlayersCount * 100; 
-
-            let scaledCurrentHp = Math.round((me.hp / 100) * maxHp);
-            if (scaledCurrentHp > maxHp) scaledCurrentHp = maxHp;
+            // 🟢 FIXED CALCULATION LAYOUT (No percentage multiplication scaling)
+            const maxHp = 100; 
+            let currentHp = me.hp;
+            if (currentHp > maxHp) currentHp = maxHp;
 
             // DAMAGE TINT FLASH CHECK
-            if (lastKnownHp !== null && scaledCurrentHp < lastKnownHp && !isDead) {
+            if (lastKnownHp !== null && currentHp < lastKnownHp && !isDead) {
                 arena.classList.add('damage-flash');
                 setTimeout(() => { arena.classList.remove('damage-flash'); }, 350);
             }
-            lastKnownHp = scaledCurrentHp;
+            lastKnownHp = currentHp;
 
             arena.classList.toggle('theme-shield', me.is_shielded);
             arena.classList.toggle('theme-boost', me.active_boost);
@@ -296,9 +295,9 @@
                 arena.classList.remove('is-frozen-state', 'theme-freeze'); 
             }
 
-            // RENDER LOGICAL DISPLAY METRICS AT 100% RATIOS
-            document.getElementById('myHp').style.width = (scaledCurrentHp / maxHp * 100) + "%";
-            document.getElementById('myHpText').innerText = `${scaledCurrentHp > 0 ? scaledCurrentHp : 0} / ${maxHp} HP`;
+            // RENDER LOGICAL DISPLAY METRICS
+            document.getElementById('myHp').style.width = (currentHp / maxHp * 100) + "%";
+            document.getElementById('myHpText').innerText = `${currentHp > 0 ? currentHp : 0} / ${maxHp} HP`;
             
             document.getElementById('myMp').style.width = me.mp + "%";
             document.getElementById('myMpText').innerText = `${me.mp} / 100 MP`;
@@ -315,15 +314,15 @@
                 } else {
                     btn.classList.remove('cooldown');
                     btn.innerText = `${p.toUpperCase()} (40)`;
-                    let canHealCheck = (p === 'heal') ? (scaledCurrentHp < maxHp) : true;
+                    let canHealCheck = (p === 'heal') ? (currentHp < maxHp) : true;
                     btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !feedbackActive && !isDead && !isFrozen && canHealCheck);
                 }
             });
 
             // 🏆 WARRIOR STANDINGS SIDEBAR
             document.getElementById('warriorList').innerHTML = data.participants.map(p => {
-                let pScaledHp = Math.round((p.hp / 100) * maxHp);
-                if (pScaledHp > maxHp) pScaledHp = maxHp;
+                let pCurrentHp = p.hp;
+                if (pCurrentHp > maxHp) pCurrentHp = maxHp;
                 
                 return `
                     <div class="rank-item ${p.user_id == {{ Auth::id() }} ? 'is-me' : ''} ${p.hp <= 0 ? 'is-dead' : ''}">
@@ -332,10 +331,10 @@
                                 ${p.rank ? `<span class="badge bg-primary me-1" style="font-size:0.7rem; padding: 4px 7px;">#${p.rank}</span>` : ''}
                                 ${p.name} ${p.hp <= 0 ? '💀' : ''}
                             </span>
-                            <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; font-weight:700;">${p.hp > 0 ? pScaledHp : '0'} / ${maxHp} HP</span>
+                            <span class="badge ${p.hp > 0 ? 'bg-success' : 'bg-danger'}" style="font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; font-weight:700;">${p.hp > 0 ? pCurrentHp : '0'} / ${maxHp} HP</span>
                         </div>
                         <div class="progress" style="height:6px; background: rgba(0,0,0,0.4); border-radius: 50px; margin-top: 6px;">
-                            <div class="progress-bar bg-danger" style="width:${(pScaledHp / maxHp * 100)}%; border-radius: 50px;"></div>
+                            <div class="progress-bar bg-danger" style="width:${(pCurrentHp / maxHp * 100)}%; border-radius: 50px;"></div>
                         </div>
                     </div>
                 `;
@@ -371,7 +370,6 @@
         startT();
     }
 
-    // 🟢 FIXED SELECTION EVALUATION METHOD
     function handleSel(id, type, btn) {
         if (isFrozen || feedbackActive || isDead) return;
         
@@ -382,7 +380,6 @@
         const cleanType = String(type).toLowerCase().trim();
         const intId = parseInt(id);
 
-        // Supports single, single_choice, or direct database string evaluations interchangeably
         if (cleanType === 'single' || cleanType === 'single_choice') { 
             document.querySelectorAll('.option-card').forEach(b => b.classList.remove('selected')); 
             btn.classList.add('selected'); 
@@ -464,7 +461,10 @@
             });
             const data = await res.json();
             if (data.success) {
-                cooldowns[type] = 10;
+                // 🟢 5-SECOND COOLDOWN APPLIED TO EVERY POWER
+                ['heal', 'shield', 'freeze', 'boost'].forEach(p => {
+                    cooldowns[p] = 5;
+                });
                 
                 if (type === 'heal') {
                     document.getElementById('arenaCard').classList.add('theme-heal');
