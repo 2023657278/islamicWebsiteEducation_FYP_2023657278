@@ -257,7 +257,7 @@
                 clearInterval(timer);
             }
 
-            // 🟢 FIXED CALCULATION LAYOUT (No percentage multiplication scaling)
+            // 🟢 FLAT VALUE RENDERING: Base individual health defaults cleanly out of 100 HP max limit
             const maxHp = 100; 
             let currentHp = me.hp;
             if (currentHp > maxHp) currentHp = maxHp;
@@ -295,7 +295,7 @@
                 arena.classList.remove('is-frozen-state', 'theme-freeze'); 
             }
 
-            // RENDER LOGICAL DISPLAY METRICS
+            // RENDER LOGICAL DISPLAY METRICS AT 100% RATIOS
             document.getElementById('myHp').style.width = (currentHp / maxHp * 100) + "%";
             document.getElementById('myHpText').innerText = `${currentHp > 0 ? currentHp : 0} / ${maxHp} HP`;
             
@@ -461,7 +461,7 @@
             });
             const data = await res.json();
             if (data.success) {
-                // 🟢 5-SECOND COOLDOWN APPLIED TO EVERY POWER
+                // 🟢 5-SECOND COOLDOWN MODIFIER TRIGGER
                 ['heal', 'shield', 'freeze', 'boost'].forEach(p => {
                     cooldowns[p] = 5;
                 });
