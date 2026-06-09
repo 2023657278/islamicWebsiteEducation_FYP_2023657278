@@ -9,28 +9,21 @@ use Illuminate\Support\Facades\Session;
 
 class YouTubeAuthController extends Controller
 {
+    private const CALLBACK_URL = 'https://islamic-lms.online/login/google/callback';
+
     /**
      * 1. Send User to Google
      */
     public function redirect(Request $request)
     {
-        $groupId = $request->group_id;
-        $subjectId = $request->subject_id;
-
-        // Force explicit context parameters into session storage
-        Session::put('sync_group_id', $groupId);
-        Session::put('sync_subject_id', $subjectId);
-        Session::save(); 
-
-        // Serialize variables cleanly into a string layout payload
-        $statePayload = json_encode([
-            'group_id' => $groupId,
-            'subject_id' => $subjectId
-        ]);
+        // Explicitly force context retention in persistent session storage
+        Session::put('sync_group_id', $request->group_id);
+        Session::put('sync_subject_id', $request->subject_id);
+        Session::save(); // Force absolute save commitment to storage driver
 
         // 🟢 THE ABSOLUTE FIX: 
-        // 1. Force 'select_account' inside with() to prompt Google's account picker view.
-        // 2. Add an evaluation parameter 'approval_prompt' => 'force' to break active browser cookie states.
+        // Changing 'prompt' from 'consent' to 'select_account consent' forces 
+        // Google to show the account picker dashboard even if you are already signed in.
         return Socialite::driver('google')
             ->scopes([
                 'https://www.googleapis.com/auth/youtube.readonly',
@@ -39,10 +32,8 @@ class YouTubeAuthController extends Controller
                 'email'
             ])
             ->with([
-                'access_type'     => 'offline', 
-                'prompt'          => 'select_account consent', // Forces account selector
-                'approval_prompt' => 'force',                  // Overrides Google browser caching profiles
-                'state'           => base64_encode($statePayload)
+                'access_type' => 'offline', 
+                'prompt'      => 'select_account consent' 
             ])
             ->redirect();
     }
@@ -50,12 +41,11 @@ class YouTubeAuthController extends Controller
     /**
      * 2. Handle the Return payload from Google
      */
-    public function callback(Request $request)
+    public function callback()
     {
         try {
-            // Explicitly enforce stateless parsing to process custom state payloads safely
+            // 🟢 CRITICAL SAFETY FIX: Added stateless() to match the custom prompt configuration
             $googleUser = Socialite::driver('google')->stateless()->user();
-            
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
 
             if (!$token) {
@@ -65,27 +55,13 @@ class YouTubeAuthController extends Controller
             // Save credentials where your AJAX handler expects it
             Session::put('youtube_access_token', $token);
 
-            // Re-extract tracking parameters from returned state parameter
-            $groupId = null;
-            $subjectId = null;
+            // Explicitly pull saved context parameters back out of session memory
+            $groupId = Session::get('sync_group_id');
+            $subjectId = Session::get('sync_subject_id');
 
-            if ($request->has('state')) {
-                $decodedState = json_decode(base64_decode($request->state), true);
-                if (is_array($decodedState)) {
-                    $groupId = $decodedState['group_id'] ?? null;
-                    $subjectId = $decodedState['subject_id'] ?? null;
-                }
-            }
-
-            // Fallback parameters evaluation loop
-            if (!$groupId) $groupId = Session::get('sync_group_id');
-            if (!$subjectId) $subjectId = Session::get('sync_subject_id');
-
-            Session::put('sync_group_id', $groupId);
-            Session::put('sync_subject_id', $subjectId);
             Session::save();
 
-            // Redirect back to search view with correct parameters on the first click
+            // Re-append group_id and subject_id directly into the URL path
             return redirect()->route('resources.youtube.search', [
                 'group_id' => $groupId,
                 'subject_id' => $subjectId,
