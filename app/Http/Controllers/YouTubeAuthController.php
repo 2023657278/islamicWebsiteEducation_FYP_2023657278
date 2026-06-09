@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Session;
 
 class YouTubeAuthController extends Controller
 {
-    private const CALLBACK_URL = 'https://islamic-lms.online/login/google/callback';
-
     /**
      * 1. Send User to Google
      */
@@ -30,6 +28,7 @@ class YouTubeAuthController extends Controller
             'subject_id' => $subjectId
         ]);
 
+        // 🟢 THE FIX: We use the dynamic configuration mapping to prevent mismatch validation blocks
         return Socialite::driver('google')
             ->scopes([
                 'https://www.googleapis.com/auth/youtube.readonly',
@@ -40,7 +39,7 @@ class YouTubeAuthController extends Controller
             ->with([
                 'access_type' => 'offline', 
                 'prompt' => 'consent',
-                'state' => base64_encode($statePayload) // Keeps data passing through Google
+                'state' => base64_encode($statePayload)
             ])
             ->redirect();
     }
@@ -51,8 +50,7 @@ class YouTubeAuthController extends Controller
     public function callback(Request $request)
     {
         try {
-            // 🟢 THE CRITICAL FIX: Add ->stateless() before calling ->user()
-            // This prevents Socialite from rejecting the custom state payload we packed.
+            // 🟢 THE CRITICAL FIX: Explicitly enforce stateless parsing to accept the encoded parameter states
             $googleUser = Socialite::driver('google')->stateless()->user();
             
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
@@ -92,7 +90,7 @@ class YouTubeAuthController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            // If it fails, show the exact error text on screen so we can read it!
+            // Displays error directly on the session alert block so we can read trace logs
             return redirect()->route('resources.index')
                 ->with('error', 'Authentication failed: ' . $e->getMessage());
         }

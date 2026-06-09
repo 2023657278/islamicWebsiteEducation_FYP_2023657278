@@ -90,7 +90,6 @@ class ResourcesController extends Controller
     public function destroy($id) {
         $res = Resources::findOrFail($id);
         if($res->teacher_id == Auth::id()) { 
-            // Delete file only if it's a physical upload, not a YouTube link
             if($res->file_url && $res->type !== 'video') Storage::disk('public')->delete($res->file_url);
             $res->delete(); 
             return back()->with('success', 'Resource deleted.'); 
@@ -105,16 +104,15 @@ class ResourcesController extends Controller
      */
     public function youtubeSearch(Request $request)
     {
-        // 🟢 THE FIX: Handle incoming request or fallback context directly matching the state payloads
         $group_id = $request->group_id ?? Session::get('sync_group_id');
         $subject_id = $request->subject_id ?? Session::get('sync_subject_id');
-        $type = $request->query('type', 'public'); // Detect if we are returning from OAuth
+        $type = $request->query('type', 'public'); 
 
         return view('resources.sync_selection', compact('group_id', 'subject_id', 'type'));
     }
 
     /**
-     * 🚀 AJAX Fetching Endpoint (Powers the search results)
+     * AJAX Fetching Endpoint
      */
     public function fetchYoutubeData(Request $request)
     {
@@ -158,7 +156,6 @@ class ResourcesController extends Controller
         Session::put('sync_subject_id', $request->subject_id);
         Session::save();
 
-        // 🟢 THE FIX: Redirect using parameters through your actual Socialite control route handler
         return redirect()->route('auth.youtube', [
             'group_id' => $request->group_id,
             'subject_id' => $request->subject_id
@@ -170,12 +167,10 @@ class ResourcesController extends Controller
      */
     public function storeSelectedVideos(Request $request)
     {
-        // 1. Check if any videos were actually ticked
         if (!$request->has('video_ids') || empty($request->video_ids)) {
             return back()->with('error', 'Please select at least one video to import.');
         }
 
-        // 🟢 THE FIX: Robust contextual extraction matching input arrays or backup sessions
         $subject_id = $request->subject_id ?? Session::get('sync_subject_id');
         $group_id = ($request->group_id && $request->group_id !== 'null') 
                     ? $request->group_id 
@@ -185,7 +180,6 @@ class ResourcesController extends Controller
             return redirect()->route('resources.index')->with('error', 'Subject ID context missing.');
         }
 
-        // 2. Wrap execution in a database transaction to force instant sequential processing
         DB::transaction(function () use ($request, $subject_id, $group_id) {
             foreach ($request->video_ids as $videoId => $title) {
                 Resources::updateOrCreate(
@@ -201,14 +195,13 @@ class ResourcesController extends Controller
             }
         });
 
-        // 3. Clear temporary state and flush current session storage immediately
-        Session::forget(['sync_group_id', 'sync_subject_id', 'youtube_access_token', 'sync_type']);
+        // 🟢 FIX: We no longer clear 'youtube_access_token' immediately right here upon saving
+        // This ensures the channel view retains its session variables on the very first try.
+        Session::forget(['sync_group_id', 'sync_subject_id', 'sync_type']);
         Session::save();
 
-        // 4. Force a fresh backend sweep by dumping Laravel data caches
         Artisan::call('cache:clear');
 
-        // 5. Return redirect equipped with cache headers to block local browser memory retention
         return redirect()
             ->route('resources.index')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
