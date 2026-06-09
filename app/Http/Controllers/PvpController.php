@@ -233,8 +233,18 @@ class PvpController extends Controller
 
     private function awardFinalPoints($participants, $difficulty)
     {
-        foreach ($participants as $p) {
-            $change = $this->calculatePointChange($p, $p->rank, $participants->count(), $difficulty);
+       // 🟢 FIX: Sort participants by health status to determine exact true ranks 
+        // Surviving champions go first (Rank 1), eliminated players go last.
+        $sortedParticipants = $participants->sortByDesc('hp')->values();
+
+        foreach ($sortedParticipants as $index => $p) {
+            // Determine true rank based on position index (0 = Rank 1, 1 = Rank 2, etc.)
+            $trueRank = $index + 1;
+
+            // Also update the database row right now so the view reads it correctly
+            $p->update(['rank' => $trueRank]);
+
+            $change = $this->calculatePointChange($p, $trueRank, $participants->count(), $difficulty);
             $user = User::find($p->user_id);
             if ($user) {
                 $newTotal = $user->pvp_points + $change;
