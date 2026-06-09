@@ -32,7 +32,6 @@ class PvpController extends Controller
             }
 
             // 2. 💀 ELIMINATION & RANKING LOGIC
-            $totalPlayers = $participants->count();
             foreach ($participants as $p) {
                 if ($p->hp <= 0 && $p->status === 'active') {
                     $playersWithMoreHp = $participants->where('hp', '>', 0)->count();
@@ -84,7 +83,7 @@ class PvpController extends Controller
     }
 
     /**
-     * COMBAT ENGINE: Handles flat damage and drawback calculations.
+     * COMBAT ENGINE: Handles flat damage execution without percentage structures.
      */
     public function submitStrike(Request $request, $code)
     {
@@ -109,21 +108,23 @@ class PvpController extends Controller
         $timeLeft = (int)$request->time_left;
 
         if ($isCorrect) {
-            // 🟢 FIXED FLAT DAMAGE MECHANICS (No Percentages)
+            // 🟢 FIXED FLAT DAMAGE RULES (No percentages):
+            // - 40 flat damage if time >= 30 seconds
+            // - 20 flat damage if time < 30 seconds
             $normalizedDmg = ($timeLeft >= 30) ? 40 : 20;
 
-            // Boost double damage check
+            // 🟢 BOOST POWER RULE: 2x damage to opponents if correct
             if ($me->active_boost) { 
                 $normalizedDmg *= 2; 
                 $me->update(['active_boost' => false]); 
             }
 
-            // Attacking while shielded nerf calculation
+            // 🟢 SHIELD ATK NERF RULE: Attacks deal half damage to opponents while user is shielded
             if ($me->is_shielded) {
                 $normalizedDmg = (int)round($normalizedDmg / 2);
             }
             
-            // Break active opponent shields
+            // Process opponent shields (Shield blocks 1 strike entirely)
             DB::table('room_participants')
                 ->where('room_id', $room->id)
                 ->where('user_id', '!=', Auth::id())
@@ -131,7 +132,7 @@ class PvpController extends Controller
                 ->where('is_shielded', true)
                 ->update(['is_shielded' => false]);
 
-            // Mutate opponent rows directly by flat health points
+            // Decrement unshielded opponents health directly by flat damage points
             DB::table('room_participants')
                 ->where('room_id', $room->id)
                 ->where('user_id', '!=', Auth::id())
@@ -139,7 +140,7 @@ class PvpController extends Controller
                 ->where('is_shielded', false)
                 ->decrement('hp', $normalizedDmg);
 
-            // Clean up row drops
+            // Clean up rows that hit 0 HP
             DB::table('room_participants')
                 ->where('room_id', $room->id)
                 ->where('hp', '<=', 0)
@@ -148,11 +149,12 @@ class PvpController extends Controller
             $me->increment('mp', 15);
             if ($me->mp > 100) $me->update(['mp' => 100]);
         } else {
-            // 🟢 FIXED FALSE PENALTY MECHANICS (No Percentages)
+            // 🟢 FIXED FALSE PENALTY: Base 10 health reduction
             $normalizedPenalty = 10;
 
+            // 🟢 BOOST FALSE PENALTY: Double damage to user if wrong (decreases 20 health)
             if ($me->active_boost) {
-                $normalizedPenalty *= 2; 
+                $normalizedPenalty *= 2;
                 $me->update(['active_boost' => false]);
             }
 
@@ -170,7 +172,7 @@ class PvpController extends Controller
     }
 
     /**
-     * POWER SYSTEM: Handles spell activation rules.
+     * POWER SYSTEM: Handles spell parameters.
      */
     public function usePower(Request $request, $code)
     {
@@ -188,12 +190,16 @@ class PvpController extends Controller
         
         $me->decrement('mp', $costs[$type]);
 
+        $maxHpPool = $participants->count() * 100;
+
         if ($type === 'heal') {
+            // 🟢 HEAL RULE: Increase health back by flat 40 points, lock answering for 5 seconds
             $me->increment('hp', 40);
-            if ($me->hp > 100) $me->update(['hp' => 100]); 
+            if ($me->hp > $maxHpPool) $me->update(['hp' => $maxHpPool]); 
             
             $me->update(['strike_locked_until' => now()->addSeconds(5)]);
         } elseif ($type === 'freeze') {
+            // 🟢 FREEZE RULE: Opponents frozen for 10s, user cannot use moves for 3 questions
             RoomParticipant::where('room_id', $room->id)->where('user_id', '!=', Auth::id())
                 ->where('status', 'active')
                 ->update(['is_frozen' => true, 'frozen_until' => now()->addSeconds(10)]);
@@ -208,9 +214,6 @@ class PvpController extends Controller
         return response()->json(['success' => true]);
     }
 
-    /**
-     * RESULTS: Sorted leaderboard.
-     */
     public function results($code)
     {
         $room = QuizRoom::where('room_code', $code)->firstOrFail();
@@ -245,6 +248,7 @@ class PvpController extends Controller
         $change = 0;
         $difficulty = strtolower($difficulty);
 
+        // Tier 1 Pool: 1 to 4 Players
         if ($playerCount >= 1 && $playerCount <= 4) {
             $isWinner = ($rank === 1);
             if ($difficulty === 'easy') {
@@ -255,6 +259,7 @@ class PvpController extends Controller
                 $change = ($isWinner) ? 70 : -50;
             }
         } 
+        // Tier 2 Pool: 5 to 20 Players
         else if ($playerCount >= 5 && $playerCount <= 20) {
             if ($difficulty === 'easy') {
                 if ($rank === 1) $change = 20;

@@ -257,8 +257,9 @@
                 clearInterval(timer);
             }
 
-            // 🟢 FLAT VALUE RENDERING: Base individual health defaults cleanly out of 100 HP max limit
-            const maxHp = 100; 
+            // 🟢 FIXED LOBBY SCALING: 100 HP per participant (e.g., 3 players = 300 Max HP Pool)
+            const totalPlayersCount = data.participants.length;
+            const maxHp = totalPlayersCount * 100; 
             let currentHp = me.hp;
             if (currentHp > maxHp) currentHp = maxHp;
 
