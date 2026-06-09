@@ -371,22 +371,24 @@
         startT();
     }
 
-    // 🟢 FIXED SELECTION TRACKING: Ensures array compliance
+    // 🟢 FIXED SELECTION EVALUATION METHOD
     function handleSel(id, type, btn) {
         if (isFrozen || feedbackActive || isDead) return;
         
-        // Always reset selection collection arrays to base structures
         if (!Array.isArray(selectedIds)) {
             selectedIds = [];
         }
 
-        if (type === 'single' || type === 'single_choice') { 
+        const cleanType = String(type).toLowerCase().trim();
+        const intId = parseInt(id);
+
+        // Supports single, single_choice, or direct database string evaluations interchangeably
+        if (cleanType === 'single' || cleanType === 'single_choice') { 
             document.querySelectorAll('.option-card').forEach(b => b.classList.remove('selected')); 
             btn.classList.add('selected'); 
-            selectedIds = [parseInt(id)]; // Wrap securely in array
+            selectedIds = [intId]; 
         } else { 
             btn.classList.toggle('selected'); 
-            const intId = parseInt(id);
             if (selectedIds.includes(intId)) {
                 selectedIds = selectedIds.filter(i => i !== intId); 
             } else {
@@ -418,15 +420,13 @@
         clearInterval(timer);
 
         const q = getQ();
-        
-        // 🟢 FIXED PAYLOAD COMPILATION: Ensure answers never package as an empty array structure
         let ans;
+        
         if (isTimeout) {
             ans = null;
         } else if (q.question_type === 'text') {
             ans = document.getElementById('ansInput').value;
         } else {
-            // Force compliance conversion block if selection variables get un-mapped
             ans = Array.isArray(selectedIds) ? selectedIds : [selectedIds];
         }
         
