@@ -101,15 +101,9 @@ class PvpController extends Controller
         $isCorrect = $this->checkAnswer($request->question_id, $request->answer, $request->question_type);
         $timeLeft = (int)$request->time_left;
 
-        $totalPlayers = $participants->count();
-
         if ($isCorrect) {
-            // 🟢 DAMAGE SCALING: 20 damage if time >= 30s, 10 damage if below 30s
-            $baseDmg = ($timeLeft >= 30) ? 20 : 10;
-            
-            // 🟢 PHP FIX: Changed Math.round() to PHP native round()
-            $normalizedDmg = (int)round(($baseDmg / ($totalPlayers * 100)) * 100);
-            if ($normalizedDmg < 1) $normalizedDmg = 1;
+            // 🟢 FIXED: Base damage stays clean out of 100 base HP pool (20 damage if time >= 30s, 10 if below)
+            $normalizedDmg = ($timeLeft >= 30) ? 20 : 10;
 
             if ($me->active_boost) { 
                 $normalizedDmg *= 2; 
@@ -122,20 +116,17 @@ class PvpController extends Controller
                     $opp->update(['is_shielded' => false]);
                 } else {
                     $opp->decrement('hp', $normalizedDmg);
-                    if ($opp->hp < 0) $opp->update(['hp' => 0]);
+                    if ($opp->hp <= 0) $opp->update(['hp' => 0, 'status' => 'defeated']); 
                 }
             }
             $me->increment('mp', 15);
             if ($me->mp > 100) $me->update(['mp' => 100]);
         } else {
-            // Wrong answer penalty logic
-            $basePenalty = $me->active_boost ? 20 : 10;
-            // 🟢 PHP FIX: Changed Math.round() to PHP native round()
-            $normalizedPenalty = (int)round(($basePenalty / ($totalPlayers * 100)) * 100);
-            if ($normalizedPenalty < 1) $normalizedPenalty = 1;
+            // 🟢 FIXED: Base penalty stays clean out of 100 base HP pool (20 if boosted, 10 if normal)
+            $normalizedPenalty = $me->active_boost ? 20 : 10;
 
             $me->decrement('hp', $normalizedPenalty);
-            if ($me->hp < 0) $me->update(['hp' => 0]);
+            if ($me->hp <= 0) $me->update(['hp' => 0, 'status' => 'defeated']);
             $me->update(['active_boost' => false]);
         }
 
@@ -165,7 +156,6 @@ class PvpController extends Controller
 
         if ($type === 'heal') {
             $totalPlayers = $participants->count();
-            // 🟢 PHP FIX: Changed Math.round() to round() and fixed missing $ on totalPlayers
             $normalizedHeal = (int)round((40 / ($totalPlayers * 100)) * 100);
             if ($normalizedHeal < 1) $normalizedHeal = 5;
 

@@ -238,7 +238,8 @@
             const r = await fetch(`${baseURL}/status`);
             const data = await r.json();
             
-            if (data.status === 'finished' && !feedbackActive) { 
+            // 🟢 FIXED: Auto-redirect triggers regardless of submission lock
+            if (data.status === 'finished') { 
                 window.location.href = resultsURL; 
                 return; 
             }
@@ -257,11 +258,11 @@
                 clearInterval(timer);
             }
 
-            // 🟢 FIXED CALCULATION SYNC POOL: Always scale default HP pool up by a clean multiplier matching 100/player metrics
+            // 🟢 FIXED CALCULATION SYNC POOL: Always scale default HP pool
             const totalPlayersCount = data.participants.length;
             const maxHp = totalPlayersCount * 100; 
 
-            // Calculate scaled HP relative to the base 100 scaling coming from backend
+            // Calculate scaled HP relative to the base 100
             let scaledCurrentHp = Math.round((me.hp / 100) * maxHp);
             if (scaledCurrentHp > maxHp) scaledCurrentHp = maxHp;
 
@@ -317,9 +318,8 @@
                 } else {
                     btn.classList.remove('cooldown');
                     btn.innerText = `${p.toUpperCase()} (40)`;
-                    // 🟢 HEAL FIX: Allow healing if current scaled HP is less than the room max pool limit!
+                    // 🟢 HEAL FIX: Check current scaled HP
                     let canHealCheck = (p === 'heal') ? (scaledCurrentHp < maxHp) : true;
-                    
                     btn.classList.toggle('active', me.mp >= cost && !me.abilities_locked && !feedbackActive && !isDead && !isFrozen && canHealCheck);
                 }
             });
@@ -356,8 +356,6 @@
     function renderQ() {
         if (isDead) return; 
         feedbackActive = false; 
-        
-        const arena = document.getElementById('arenaCard');
         
         const q = getQ();
         document.getElementById('qText').innerText = q.question_text;
@@ -425,7 +423,8 @@
             const result = await res.json();
 
             if (q.question_type === 'text') {
-                document.getElementById('ansInput').classList.add(result.is_correct ? 'correct' : 'incorrect');
+                const input = document.getElementById('ansInput');
+                if (input) input.classList.add(result.is_correct ? 'correct' : 'incorrect');
             } else {
                 document.querySelectorAll('.option-card').forEach(btn => {
                     const id = parseInt(btn.dataset.id);
