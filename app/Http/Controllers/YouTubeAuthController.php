@@ -16,10 +16,9 @@ class YouTubeAuthController extends Controller
      */
     public function redirect(Request $request)
     {
-        // Explicitly force context retention in persistent session storage
         Session::put('sync_group_id', $request->group_id);
         Session::put('sync_subject_id', $request->subject_id);
-        Session::save(); // Force absolute save commitment to storage driver
+        Session::save(); 
 
         return Socialite::driver('google')
             ->scopes([
@@ -30,6 +29,7 @@ class YouTubeAuthController extends Controller
             ])
             ->with([
                 'access_type' => 'offline', 
+                // 🟢 FORCES the account picker menu to pop up every single time!
                 'prompt'      => 'select_account consent' 
             ])
             ->redirect();
@@ -70,14 +70,14 @@ class YouTubeAuthController extends Controller
     /**
      * 3. 🟢 NEW: Explicitly Disconnect/Logout YouTube Google Session
      */
-    public function disconnect()
+   public function disconnect()
     {
-        // Wipe local token credentials out of your Laravel application runtime memory
+        // 1. Completely destroy local credentials from your system session memory
         Session::forget(['youtube_access_token', 'sync_group_id', 'sync_subject_id']);
         Session::save();
 
-        // 🟢 THE FIX: Change the continue parameter to point directly to your clean root base domain URL.
-        // This stops Google's security engine from rejecting the address string as malformed!
-        return redirect('https://accounts.google.com/Logout?continue=' . urlencode('https://islamic-lms.online'));
+        // 2. 🟢 THE SMART BYPASS: Send them back to your library index page with an explicit instruction.
+        // This avoids Google's broken 400 error page entirely!
+        return redirect()->route('resources.index')->with('success', 'Session disconnected! You can now link a completely different YouTube channel.');
     }
 }

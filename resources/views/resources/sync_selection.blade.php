@@ -11,9 +11,9 @@
             </div>
             <div>
                 <!-- 🟢 NEW: Disconnect/Switch Google Account Button -->
-                <a href="/youtube/disconnect" class="btn btn-outline-danger btn-sm rounded-pill px-3 mr-2 font-weight-bold">
-    <i class="fas fa-sign-out-alt mr-1"></i> Switch Google Account
-</a>
+                <a href="{{ route('resources.youtube.disconnect') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3 mr-2 font-weight-bold">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Switch Google Account
+                </a>
                 <a href="{{ route('resources.index') }}" class="btn btn-light btn-sm rounded-pill px-4 border font-weight-bold">
                     <i class="fas fa-arrow-left mr-1"></i> Back to Library
                 </a>
