@@ -90,9 +90,13 @@ class YouTubeAuthController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            // Displays error directly on the session alert block so we can read trace logs
-            return redirect()->route('resources.index')
-                ->with('error', 'Authentication failed: ' . $e->getMessage());
+            // 🟢 TEMPORARY DEBUG: Stop the redirect and dump the exact error text on screen
+            dd([
+                'Message' => $e->getMessage(),
+                'File'    => $e->getFile(),
+                'Line'    => $e->getLine(),
+                'Trace'   => $e->getTraceAsString()
+            ]);
         }
     }
 }
