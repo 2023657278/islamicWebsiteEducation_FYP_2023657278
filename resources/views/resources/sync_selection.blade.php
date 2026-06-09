@@ -9,9 +9,15 @@
                 <h4 class="font-weight-bold mb-1"><i class="fab fa-youtube text-danger mr-2"></i> YouTube Master Finder</h4>
                 <p class="text-muted mb-0">Class: <strong>{{ \App\Models\Group::find($group_id)?->group_name ?? 'General Resource' }}</strong></p>
             </div>
-            <a href="{{ route('resources.index') }}" class="btn btn-light btn-sm rounded-pill px-4 border font-weight-bold">
-                <i class="fas fa-arrow-left mr-1"></i> Back to Library
-            </a>
+            <div>
+                <!-- 🟢 NEW: Disconnect/Switch Google Account Button -->
+                <a href="{{ route('resources.youtube.disconnect') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3 mr-2 font-weight-bold">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Switch Google Account
+                </a>
+                <a href="{{ route('resources.index') }}" class="btn btn-light btn-sm rounded-pill px-4 border font-weight-bold">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Library
+                </a>
+            </div>
         </div>
     </div>
 

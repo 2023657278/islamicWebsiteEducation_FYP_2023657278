@@ -51,6 +51,8 @@ Route::prefix('webhook')->group(function () {
 // 4. Public API / Auth Routes
 //Route::get('/auth/youtube', [YouTubeAuthController::class, 'redirect'])->name('auth.youtube');
 Route::get('/auth/youtube', [YouTubeAuthController::class, 'redirect'])->name('resources.sync.auth');
+// Put this right near your other /login/google routes
+Route::get('/youtube/disconnect', [YouTubeAuthController::class, 'disconnect'])->name('resources.youtube.disconnect');
 Route::get('/login/google/callback', [YouTubeAuthController::class, 'callback'])->name('login.google.callback');
 //Route::get('/auth/youtube/callback', [YouTubeAuthController::class, 'callback']);
 
