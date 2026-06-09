@@ -88,13 +88,11 @@ class PvpController extends Controller
      */
     public function submitStrike(Request $request, $code)
     {
-        // Log payload directly to verify array contents
         \Log::info('Strike Received Payload:', $request->all());
 
         $room = QuizRoom::where('room_code', $code)->first();
         if (!$room) return response()->json(['error' => 'Room not found'], 404);
 
-        // Fetch using direct Eloquent query builders to prevent dirty cache retention
         $me = RoomParticipant::where('room_id', $room->id)
                              ->where('user_id', Auth::id())
                              ->first();
@@ -111,17 +109,12 @@ class PvpController extends Controller
         $timeLeft = (int)$request->time_left;
 
         if ($isCorrect) {
-            // Base damage calculation
             $normalizedDmg = ($timeLeft >= 30) ? 20 : 10;
 
             if ($me->active_boost) { 
                 $normalizedDmg *= 2; 
                 $me->update(['active_boost' => false]); 
             }
-
-            // 🟢 SOLUTION FIX: Direct Database Query Execution
-            // This forces the database engine to decrement values instantly across 3+ player rows 
-            // bypassing separate instance cache locks.
             
             // First, process shielded opponents
             DB::table('room_participants')
@@ -145,13 +138,11 @@ class PvpController extends Controller
                 ->where('hp', '<=', 0)
                 ->update(['hp' => 0, 'status' => 'defeated']);
 
-            // Refresh local player state context data
             $me->increment('mp', 15);
             if ($me->mp > 100) {
                 $me->update(['mp' => 100]);
             }
         } else {
-            // Handle incorrect answer damage penalty straight at the database row layer
             $normalizedPenalty = $me->active_boost ? 20 : 10;
 
             $me->decrement('hp', $normalizedPenalty);
@@ -188,11 +179,8 @@ class PvpController extends Controller
         $me->decrement('mp', $costs[$type]);
 
         if ($type === 'heal') {
-            $totalPlayers = $participants->count();
-            $normalizedHeal = (int)round((40 / ($totalPlayers * 100)) * 100);
-            if ($normalizedHeal < 1) $normalizedHeal = 5;
-
-            $me->increment('hp', $normalizedHeal);
+            // 🟢 FIXED: Heal recovers a base amount of 20 health out of the 100 scale
+            $me->increment('hp', 20);
             if ($me->hp > 100) $me->update(['hp' => 100]); 
             
             $me->update(['strike_locked_until' => now()->addSeconds(3)]);
@@ -256,11 +244,9 @@ class PvpController extends Controller
         $question = Question::find($qId);
         if ($type === 'text') return strtolower(trim($submitted ?? '')) === strtolower(trim($question->correct_answer_text));
         
-        // Handle array conversion for multiple choice matching setups safely
         $correct = DB::table('options')->where('question_id', $qId)->where('is_correct', 1)->pluck('id')->toArray();
         $sub = is_array($submitted) ? $submitted : [$submitted];
         
-        // Map elements to integers to bypass loose string comparison filters inside array evaluations
         $correct = array_map('intval', $correct);
         $sub = array_map('intval', array_filter($sub));
         
