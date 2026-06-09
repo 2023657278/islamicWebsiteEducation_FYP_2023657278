@@ -32,11 +32,13 @@ class PvpController extends Controller
             }
 
             // 2. 💀 ELIMINATION & RANKING LOGIC
+            // 🟢 FIXED: Calculate rank cleanly based on active health states to prevent tied ranks
             $totalPlayers = $participants->count();
             foreach ($participants as $p) {
                 if ($p->hp <= 0 && $p->status === 'active') {
-                    $defeatedCount = $participants->where('status', 'defeated')->count();
-                    $myRank = $totalPlayers - $defeatedCount;
+                    // Count how many players have strictly MORE health than this player right now
+                    $playersWithMoreHp = $participants->where('hp', '>', 0)->count();
+                    $myRank = $playersWithMoreHp + 1;
 
                     $p->update([
                         'status' => 'defeated',
