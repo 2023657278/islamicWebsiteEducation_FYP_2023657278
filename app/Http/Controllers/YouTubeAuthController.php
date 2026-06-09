@@ -17,7 +17,7 @@ class YouTubeAuthController extends Controller
         $groupId = $request->group_id;
         $subjectId = $request->subject_id;
 
-        // Force explicit fallback backup parameters into session driver
+        // Force explicit context parameters into session storage
         Session::put('sync_group_id', $groupId);
         Session::put('sync_subject_id', $subjectId);
         Session::save(); 
@@ -28,6 +28,9 @@ class YouTubeAuthController extends Controller
             'subject_id' => $subjectId
         ]);
 
+        // 🟢 THE ABSOLUTE FIX: 
+        // 1. Force 'select_account' inside with() to prompt Google's account picker view.
+        // 2. Add an evaluation parameter 'approval_prompt' => 'force' to break active browser cookie states.
         return Socialite::driver('google')
             ->scopes([
                 'https://www.googleapis.com/auth/youtube.readonly',
@@ -36,10 +39,10 @@ class YouTubeAuthController extends Controller
                 'email'
             ])
             ->with([
-                'access_type' => 'offline', 
-                // 🟢 THE FIX: Enforce account selection interface prompt alongside user scope consent requests
-                'prompt' => 'select_account consent', 
-                'state' => base64_encode($statePayload)
+                'access_type'     => 'offline', 
+                'prompt'          => 'select_account consent', // Forces account selector
+                'approval_prompt' => 'force',                  // Overrides Google browser caching profiles
+                'state'           => base64_encode($statePayload)
             ])
             ->redirect();
     }
@@ -50,6 +53,7 @@ class YouTubeAuthController extends Controller
     public function callback(Request $request)
     {
         try {
+            // Explicitly enforce stateless parsing to process custom state payloads safely
             $googleUser = Socialite::driver('google')->stateless()->user();
             
             $token = $googleUser->token ?? ($googleUser->accessTokenResponseBody['access_token'] ?? null);
