@@ -88,6 +88,9 @@ class PvpController extends Controller
      */
     public function submitStrike(Request $request, $code)
     {
+        // 🟢 ADD THIS TEMPORARY LINE HERE
+        \Log::info('Strike Received Payload:', $request->all());
+
         $room = QuizRoom::where('room_code', $code)->first();
         $participants = RoomParticipant::where('room_id', $room->id)->get();
         $me = $participants->where('user_id', Auth::id())->first();
