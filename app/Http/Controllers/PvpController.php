@@ -109,8 +109,8 @@ class PvpController extends Controller
         $timeLeft = (int)$request->time_left;
 
         if ($isCorrect) {
-            // 🟢 DAMAGE RULE: 40 damage if time >= 30s, 20 damage if below 30s
-            $normalizedDmg = ($timeLeft >= 30) ? 40 : 20;
+            // 🟢 DAMAGE RULE: 20 damage if time >= 30s, 10 damage if below 30s
+            $normalizedDmg = ($timeLeft >= 30) ? 20 : 10;
 
             // 🟢 BOOST RULE: 2x damage if correct
             if ($me->active_boost) { 
