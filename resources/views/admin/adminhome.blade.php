@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MRSM Terendak | Teacher Portal</title>
+  <!-- 🟢 Website Browser Tab Icon (Favicon) -->
   <link rel="icon" type="image/png" href="{{ asset('image/logo-badge.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,46 +53,44 @@
       position: fixed;
     }
 
-    /* 🟢 FIXED: Sticky top placement + centered row block alignment configuration */
+    /* Centers the whole logo + text group and keeps it static at the top */
     .brand-link {
-      background-color: var(--bg-sidebar) !important; /* Matches background so content scrolling behind is masked */
+      background-color: var(--bg-sidebar) !important; 
       border-bottom: 1px solid rgba(255,255,255,0.1) !important;
       padding: 1.2rem 1rem !important;
       display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      justify-content: center !important; /* Centers the whole logo + text group */
-      position: sticky !important;
-      top: 0;
-      z-index: 1030;
+      justify-content: center !important; 
+      height: 70px !important;
     }
 
-    /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
     .custom-sidebar-logo {
-      width: 50px !important;
-      height: 50px !important;
+      width: 45px !important;
+      height: 45px !important;
       object-fit: cover !important;
       border-radius: 50% !important;
-      border: 3px solid rgba(14, 1, 1, 0.03) !important;
+      border: 2px solid rgba(255,255,255,0.2) !important;
       box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
       margin-right: 10px !important;
       margin-left: 0 !important;
       margin-bottom: 0 !important;
     }
 
-    /* 🟢 FIXED: Force reset native padding rules built into AdminLTE's sidebar container wrapper */
+    /* 🟢 CHANGED: The user panel is now completely static right below the brand logo, with no gaps */
+    .user-panel {
+        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+        margin: 0 !important; 
+        padding: 15px 10px !important;
+        text-align: center;
+        background-color: var(--bg-sidebar) !important;
+    }
+
+    /* 🟢 CHANGED: The sidebar container now contains ONLY the navigation menu, making it the only scrollable part */
     .sidebar {
       flex: 1;
       overflow-y: auto;
-      padding-top: 0 !important; /* Removes default space at the very top of the scrollable list */
-    }
-
-    /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
-    .user-panel {
-        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 0px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
-        padding-top: 0 !important;
-        text-align: center;
+      padding-top: 10px !important; 
     }
 
     .sidebar-profile-img {
@@ -102,7 +101,7 @@
         border-radius: 12px !important; 
         border: 3px solid rgba(255,255,255,0.2) !important;
         display: block !important;
-        margin: 10px auto !important;
+        margin: 0 auto !important;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
     }
 
@@ -210,19 +209,21 @@
       <span class="brand-text font-weight-bold text-white fs-5">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
 
-    <div class="sidebar">
-      <div class="user-panel">
-        @if(Auth::user()->profile_image)
-            <img src="{{ asset('storage/profile_images/' . Auth::user()->profile_image) }}" 
-                 class="sidebar-profile-img" 
-                 alt="User Image">
-        @else
-            <div class="sidebar-profile-placeholder">
-                {{ substr(Auth::user()->name, 0, 1) }}
-            </div>
-        @endif
-      </div>
+    <!-- 🟢 LOCKED PANEL: The profile image block is now outside the scroll container, keeping it 100% frozen underneath the logo layout -->
+    <div class="user-panel">
+      @if(Auth::user()->profile_image)
+          <img src="{{ asset('storage/profile_images/' . Auth::user()->profile_image) }}" 
+               class="sidebar-profile-img" 
+               alt="User Image">
+      @else
+          <div class="sidebar-profile-placeholder">
+              {{ substr(Auth::user()->name, 0, 1) }}
+          </div>
+      @endif
+    </div>
 
+    <!-- SCROLLABLE LIST: Only navigation links scroll now -->
+    <div class="sidebar">
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
           
