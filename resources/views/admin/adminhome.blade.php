@@ -176,7 +176,7 @@
 
   <aside class="main-sidebar elevation-0">
     <a href="{{ route('admin.dashboard') }}" class="brand-link">
-      <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="brand-image img-circle elevation-0" style="opacity: .9">
+      <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="brand-image img-circle elevation-0" style="opacity: .9" width="150">
       <span class="brand-text font-weight-bold text-white ml-2">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
 
