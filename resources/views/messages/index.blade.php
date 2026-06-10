@@ -131,8 +131,6 @@
         flex-direction: column;
         gap: 8px;
         scroll-behavior: smooth;
-        mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black 100%);
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black 100%);
     }
 
     .message-bubble {
@@ -161,17 +159,17 @@
     ::-webkit-scrollbar-thumb { background: #374045; border-radius: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
 
-    /* 🟢 EXTENDED CONTRAST STYLING FOR SEARCH RESULTS PANEL */
+    /* --- SEARCH RESULTS OVERLAY --- */
     .search-results-overlay {
         overflow-y: auto;
         height: 100%;
         padding: 24px;
-        background-color: rgba(18, 18, 18, 0.92); /* Solid dark mask filtering the cream image map out */
-        backdrop-filter: blur(4px); /* Clean glass accentuation logic */
+        background-color: rgba(18, 18, 18, 0.95);
+        backdrop-filter: blur(4px);
         color: var(--text-primary);
     }
     .search-item-card {
-        background: #1f2c34 !important; /* Forces solid dark-mode container panels */
+        background: #1f2c34 !important;
         border: 1px solid #2a3942 !important;
         transition: background 0.2s ease;
     }
@@ -193,28 +191,28 @@
             </div>
             
             <div class="contact-list" id="contactList">
-                {{-- Global --}}
-                <a href="{{ route('messages.index', ['type' => 'global', 'id' => 0]) }}" class="contact-item {{ ($type == 'global') ? 'active' : '' }}" onclick="loadChat(event, this.href)" data-name="Global Announcement">
+                {{-- Global Room --}}
+                <a href="{{ route('messages.index', ['type' => 'global', 'id' => 0]) }}" class="contact-item {{ ($type == 'global') ? 'active' : '' }}" onclick="loadChat(event, this.href)">
                     <div class="avatar" style="background: #E53935;"><i class="fas fa-bullhorn"></i></div>
                     <div><div class="fw-bold">Global Announcement</div><small style="color: var(--text-secondary)">Message All</small></div>
                 </a>
 
-                {{-- Groups --}}
+                {{-- Groups Section --}}
                 @if($groups->count() > 0)
                     <div class="section-title">Class Groups</div>
                     @foreach($groups as $group)
-                        <a href="{{ route('messages.index', ['type' => 'group', 'id' => $group->id]) }}" class="contact-item {{ ($type == 'group' && $id == $group->id) ? 'active' : '' }}" data-name="{{ $group->group_name }}" onclick="loadChat(event, this.href)">
+                        <a href="{{ route('messages.index', ['type' => 'group', 'id' => $group->id]) }}" class="contact-item {{ ($type == 'group' && $id == $group->id) ? 'active' : '' }}" onclick="loadChat(event, this.href)">
                             <div class="avatar" style="background: #008f78;"><i class="fas fa-users"></i></div>
                             <div><div class="fw-bold">{{ $group->group_with_year }}</div><small style="color: var(--text-secondary)">Classroom</small></div>
                         </a>
                     @endforeach
                 @endif
 
-                {{-- People --}}
+                {{-- Contacts Section --}}
                 @if($contacts->count() > 0)
                     <div class="section-title">Contacts</div>
                     @foreach($contacts as $contact)
-                        <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="contact-item {{ ($type == 'private' && $id == $contact->id) ? 'active' : '' }}" data-name="{{ $contact->name }}" onclick="loadChat(event, this.href)">
+                        <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="contact-item {{ ($type == 'private' && $id == $contact->id) ? 'active' : '' }}" onclick="loadChat(event, this.href)">
                             <div class="avatar">{{ substr($contact->name, 0, 1) }}</div>
                             <div>
                                 <div class="fw-bold">{{ $contact->name }}</div>
@@ -228,20 +226,19 @@
             </div>
         </div>
 
-        {{-- CHAT AREA --}}
+        {{-- CHAT INTERFACE AREA --}}
         <div class="chat-area" id="chatArea">
-            {{-- 🟢 APPLIED THE CONDITIONAL OVERLAY TINT COMPONENT BLOCK --}}
             @if($search && !$activeChat)
                 <div class="search-results-overlay">
                     <h4 class="fw-bold mb-4" style="color: #38a169;">
                         <i class="fas fa-search me-2"></i> Unified Query Search Matches for: "{{ $search }}"
                     </h4>
                     
-                    {{-- Profile / Email Section --}}
+                    {{-- Verified Accounts Profiles Section --}}
                     <div class="mb-4">
                         <h6 class="section-title text-start ps-0 mb-3" style="color: #8696a0;">Profile Matches / Verified Email Addresses ({{ $contacts->count() }})</h6>
                         @forelse($contacts as $contact)
-                            <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="search-item_card d-flex align-items-center p-3 mb-2 rounded-3 text-decoration-none text-light search-item-card">
+                            <a href="{{ route('messages.index', ['type' => 'private', 'id' => $contact->id]) }}" class="search-item-card d-flex align-items-center p-3 mb-2 rounded-3 text-decoration-none text-light">
                                 <div class="avatar" style="width: 35px; height: 35px; font-size: 0.9rem;">{{ strtoupper(substr($contact->name, 0, 1)) }}</div>
                                 <div>
                                     <div class="fw-bold text-white mb-0" style="font-size: 0.95rem;">{{ $contact->name }}</div>
@@ -253,7 +250,7 @@
                         @endforelse
                     </div>
 
-                    {{-- Text Message Snippets Section --}}
+                    {{-- Text Content Snippets Section --}}
                     <div class="mb-4">
                         <h6 class="section-title text-start ps-0 mb-3" style="color: #8696a0;">Matching Historical Message Content ({{ $searchedMessages->count() }})</h6>
                         @forelse($searchedMessages as $msg)
@@ -329,7 +326,9 @@
         var container = document.getElementById("messageContainer");
         if(container) container.scrollTop = container.scrollHeight;
     }
-    scrollToBottom();
+    
+    // Run initial on standard page ready load profiles
+    document.addEventListener("DOMContentLoaded", scrollToBottom);
 
     function loadChat(e, url) {
         e.preventDefault();
@@ -369,7 +368,11 @@
             body: formData,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         }).then(res => {
-            if(res.ok) { container.lastElementChild.style.opacity = '1'; }
+            if(res.ok) { 
+                if (container.lastElementChild) {
+                    container.lastElementChild.style.opacity = '1'; 
+                }
+            }
         });
     }
 </script>
