@@ -80,13 +80,13 @@
     /* 🟢 FIXED: Removed strict overflows and set height to auto to prevent any clipping */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 0 !important; 
-        padding: 20px 10px !important;
+        margin: 10px 10px 15px 10px !important; 
+        padding: 0 !important;
         text-align: center !important;
-        background-color: var(--bg-sidebar) !important;
         display: block !important;
-        height: auto !important;
-        overflow: visible !important;
+        height: auto !important;         /* 👈 Overrides AdminLTE's fixed pixel max-height cap */
+        min-height: 120px !important;    /* 👈 Ensures full structural clearance for the 120px cat profile image */
+        overflow: visible !important;    /* 👈 Prevents the container bounding box from cutting off the image */
     }
 
     /* SCROLLABLE LIST: Only navigation links scroll now */
