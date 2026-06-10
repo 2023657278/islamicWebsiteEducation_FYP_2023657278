@@ -68,11 +68,11 @@
 
     /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
     .custom-sidebar-logo {
-      width: 45px !important;
-      height: 45px !important;
+      width: 20px !important;
+      height: 20px !important;
       object-fit: cover !important;
-      border-radius: 10% !important;
-      border: 2px solid rgba(255,255,255,0.2) !important;
+      border-radius: 50% !important;
+      border: 3px solid rgba(14, 1, 1, 0.03) !important;
       box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
       margin-right: 10px !important;
       margin-left: 0 !important;
@@ -89,7 +89,7 @@
     /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: -15px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
+        margin: 0px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
         padding-top: 0 !important;
         text-align: center;
     }
