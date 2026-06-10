@@ -26,7 +26,6 @@
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: var(--bg-cream); 
-            /* Enhanced layered background for maximum visibility of the geometric design */
             background-image: 
                 radial-gradient(at 0% 0%, rgba(139, 30, 36, 0.05) 0, transparent 50%), 
                 radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.08) 0, transparent 50%),
@@ -46,14 +45,27 @@
             border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
         }
         .navbar-brand { display: flex; align-items: center; gap: 12px; }
+        
+        /* 🟢 CHANGED: Reconfigured to a transparent background so your circular image fits cleanly */
         .brand-icon { 
-            width: 42px; height: 42px; 
-            background: linear-gradient(135deg, var(--primary-red), #a3242a); 
-            color: white; border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.2rem;
-            box-shadow: 0 6px 12px rgba(139, 30, 36, 0.15);
+            width: 44px; 
+            height: 44px; 
+            background: transparent; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 4px 10px rgba(139, 30, 36, 0.15);
         }
+
+        /* 🟢 NEW: Added img layout configurations to keep the graphic high resolution and circular */
+        .brand-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
         .brand-title { font-weight: 800; font-size: 1.15rem; color: var(--text-dark); line-height: 1.1; letter-spacing: -0.5px; }
         .brand-subtitle { font-size: 0.72rem; color: #718096; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
@@ -128,7 +140,7 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.05);
         }
 
-        /* --- Quiz Section (Royal Slate Background) --- */
+        /* --- Quiz Section --- */
         .quiz-section { 
             background: radial-gradient(circle at top left, #1e293b, #0f172a);
             color: white; 
@@ -159,7 +171,7 @@
         .textbook-img { height: 190px; width: 100%; object-fit: cover; border-bottom: 1px solid #f1f5f9; }
         .textbook-body { padding: 16px; text-align: left; }
 
-        /* --- About Section (Warm Alabaster) --- */
+        /* --- About Section --- */
         .about-section { 
             background: #F9F7F2; 
             padding: 100px 0; 
@@ -186,9 +198,12 @@
     <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <div class="brand-icon"><i class="fas fa-book-open"></i></div>
+                <!-- 🟢 FIXED: Replaced font-awesome tag with your explicit Asset Image logo -->
+                <div class="brand-icon">
+                    <img src="{{ asset('image/Ilmora.png') }}" alt="Ilmora Logo" class="brand-logo-img">
+                </div>
                 <div class="text-start">
-                    <span class="brand-title d-block">Ilmora</span>
+                    <span class="brand-title d-block">ILMORA</span>
                     <span class="brand-subtitle">PAI Learning Platform</span>
                 </div>
             </a>
@@ -284,7 +299,7 @@
                                     <div class="progress-line"><div class="progress-fill" style="width: 15%;"></div></div>
                                 </div>
                             </div>
-                            @endforeach
+                            @foreach
                         </div>
                     </div>
                 </div>
@@ -356,7 +371,7 @@
         <div class="container border-top pt-4">
             <p class="small">© {{ date('Y') }} PAI Learning Platform. All Rights Reserved.</p>
         </div>
-    </footer>
+    </footer
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>

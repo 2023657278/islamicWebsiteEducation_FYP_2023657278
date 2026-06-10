@@ -190,7 +190,7 @@
   </nav>
 
   <aside class="main-sidebar elevation-0">
-    <a href="{{ route('admin.dashboard') }}" class="brand-link">
+    <a href="{{ route('admin.dashboard') }}" class="brand-link d-flex align-items-center">
       <!-- Logo Image and brand text are now side-by-side cleanly -->
       <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="custom-sidebar-logo">
       <span class="brand-text font-weight-bold text-white fs-5">Ilmora <span style="color: #fbbf24;">PAI</span></span>
