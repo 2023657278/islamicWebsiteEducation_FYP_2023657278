@@ -175,11 +175,11 @@
   </nav>
 
   <aside class="main-sidebar elevation-0">
-    <a href="{{ route('admin.dashboard') }}" class="brand-link d-flex align-items-center py-3">
+    <a href="{{ route('admin.dashboard') }}" class="brand-link d-flex align-items-center py-1">
       
       <!-- 🟢 CHANGED: Removed restricting classes and added border-radius: 50% with clean dimension constraints -->
       <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" 
-           style="opacity: 0.9; width: 60px; height: 60px; min-width: 60px; border-radius: 50%; object-fit: cover;">
+           style="opacity: 0.9; width: 150px; height: 150px; min-width: 60px; border-radius: 50%; object-fit: cover;">
       
       <span class="brand-text font-weight-bold text-white ml-3">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
