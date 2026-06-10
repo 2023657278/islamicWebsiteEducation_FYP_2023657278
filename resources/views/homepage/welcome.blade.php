@@ -46,7 +46,6 @@
         }
         .navbar-brand { display: flex; align-items: center; gap: 12px; }
         
-        /* 🟢 CHANGED: Reconfigured to a transparent background so your circular image fits cleanly */
         .brand-icon { 
             width: 44px; 
             height: 44px; 
@@ -58,7 +57,6 @@
             box-shadow: 0 4px 10px rgba(139, 30, 36, 0.15);
         }
 
-        /* 🟢 NEW: Added img layout configurations to keep the graphic high resolution and circular */
         .brand-logo-img {
             width: 100%;
             height: 100%;
@@ -198,7 +196,6 @@
     <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <!-- 🟢 FIXED: Replaced font-awesome tag with your explicit Asset Image logo -->
                 <div class="brand-icon">
                     <img src="{{ asset('image/Ilmora.png') }}" alt="Ilmora Logo" class="brand-logo-img">
                 </div>
@@ -291,6 +288,8 @@
                             @php
                                 $quizInfo = ['Al-Quran' => 'Tajwid rules.', 'Hadis' => 'Prophetic teachings.', 'Akidah' => 'Islamic belief.', 'Fiqh' => 'Shariah.', 'Sirah' => 'History.', 'Akhlak' => 'Character.'];
                             @endphp
+                            
+                            {{-- 🟢 FIXED: Changed the broken duplicate @foreach closure into a standard @endforeach container closure --}}
                             @foreach($quizInfo as $name => $info)
                             <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 50 }}">
                                 <div class="quiz-card text-start">
@@ -299,7 +298,7 @@
                                     <div class="progress-line"><div class="progress-fill" style="width: 15%;"></div></div>
                                 </div>
                             </div>
-                            @foreach
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -371,7 +370,7 @@
         <div class="container border-top pt-4">
             <p class="small">© {{ date('Y') }} PAI Learning Platform. All Rights Reserved.</p>
         </div>
-    </footer
+    </footer> {{-- 🟢 FIXED: Closed missing trailing bracket flag --}}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
