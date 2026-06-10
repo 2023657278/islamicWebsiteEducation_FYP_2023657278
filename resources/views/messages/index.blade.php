@@ -15,19 +15,22 @@
         --maroon-accent: #800000;
     }
 
+    /* 🟢 FIXED: Locks wrapper height to fill remaining viewport space and hides outer window overflow */
     .chat-wrapper {
         display: flex;
         align-items: center;
         justify-content: center;
-        height: calc(100vh - 80px);
-        padding-bottom: 20px;
+        height: calc(100vh - 140px); /* Perfectly fills workspace without spilling over */
+        padding-bottom: 0;
+        overflow: hidden; /* Absolutely blocks page scrolling */
     }
 
+    /* 🟢 FIXED: Stretches container to 100% height of the locked wrapper box */
     .chat-container {
         display: flex;
-        width: 95%;
+        width: 100%;
         max-width: 1400px;
-        height: 85vh;
+        height: 100%;
         background-color: var(--dark-chat);
         border-radius: 16px;
         overflow: hidden;
@@ -43,6 +46,7 @@
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
+        height: 100%;
     }
     
     .sidebar-search {
@@ -109,6 +113,7 @@
         background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
         background-repeat: repeat;
         position: relative;
+        height: 100%;
     }
 
     .chat-header {
@@ -123,6 +128,7 @@
         z-index: 10;
     }
 
+    /* 🟢 ALREADY ROBUST: This stays as the exclusive vertical scrolling block area */
     .messages-box {
         flex: 1;
         padding: 20px 30px;
@@ -191,13 +197,11 @@
             </div>
             
             <div class="contact-list" id="contactList">
-                {{-- Global Room --}}
                 <a href="{{ route('messages.index', ['type' => 'global', 'id' => 0]) }}" class="contact-item {{ ($type == 'global') ? 'active' : '' }}" onclick="loadChat(event, this.href)">
                     <div class="avatar" style="background: #E53935;"><i class="fas fa-bullhorn"></i></div>
                     <div><div class="fw-bold">Global Announcement</div><small style="color: var(--text-secondary)">Message All</small></div>
                 </a>
 
-                {{-- Groups Section --}}
                 @if($groups->count() > 0)
                     <div class="section-title">Class Groups</div>
                     @foreach($groups as $group)
@@ -208,7 +212,6 @@
                     @endforeach
                 @endif
 
-                {{-- Contacts Section --}}
                 @if($contacts->count() > 0)
                     <div class="section-title">Contacts</div>
                     @foreach($contacts as $contact)
@@ -234,7 +237,6 @@
                         <i class="fas fa-search me-2"></i> Unified Query Search Matches for: "{{ $search }}"
                     </h4>
                     
-                    {{-- Verified Accounts Profiles Section --}}
                     <div class="mb-4">
                         <h6 class="section-title text-start ps-0 mb-3" style="color: #8696a0;">Profile Matches / Verified Email Addresses ({{ $contacts->count() }})</h6>
                         @forelse($contacts as $contact)
@@ -250,7 +252,6 @@
                         @endforelse
                     </div>
 
-                    {{-- Text Content Snippets Section --}}
                     <div class="mb-4">
                         <h6 class="section-title text-start ps-0 mb-3" style="color: #8696a0;">Matching Historical Message Content ({{ $searchedMessages->count() }})</h6>
                         @forelse($searchedMessages as $msg)
@@ -327,7 +328,6 @@
         if(container) container.scrollTop = container.scrollHeight;
     }
     
-    // Run initial on standard page ready load profiles
     document.addEventListener("DOMContentLoaded", scrollToBottom);
 
     function loadChat(e, url) {
