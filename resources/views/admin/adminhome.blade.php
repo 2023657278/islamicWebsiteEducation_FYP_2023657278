@@ -68,8 +68,8 @@
 
     /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
     .custom-sidebar-logo {
-      width: 20px !important;
-      height: 20px !important;
+      width: 50px !important;
+      height: 50px !important;
       object-fit: cover !important;
       border-radius: 50% !important;
       border: 3px solid rgba(14, 1, 1, 0.03) !important;
