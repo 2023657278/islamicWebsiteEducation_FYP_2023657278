@@ -34,7 +34,6 @@
       background-size: cover; 
     }
 
-    /* 🟢 FIXED: Removed white opaque background to let your main asset show behind */
     .content-wrapper {
       background: transparent !important;
       min-height: 100vh;
@@ -49,10 +48,27 @@
       border-right: 1px solid rgba(0,0,0,0.1);
     }
 
+    /* 🟢 CHANGED: Custom centering configuration block for the top branding wrapper */
     .brand-link {
       background-color: transparent !important;
       border-bottom: 1px solid rgba(255,255,255,0.1) !important;
       padding: 1.5rem 1rem;
+      text-align: center !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 🟢 NEW: Custom style class that completely bypasses AdminLTE container maximum caps */
+    .custom-sidebar-logo {
+      width: 90px !important;
+      height: 90px !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+      border: 2px solid rgba(255,255,255,0.2) !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+      margin-bottom: 10px !important;
     }
 
     /* Rectangular Profile Image Styling */
@@ -120,7 +136,6 @@
       opacity: 0.7;
     }
 
-    /* 🟢 FIXED: Translucent frosted glass look for the main navbar link bar */
     .main-header {
       background: rgba(255, 255, 255, 0.75) !important;
       backdrop-filter: blur(15px);
@@ -175,9 +190,10 @@
   </nav>
 
   <aside class="main-sidebar elevation-0">
+    <!-- 🟢 FIXED: The layout centers both the clean 90px logo and text vertically stacked -->
     <a href="{{ route('admin.dashboard') }}" class="brand-link">
-      <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="brand-image img-circle elevation-0" style="opacity: .9">
-      <span class="brand-text font-weight-bold text-white ml-2">Ilmora <span style="color: #fbbf24;">PAI</span></span>
+      <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="custom-sidebar-logo">
+      <span class="brand-text font-weight-bold text-white">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
 
     <div class="sidebar">
@@ -246,7 +262,7 @@
 
   <div class="content-wrapper">
     <section class="content pt-4">
-      <div class="website-container" data-aos="fade-up" data-aos-duration="800">
+      <div class="website-container" data-runs-animations="fade-up" data-aos-duration="800">
          @yield('content')
       </div>
     </section>
