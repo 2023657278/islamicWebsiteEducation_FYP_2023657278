@@ -81,9 +81,10 @@
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
         margin: 0 !important; 
-        padding: 15px 10px !important;
+        padding: 20px 10px !important; /* Increased top/bottom padding so the image fits perfectly */
         text-align: center;
         background-color: var(--bg-sidebar) !important;
+        box-sizing: border-box !important;
     }
 
     /* 🟢 CHANGED: The sidebar container now contains ONLY the navigation menu, making it the only scrollable part */
