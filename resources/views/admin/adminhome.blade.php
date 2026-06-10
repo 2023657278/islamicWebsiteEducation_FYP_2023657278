@@ -64,7 +64,6 @@
       position: sticky !important;
       top: 0;
       z-index: 1030;
-      height: 70px !important;
     }
 
     /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
@@ -84,13 +83,13 @@
     .sidebar {
       flex: 1;
       overflow-y: auto;
-      padding-top: 15px !important; /* Adjust padding top to let content rest comfortably without overlapping */
+      padding-top: 0 !important; /* Removes default space at the very top of the scrollable list */
     }
 
-    /* 🟢 FIXED: Zero-out the margins cleanly to eliminate hidden overlapping and prevent hiding behind elements */
+    /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 0px 10px 15px 10px !important; 
+        margin: -15px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
         padding-top: 0 !important;
         text-align: center;
     }
@@ -267,7 +266,7 @@
           <li class="nav-header">CONTENT</li>
           <li class="nav-item"><a href="{{ route('resources.index') }}" class="nav-link {{ request()->routeIs('resources.*') ? 'active' : '' }}"><i class="nav-icon fas fa-folder"></i> <p>Resources</p></a></li>
           <li class="nav-item"><a href="{{ route('quizzes.index') }}" class="nav-link {{ request()->routeIs('quizzes.*') ? 'active' : '' }}"><i class="nav-icon fas fa-question-circle"></i> <p>Quizzes</p></a></li>
-          <li class="nav-item"><a href="{{ asset('flashcards.index') }}" class="nav-link {{ request()->routeIs('flashcards.*') ? 'active' : '' }}"><i class="nav-icon fas fa-layer-group"></i> <p>Flashcards</p></a></li>
+          <li class="nav-item"><a href="{{ route('flashcards.index') }}" class="nav-link {{ request()->routeIs('flashcards.*') ? 'active' : '' }}"><i class="nav-icon fas fa-layer-group"></i> <p>Flashcards</p></a></li>
           <li class="nav-item"><a href="{{ route('results.index') }}" class="nav-link {{ request()->routeIs('teacher.results.*') ? 'active' : '' }}"><i class="nav-icon fas fa-poll"></i> <p>Results</p></a></li>
 
         </ul>
