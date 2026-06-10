@@ -78,18 +78,18 @@
       margin-bottom: 0 !important;
     }
 
-    /* 🟢 FIXED: Standardized structural overflow constraints to maintain scroll paths below header */
+    /* 🟢 FIXED: Force reset native padding rules built into AdminLTE's sidebar container wrapper */
     .sidebar {
       flex: 1;
       overflow-y: auto;
+      padding-top: 0 !important; /* Removes default space at the very top of the scrollable list */
     }
 
-    /* Added top margin so the profile picture box sits neatly below the brand line */
-    /* 🟢 FIXED: Reduced top margin from 25px to 5px to close up the gap cleanly */
+    /* 🟢 FIXED: Zero-out the top margin entirely and rely on a precise padding to close the gap */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 5px 10px 15px 10px !important;
-        padding: 0;
+        margin: 0px 10px 15px 10px !important; /* Changed top margin to 0px */
+        padding-top: 5px !important; /* Precise control space right below the line */
         text-align: center;
     }
 
