@@ -8,6 +8,8 @@
 
     <title>{{ config('app.name', 'PAI Platform') }}</title>
 
+    <!-- 🟢 NEW: Website Browser Tab Icon (Favicon) -->
+    <link rel="icon" type="image/png" href="{{ asset('image/logo-badge.png') }}">
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
