@@ -77,33 +77,36 @@
       margin-bottom: 0 !important;
     }
 
-    /* 🟢 CHANGED: The user panel is now completely static right below the brand logo, with no gaps */
+    /* 🟢 FIXED: Removed strict overflows and set height to auto to prevent any clipping */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
         margin: 0 !important; 
-        padding: 20px 10px !important; /* Increased top/bottom padding so the image fits perfectly */
-        text-align: center;
+        padding: 20px 10px !important;
+        text-align: center !important;
         background-color: var(--bg-sidebar) !important;
-        box-sizing: border-box !important;
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
     }
 
-    /* 🟢 CHANGED: The sidebar container now contains ONLY the navigation menu, making it the only scrollable part */
+    /* SCROLLABLE LIST: Only navigation links scroll now */
     .sidebar {
       flex: 1;
       overflow-y: auto;
       padding-top: 10px !important; 
     }
 
+    /* 🟢 FIXED: Added clear display block parameters to guarantee the picture renders unconstrained */
     .sidebar-profile-img {
-        width: 100% !important;
-        max-width: 180px !important; 
+        width: 180px !important; 
         height: 120px !important;    
         object-fit: cover !important; 
         border-radius: 12px !important; 
         border: 3px solid rgba(255,255,255,0.2) !important;
-        display: block !important;
+        display: inline-block !important;
         margin: 0 auto !important;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+        float: none !important;
     }
 
     .sidebar-profile-placeholder {
@@ -210,7 +213,7 @@
       <span class="brand-text font-weight-bold text-white fs-5">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
 
-    <!-- 🟢 LOCKED PANEL: The profile image block is now outside the scroll container, keeping it 100% frozen underneath the logo layout -->
+    <!-- LOCKED PANEL: The profile image block is outside the scroll container -->
     <div class="user-panel">
       @if(Auth::user()->profile_image)
           <img src="{{ asset('storage/profile_images/' . Auth::user()->profile_image) }}" 
