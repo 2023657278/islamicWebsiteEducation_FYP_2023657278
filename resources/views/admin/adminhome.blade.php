@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MRSM Terendak | Teacher Portal</title>
-  
   <link rel="icon" type="image/png" href="{{ asset('image/logo-badge.png') }}">
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -54,18 +52,22 @@
       position: fixed;
     }
 
-    /* 🟢 FIXED: Solid header sizing layout to prevent components hiding behind background elements */
+    /* 🟢 FIXED: Sticky top placement + centered row block alignment configuration */
     .brand-link {
-      background-color: var(--bg-sidebar) !important; 
+      background-color: var(--bg-sidebar) !important; /* Matches background so content scrolling behind is masked */
       border-bottom: 1px solid rgba(255,255,255,0.1) !important;
       padding: 1.2rem 1rem !important;
       display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      justify-content: center !important; 
+      justify-content: center !important; /* Centers the whole logo + text group */
+      position: sticky !important;
+      top: 0;
+      z-index: 1030;
       height: 70px !important;
     }
 
+    /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
     .custom-sidebar-logo {
       width: 45px !important;
       height: 45px !important;
@@ -78,18 +80,18 @@
       margin-bottom: 0 !important;
     }
 
-    /* 🟢 FIXED: Aligned top bounds structure below your branding separator line */
+    /* 🟢 FIXED: Force reset native padding rules built into AdminLTE's sidebar container wrapper */
     .sidebar {
       flex: 1;
       overflow-y: auto;
-      padding-top: 15px !important; 
+      padding-top: 15px !important; /* Adjust padding top to let content rest comfortably without overlapping */
     }
 
-    /* 🟢 FIXED: Zeroed margins to sit beautifully beneath your brand banner header */
+    /* 🟢 FIXED: Zero-out the margins cleanly to eliminate hidden overlapping and prevent hiding behind elements */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
         margin: 0px 10px 15px 10px !important; 
-        padding: 0 !important;
+        padding-top: 0 !important;
         text-align: center;
     }
 
@@ -263,4 +265,33 @@
           </li>
 
           <li class="nav-header">CONTENT</li>
-          <li class="nav-item"><a href="{{ route('resources.index') }}" class="nav-link {{ request()->routeIs('resources.*') ? 'active' : '' }}"><i class="nav-icon fas fa-folder"></i> <p>Resources</p></a>
+          <li class="nav-item"><a href="{{ route('resources.index') }}" class="nav-link {{ request()->routeIs('resources.*') ? 'active' : '' }}"><i class="nav-icon fas fa-folder"></i> <p>Resources</p></a></li>
+          <li class="nav-item"><a href="{{ route('quizzes.index') }}" class="nav-link {{ request()->routeIs('quizzes.*') ? 'active' : '' }}"><i class="nav-icon fas fa-question-circle"></i> <p>Quizzes</p></a></li>
+          <li class="nav-item"><a href="{{ asset('flashcards.index') }}" class="nav-link {{ request()->routeIs('flashcards.*') ? 'active' : '' }}"><i class="nav-icon fas fa-layer-group"></i> <p>Flashcards</p></a></li>
+          <li class="nav-item"><a href="{{ route('results.index') }}" class="nav-link {{ request()->routeIs('teacher.results.*') ? 'active' : '' }}"><i class="nav-icon fas fa-poll"></i> <p>Results</p></a></li>
+
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="content-wrapper">
+    <section class="content pt-4">
+      <div class="website-container" data-aos="fade-up" data-aos-duration="800">
+         @yield('content')
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="{{ asset('admin/plugins/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('admin/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('admin/dist/js/adminlte.js') }}"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  $(document).ready(function() {
+      AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true });
+  });
+</script>
+</body>
+</html>
