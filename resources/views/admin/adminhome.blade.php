@@ -71,7 +71,7 @@
       width: 45px !important;
       height: 45px !important;
       object-fit: cover !important;
-      border-radius: 50% !important;
+      border-radius: 10% !important;
       border: 2px solid rgba(255,255,255,0.2) !important;
       box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
       margin-right: 10px !important;
@@ -89,7 +89,7 @@
     /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: -70px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
+        margin: -15px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
         padding-top: 0 !important;
         text-align: center;
     }
