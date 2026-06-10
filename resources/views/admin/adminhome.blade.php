@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MRSM Terendak | Teacher Portal</title>
   <!-- 🟢 NEW: Website Browser Tab Icon (Favicon) -->
-    <link rel="icon" type="image/png" href="{{ asset('image/logo-badge.png') }}">
+  <link rel="icon" type="image/png" href="{{ asset('image/logo-badge.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -47,20 +47,25 @@
       background: var(--bg-sidebar) !important;
       box-shadow: none !important;
       border-right: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
     }
 
-    /* 🟢 FIXED: Changed back to a row-based layout (align-items-center) so text stays side-by-side */
+    /* 🟢 FIXED: Sticky top placement + centered row block alignment configuration */
     .brand-link {
-      background-color: transparent !important;
+      background-color: var(--bg-sidebar) !important; /* Matches background so content scrolling behind is masked */
       border-bottom: 1px solid rgba(255,255,255,0.1) !important;
       padding: 1.2rem 1rem !important;
       display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      justify-content: flex-start !important;
+      justify-content: center !important; /* Centers the whole logo + text group */
+      position: sticky !important;
+      top: 0;
+      z-index: 1030;
     }
 
-    /* 🟢 FIXED: Set logo size to a crisp 45px. This keeps it large but allows side-by-side placement */
+    /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
     .custom-sidebar-logo {
       width: 45px !important;
       height: 45px !important;
@@ -68,11 +73,19 @@
       border-radius: 50% !important;
       border: 2px solid rgba(255,255,255,0.2) !important;
       box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
-      margin-right: 12px !important;
+      margin-right: 10px !important;
+      margin-left: 0 !important;
       margin-bottom: 0 !important;
     }
 
-    /* 🟢 FIXED: Added top margin so the profile picture box sits neatly below the brand line */
+    /* 🟢 FIXED: Standardized structural overflow constraints to maintain scroll paths below header */
+    .sidebar {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Added top margin so the profile picture box sits neatly below the brand line */
+    /* 🟢 FIXED: Reduced top margin from 25px to 5px to close up the gap cleanly */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
         margin: 5px 10px 15px 10px !important;
@@ -192,7 +205,7 @@
 
   <aside class="main-sidebar elevation-0">
     <a href="{{ route('admin.dashboard') }}" class="brand-link">
-      <!-- Logo Image and brand text are now side-by-side cleanly -->
+      <!-- Logo Image and brand text are centered side-by-side cleanly and stick to the top -->
       <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="custom-sidebar-logo">
       <span class="brand-text font-weight-bold text-white fs-5">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
