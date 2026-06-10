@@ -188,8 +188,8 @@
             <a class="navbar-brand" href="#">
                 <div class="brand-icon"><i class="fas fa-book-open"></i></div>
                 <div class="text-start">
-                    <span class="brand-title d-block">PAI Learning</span>
-                    <span class="brand-subtitle">Ilmora PAI</span>
+                    <span class="brand-title d-block">Ilmora</span>
+                    <span class="brand-subtitle">PAI Learning Platform</span>
                 </div>
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">

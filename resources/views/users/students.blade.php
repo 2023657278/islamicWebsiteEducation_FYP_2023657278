@@ -150,8 +150,8 @@
         <div class="logo-section">
             <div class="logo-icon"><i class="fas fa-kaaba"></i></div>
             <div>
-                <div class="platform-name" style="font-weight: 800; font-size: 1.1rem; color: #1A202C;">PAI Platform</div>
-                <div class="platform-sub" style="font-size: 0.7rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">MRSM Terendak</div>
+                <div class="platform-name" style="font-weight: 800; font-size: 1.1rem; color: #1A202C;">Ilmora PAI</div>
+                <div class="platform-sub" style="font-size: 0.7rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">Student Portal</div>
             </div>
         </div>
 
