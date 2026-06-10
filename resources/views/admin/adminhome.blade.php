@@ -88,7 +88,7 @@
     /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: -15px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
+        margin: -70px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
         padding-top: 0 !important;
         text-align: center;
     }
