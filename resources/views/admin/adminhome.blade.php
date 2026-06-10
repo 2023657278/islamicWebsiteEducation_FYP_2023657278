@@ -85,7 +85,7 @@
         text-align: center !important;
         display: block !important;
         height: auto !important;         /* 👈 Overrides AdminLTE's fixed pixel max-height cap */
-        min-height: 120px !important;    /* 👈 Ensures full structural clearance for the 120px cat profile image */
+        min-height: 300px !important;    /* 👈 Ensures full structural clearance for the 120px cat profile image */
         overflow: visible !important;    /* 👈 Prevents the container bounding box from cutting off the image */
     }
 
