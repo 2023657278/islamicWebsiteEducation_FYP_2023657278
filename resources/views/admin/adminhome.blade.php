@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MRSM Terendak | Teacher Portal</title>
-  <!-- 🟢 NEW: Website Browser Tab Icon (Favicon) -->
+  
   <link rel="icon" type="image/png" href="{{ asset('image/logo-badge.png') }}">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -49,23 +50,22 @@
       border-right: 1px solid rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
+      height: 100vh !important;
+      position: fixed;
     }
 
-    /* 🟢 FIXED: Sticky top placement + centered row block alignment configuration */
+    /* 🟢 FIXED: Solid header sizing layout to prevent components hiding behind background elements */
     .brand-link {
-      background-color: var(--bg-sidebar) !important; /* Matches background so content scrolling behind is masked */
+      background-color: var(--bg-sidebar) !important; 
       border-bottom: 1px solid rgba(255,255,255,0.1) !important;
       padding: 1.2rem 1rem !important;
       display: flex !important;
       flex-direction: row !important;
       align-items: center !important;
-      justify-content: center !important; /* Centers the whole logo + text group */
-      position: sticky !important;
-      top: 0;
-      z-index: 1030;
+      justify-content: center !important; 
+      height: 70px !important;
     }
 
-    /* 🟢 FIXED: Removed absolute margins and adjusted layout spacing */
     .custom-sidebar-logo {
       width: 45px !important;
       height: 45px !important;
@@ -78,18 +78,18 @@
       margin-bottom: 0 !important;
     }
 
-    /* 🟢 FIXED: Force reset native padding rules built into AdminLTE's sidebar container wrapper */
+    /* 🟢 FIXED: Aligned top bounds structure below your branding separator line */
     .sidebar {
       flex: 1;
       overflow-y: auto;
-      padding-top: 0 !important; /* Removes default space at the very top of the scrollable list */
+      padding-top: 15px !important; 
     }
 
-    /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
+    /* 🟢 FIXED: Zeroed margins to sit beautifully beneath your brand banner header */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: -70px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
-        padding-top: 0 !important;
+        margin: 0px 10px 15px 10px !important; 
+        padding: 0 !important;
         text-align: center;
     }
 
@@ -205,7 +205,6 @@
 
   <aside class="main-sidebar elevation-0">
     <a href="{{ route('admin.dashboard') }}" class="brand-link">
-      <!-- Logo Image and brand text are centered side-by-side cleanly and stick to the top -->
       <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="custom-sidebar-logo">
       <span class="brand-text font-weight-bold text-white fs-5">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
@@ -264,33 +263,4 @@
           </li>
 
           <li class="nav-header">CONTENT</li>
-          <li class="nav-item"><a href="{{ route('resources.index') }}" class="nav-link {{ request()->routeIs('resources.*') ? 'active' : '' }}"><i class="nav-icon fas fa-folder"></i> <p>Resources</p></a></li>
-          <li class="nav-item"><a href="{{ route('quizzes.index') }}" class="nav-link {{ request()->routeIs('quizzes.*') ? 'active' : '' }}"><i class="nav-icon fas fa-question-circle"></i> <p>Quizzes</p></a></li>
-          <li class="nav-item"><a href="{{ route('flashcards.index') }}" class="nav-link {{ request()->routeIs('flashcards.*') ? 'active' : '' }}"><i class="nav-icon fas fa-layer-group"></i> <p>Flashcards</p></a></li>
-          <li class="nav-item"><a href="{{ route('results.index') }}" class="nav-link {{ request()->routeIs('teacher.results.*') ? 'active' : '' }}"><i class="nav-icon fas fa-poll"></i> <p>Results</p></a></li>
-
-        </ul>
-      </nav>
-    </div>
-  </aside>
-
-  <div class="content-wrapper">
-    <section class="content pt-4">
-      <div class="website-container" data-aos="fade-up" data-aos-duration="800">
-         @yield('content')
-      </div>
-    </section>
-  </div>
-</div>
-
-<script src="{{ asset('admin/plugins/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('admin/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('admin/dist/js/adminlte.js') }}"></script>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-  $(document).ready(function() {
-      AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true });
-  });
-</script>
-</body>
-</html>
+          <li class="nav-item"><a href="{{ route('resources.index') }}" class="nav-link {{ request()->routeIs('resources.*') ? 'active' : '' }}"><i class="nav-icon fas fa-folder"></i> <p>Resources</p></a>
