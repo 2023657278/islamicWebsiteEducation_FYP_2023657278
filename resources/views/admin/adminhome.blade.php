@@ -80,12 +80,12 @@
     /* 🟢 FIXED: Removed strict overflows and set height to auto to prevent any clipping */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 100px 10px 15px 10px !important; 
+        margin: 90px 10px 15px 10px !important; 
         padding: 0 !important;
         text-align: center !important;
         display: block !important;
         height: auto !important;         /* 👈 Overrides AdminLTE's fixed pixel max-height cap */
-        min-height: 50px !important;    /* 👈 Ensures full structural clearance for the 120px cat profile image */
+        min-height: 30px !important;    /* 👈 Ensures full structural clearance for the 120px cat profile image */
         overflow: visible !important;    /* 👈 Prevents the container bounding box from cutting off the image */
     }
 
