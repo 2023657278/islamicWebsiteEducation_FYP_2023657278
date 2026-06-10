@@ -11,7 +11,7 @@
                     
                     <div class="text-center mb-4">
                         <div class="mb-3">
-                            <img src="{{ asset('image/Ilmora.png') }}" alt="MRSM Logo" width="85" class="img-fluid">
+                            <img src="{{ asset('image/Ilmora.png') }}" alt="MRSM Logo" width="120" class="img-fluid">
                         </div>
                         <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 800; letter-spacing: -0.5px;">Selamat Datang! 👋</h3>
                         <p class="text-muted small">Sign in to access your quizzes, analytics, and class timetables.</p>
