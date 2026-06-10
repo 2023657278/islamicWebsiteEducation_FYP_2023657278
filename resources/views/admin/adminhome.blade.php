@@ -85,11 +85,11 @@
       padding-top: 0 !important; /* Removes default space at the very top of the scrollable list */
     }
 
-    /* 🟢 FIXED: Zero-out the top margin entirely and rely on a precise padding to close the gap */
+    /* 🟢 FIXED: Used a negative top margin to completely override AdminLTE's dynamic javascript gap positioning */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 0px 10px 15px 10px !important; /* Changed top margin to 0px */
-        padding-top: 5px !important; /* Precise control space right below the line */
+        margin: -15px 10px 15px 10px !important; /* 👈 Negative margin pulls the cat profile image card upward instantly */
+        padding-top: 0 !important;
         text-align: center;
     }
 
