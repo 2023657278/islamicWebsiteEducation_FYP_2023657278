@@ -148,7 +148,7 @@
     <div class="sidebar">
         <!-- Logo Section -->
         <div class="logo-section">
-            <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="brand-image img-circle elevation-0" style="opacity: .9">
+            <div class="logo-icon"><i class="fas fa-kaaba"></i></div>
             <div>
                 <div class="platform-name" style="font-weight: 800; font-size: 1.1rem; color: #1A202C;">PAI Platform</div>
                 <div class="platform-sub" style="font-size: 0.7rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">MRSM Terendak</div>
