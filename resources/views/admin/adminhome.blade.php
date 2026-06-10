@@ -48,33 +48,33 @@
       border-right: 1px solid rgba(0,0,0,0.1);
     }
 
-    /* 🟢 CHANGED: Custom centering configuration block for the top branding wrapper */
+    /* 🟢 FIXED: Changed back to a row-based layout (align-items-center) so text stays side-by-side */
     .brand-link {
       background-color: transparent !important;
       border-bottom: 1px solid rgba(255,255,255,0.1) !important;
-      padding: 1.5rem 1rem;
-      text-align: center !important;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      padding: 1.2rem 1rem !important;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
     }
 
-    /* 🟢 NEW: Custom style class that completely bypasses AdminLTE container maximum caps */
+    /* 🟢 FIXED: Set logo size to a crisp 45px. This keeps it large but allows side-by-side placement */
     .custom-sidebar-logo {
-      width: 90px !important;
-      height: 90px !important;
+      width: 45px !important;
+      height: 45px !important;
       object-fit: cover !important;
       border-radius: 50% !important;
       border: 2px solid rgba(255,255,255,0.2) !important;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-      margin-bottom: 10px !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
+      margin-right: 12px !important;
+      margin-bottom: 0 !important;
     }
 
-    /* Rectangular Profile Image Styling */
+    /* 🟢 FIXED: Added top margin so the profile picture box sits neatly below the brand line */
     .user-panel {
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        margin: 15px 10px;
+        margin: 25px 10px 15px 10px !important;
         padding: 0;
         text-align: center;
     }
@@ -190,14 +190,14 @@
   </nav>
 
   <aside class="main-sidebar elevation-0">
-    <!-- 🟢 FIXED: The layout centers both the clean 90px logo and text vertically stacked -->
     <a href="{{ route('admin.dashboard') }}" class="brand-link">
+      <!-- Logo Image and brand text are now side-by-side cleanly -->
       <img src="{{ asset('admin/dist/img/Ilmora.png') }}" alt="Logo" class="custom-sidebar-logo">
-      <span class="brand-text font-weight-bold text-white">Ilmora <span style="color: #fbbf24;">PAI</span></span>
+      <span class="brand-text font-weight-bold text-white fs-5">Ilmora <span style="color: #fbbf24;">PAI</span></span>
     </a>
 
     <div class="sidebar">
-      <div class="user-panel mt-3 pb-3 mb-3 border-0">
+      <div class="user-panel">
         @if(Auth::user()->profile_image)
             <img src="{{ asset('storage/profile_images/' . Auth::user()->profile_image) }}" 
                  class="sidebar-profile-img" 
@@ -262,7 +262,7 @@
 
   <div class="content-wrapper">
     <section class="content pt-4">
-      <div class="website-container" data-runs-animations="fade-up" data-aos-duration="800">
+      <div class="website-container" data-aos="fade-up" data-aos-duration="800">
          @yield('content')
       </div>
     </section>
