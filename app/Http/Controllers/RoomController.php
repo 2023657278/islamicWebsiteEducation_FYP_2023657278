@@ -36,7 +36,7 @@ class RoomController extends Controller
     public function createFromDifficulty(Request $request, $subject_id, $difficulty)
     {
         $questions = Question::where('subject_id', $subject_id)
-            ->where('difficulty', trim($difficulty))
+            ->where(DB::raw('LOWER(difficulty)'), strtolower(trim($difficulty))) // 🟢 Forces case-insensitive matching
             ->inRandomOrder()
             ->limit(10)
             ->get();
