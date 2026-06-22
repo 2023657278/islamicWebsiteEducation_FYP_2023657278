@@ -10,7 +10,7 @@ use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Support0\Facades\DB; // 🟢 ADD THIS LINE TO FIX THE ERROR
+use Illuminate\Support\Facades\DB; // 🟢 ADD THIS LINE TO FIX THE ERROR
 
 class RoomController extends Controller
 {
@@ -19,6 +19,13 @@ class RoomController extends Controller
      */
     public function browse($subject_id)
     {
+        // 🏁 PERMANENT AUTO-CLEANUP: Automatically delete lobbies older than 1 hour
+        \DB::table('quiz_rooms')
+            ->where('status', 'waiting')
+            ->where('created_at', '<', now()->subHour())
+            ->delete();
+
+        // Continue running your normal browsing logic exactly as before
         $rooms = QuizRoom::where('status', 'waiting')
             ->where('is_public', true)
             ->whereHas('quiz', function($q) use ($subject_id) {
@@ -85,6 +92,12 @@ class RoomController extends Controller
      */
     public function join(Request $request)
     {
+        // 🏁 Check and clear expired lobbies before letting them search
+        \DB::table('quiz_rooms')
+            ->where('status', 'waiting')
+            ->where('created_at', '<', now()->subHour())
+            ->delete();
+
         $room = QuizRoom::where('room_code', $request->room_code)
                         ->where('status', 'waiting')
                         ->first();
