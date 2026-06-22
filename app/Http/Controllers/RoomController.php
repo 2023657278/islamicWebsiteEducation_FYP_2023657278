@@ -10,6 +10,7 @@ use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support0\Facades\DB; // 🟢 ADD THIS LINE TO FIX THE ERROR
 
 class RoomController extends Controller
 {
@@ -36,7 +37,7 @@ class RoomController extends Controller
     public function createFromDifficulty(Request $request, $subject_id, $difficulty)
     {
         $questions = Question::where('subject_id', $subject_id)
-            ->where(DB::raw('LOWER(difficulty)'), strtolower(trim($difficulty))) // 🟢 Forces case-insensitive matching
+            ->where(\DB::raw('LOWER(difficulty)'), strtolower(trim($difficulty))) // 🟢 Forces case-insensitive matching
             ->inRandomOrder()
             ->limit(10)
             ->get();
