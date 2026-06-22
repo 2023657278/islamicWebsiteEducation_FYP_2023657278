@@ -51,7 +51,7 @@
         .theme-shield { background: #064e3b !important; border-color: #10b981 !important; box-shadow: 0 0 40px rgba(16, 185, 129, 0.4); }
         .theme-boost { background: #450a0a !important; border-color: #ef4444 !important; box-shadow: 0 0 40px rgba(239, 68, 68, 0.4); }
         .theme-freeze { background: #0c4a6e !important; border-color: #3b82f6 !important; }
-        .theme-heal { background: #14532d !important; border-color: #22c55e !important; box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); }
+        .theme-heal { background: #14532d !important; border-color: #d2ff07 !important; box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); }
 
         .power-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
         
