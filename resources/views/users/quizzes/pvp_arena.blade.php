@@ -81,7 +81,7 @@
         .pwr-btn:active { transform: translateY(-1px); }
         .pwr-btn.cooldown { opacity: 0.4 !important; pointer-events: none !important; transform: none !important; background: #1e293b !important; border-color: #475569 !important; color: #94a3b8 !important; }
         
-        .bg-heal { background: #22c55e !important; color: #ffffff !important; }
+        .bg-heal { background: #cbe121 !important; color: #ffffff !important; }
         .bg-shield { background: #3b82f6 !important; color: #ffffff !important; }
         .bg-freeze { background: #06b6d4 !important; color: #ffffff !important; }
         .bg-boost { background: #f43f5e !important; color: #ffffff !important; }
