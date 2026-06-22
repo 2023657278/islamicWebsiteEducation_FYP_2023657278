@@ -163,14 +163,19 @@ class QuizController extends Controller
         $quiz = Quiz::findOrFail($quiz_id);
         $cleanQuestionText = str_replace('$', '', $request->question_text);
 
+        // 👇 MODIFY THIS BLOCK BELOW 👇
         $questionData = [
             'question_text' => $cleanQuestionText,
             'question_type' => $request->question_type,
             'points' => $request->points ?? 1,
+            'quiz_id' => $quiz->id, 
+            
+            // 🏁 PERMANENT FIX: Force the question to always take the subject 
+            // and difficulty directly from the quiz it is being added to!
             'subject_id' => $quiz->subject_id, 
             'difficulty' => $quiz->difficulty,
-            'quiz_id' => $quiz->id, 
         ];
+        // 👆 MODIFY THIS BLOCK ABOVE 👆
 
         if ($request->question_type === 'text') {
             $questionData['correct_answer_text'] = $request->text_answer;
