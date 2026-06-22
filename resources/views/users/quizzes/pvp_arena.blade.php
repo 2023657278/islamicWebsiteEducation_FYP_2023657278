@@ -478,7 +478,7 @@
         } catch (e) {}
     }
     
-    setInterval(sync, 1500); 
+    setInterval(sync, 500); 
     renderQ();
 </script>
 </body>
