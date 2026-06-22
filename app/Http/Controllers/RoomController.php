@@ -41,9 +41,11 @@ class RoomController extends Controller
             ->limit(10)
             ->get();
 
-        if ($questions->isEmpty()) {
-            return back()->with('error', "Database Error: No questions found for $difficulty level in this subject.");
-        }
+        // 🔴 CHANGE THIS BLOCK:
+    if ($questions->count() < 2) { // Ensure there are enough questions to form a PvP arena match
+        return redirect()->route('student.quizzes.difficulties', $subject_id)
+                         ->with('error', "No questions found for " . ucfirst($difficulty) . " level in Akhlak. Please populate the question pool first!");
+    }
 
         $quiz = Quiz::create([
             'title' => "PVP: " . strtoupper($difficulty),
