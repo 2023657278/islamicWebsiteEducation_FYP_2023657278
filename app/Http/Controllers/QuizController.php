@@ -285,96 +285,93 @@ class QuizController extends Controller
         return back()->with('success', 'Question deleted successfully.');
     }
 
-    // question banks
+    // =================================================================
+    // PART E: AUTOMATED QUESTION BANK INGESTION & BUFFERED PARSER
+    // =================================================================
     public function uploadQuestionsBank(Request $request)
-{
-    $request->validate([
-        'pdf_file' => 'required|mimes:pdf|max:20480', 
-        'subject_id' => 'required|integer'
-    ]);
+    {
+        $request->validate([
+            'pdf_file' => 'required|mimes:pdf|max:20480', 
+            'subject_id' => 'required|integer'
+        ]);
 
-    // 🟢 1. SATISFY FOREIGN KEY: Find or cleanly insert a dedicated Master Bank Subject
-    $globalSubject = \App\Models\Subject::firstOrCreate(
-        ['subject_name' => 'Global Reservoir'],
-        [
-            // Fill any other columns your subjects table might require by default
-            'created_at' => now(),
-            'updated_at' => now()
-        ]
-    );
+        // 🟢 1. SATISFY FOREIGN KEY: Find or cleanly insert a dedicated Master Bank Subject
+        $globalSubject = \App\Models\Subject::firstOrCreate(
+            ['subject_name' => 'Global Reservoir'],
+            [
+                'subject_code' => 'GLOBAL_RESERVOIR', 
+                'created_at'   => now(),
+                'updated_at'   => now()
+            ]
+        );
 
-    // 🟢 2. CREATE HOLDER CONTAINER: Linked cleanly to our valid master subject row ID
-    $bankQuiz = \App\Models\Quiz::firstOrCreate(
-        ['title' => 'Al-Falah Global Question Bank Reservoir'],
-        [
-            'description' => 'System-generated container for global pool extraction.',
-            'duration_minutes' => 60,
-            'teacher_id' => auth()->id() ?? 1, 
-            'subject_id' => $globalSubject->id, 
-            'topic' => 'GLOBAL_BANK',
-            'difficulty' => 'Easy'
-        ]
-    );
+        // 🟢 2. CREATE HOLDER CONTAINER: Linked cleanly to our valid master subject row ID
+        $bankQuiz = \App\Models\Quiz::firstOrCreate(
+            ['title' => 'Al-Falah Global Question Bank Reservoir'],
+            [
+                'description' => 'System-generated container for global pool extraction.',
+                'duration_minutes' => 60,
+                'teacher_id' => auth()->id() ?? 1, 
+                'subject_id' => $globalSubject->id, 
+                'topic' => 'GLOBAL_BANK',
+                'difficulty' => 'Easy'
+            ]
+        );
 
-    if ($bankQuiz->subject_id != $globalSubject->id) {
-        $bankQuiz->update(['subject_id' => $globalSubject->id]);
-    }
-
-    $file = $request->file('pdf_file');
-    $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
-
-    $lines = explode("\n", $rawText);
-    
-    $importCount = 0;
-    $currentQuestionText = "";
-    $currentAnswerLines = [];
-
-    foreach ($lines as $line) {
-        // Fix the typo variable look-ahead from your copy-paste ($line instead of line)
-        $line = trim($line);
-
-        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
-            continue;
+        if ($bankQuiz->subject_id != $globalSubject->id) {
+            $bankQuiz->update(['subject_id' => $globalSubject->id]);
         }
 
-        if (preg_match('/^\d+/', $line)) {
-            if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-                $this->saveBufferedQuestion($bankQuiz->id, $globalSubject->id, $currentQuestionText, $currentAnswerLines);
-                $importCount++;
+        $file = $request->file('pdf_file');
+        $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
+
+        $lines = explode("\n", $rawText);
+        
+        $importCount = 0;
+        $currentQuestionText = "";
+        $currentAnswerLines = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
+                continue;
             }
 
-            $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
-            $currentQuestionText = $cleaned;
-            $currentAnswerLines = [];
-        } else {
-            if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
-                $currentAnswerLines[] = $line;
+            if (preg_match('/^\d+/', $line)) {
+                if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+                    $this->saveBufferedQuestion($bankQuiz->id, $globalSubject->id, $currentQuestionText, $currentAnswerLines);
+                    $importCount++;
+                }
+
+                $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
+                $currentQuestionText = $cleaned;
+                $currentAnswerLines = [];
             } else {
-                $currentQuestionText .= " " . $line;
+                if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
+                    $currentAnswerLines[] = $line;
+                } else {
+                    $currentQuestionText .= " " . $line;
+                }
             }
         }
-    }
 
-    if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-        $this->saveBufferedQuestion($bankQuiz->id, $globalSubject->id, $currentQuestionText, $currentAnswerLines);
-        $importCount++;
-    }
+        if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+            $this->saveBufferedQuestion($bankQuiz->id, $globalSubject->id, $currentQuestionText, $currentAnswerLines);
+            $importCount++;
+        }
 
-    return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
-}
+        return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
+    }
 
     /**
-     * 🟢 THE MISSING METHOD - PASTE THIS RIGHT BELOW THE UPLOAD FUNCTION
-     */
-   /**
      * Helper function to structure and save the buffered text blocks cleanly
      */
-   private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
+    private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
     {
         $combinedAnswerText = implode("\n", $answerLines);
 
         try {
-            // 🟢 UPGRADED SCHEMA INSTRUCTION:
             // Safely modifies columns to be TEXT and allows subject_id to be NULL
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE `options` MODIFY COLUMN `option_text` TEXT NULL");
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE `questions` MODIFY COLUMN `question_text` TEXT NULL");
@@ -391,7 +388,7 @@ class QuizController extends Controller
             'question_type'       => 'text', 
             'points'              => 2,
             
-            // 🟢 CHANGED TO NULL: This question no longer consists of or is locked to any subject!
+            // This question no longer consists of or is locked to any subject!
             'subject_id'          => null, 
             
             'difficulty'          => 'Easy',
@@ -407,79 +404,77 @@ class QuizController extends Controller
         ]);
     }
 
-// =================================================================
-// 🟢 PART D: KEYWORD SEARCH & AUTO-FILL QUESTION BANK DISPATCHER
-// =================================================================
+    // =================================================================
+    // 🟢 PART D: KEYWORD SEARCH & AUTO-FILL QUESTION BANK DISPATCHER
+    // =================================================================
 
-public function searchBank(Request $request)
-{
-    $keyword = $request->query('keyword');
+    public function searchBank(Request $request)
+    {
+        $keyword = $request->query('keyword');
 
-    if (empty($keyword) || strlen($keyword) < 2) {
-        return response()->json([]);
+        if (empty($keyword) || strlen($keyword) < 2) {
+            return response()->json([]);
+        }
+
+        // Search for matching rows in your global questions dataset
+        $questions = Question::where('question_text', 'LIKE', "%{$keyword}%")
+            ->with(['options' => function($query) {
+                $query->where('is_correct', true);
+            }])
+            ->limit(10)
+            ->get();
+
+        return response()->json($questions);
     }
 
-    // Search for matching rows in your global questions dataset
-    $questions = Question::where('question_text', 'LIKE', "%{$keyword}%")
-        ->with(['options' => function($query) {
-            $query->where('is_correct', true);
-        }])
-        ->limit(10)
-        ->get();
-
-    return response()->json($questions);
-}
-
-public function attachBankQuestion(Request $request, $quiz_id)
-{
-    $request->validate([
-        'bank_question_id' => 'required|exists:questions,id',
-        'points'           => 'required|integer|min:1',
-        'wrong_options'    => 'required|array|min:1',
-        'wrong_options.*'  => 'required|string'
-    ]);
-
-    $quiz = Quiz::findOrFail($quiz_id);
-    $bankQuestion = Question::with('options')->findOrFail($request->bank_question_id);
-
-    // 🏁 FIX: If correct_answer_text is null, look inside the options table relation for the answer
-    $correctAnswerText = $bankQuestion->correct_answer_text;
-    if (empty($correctAnswerText)) {
-        $correctOption = $bankQuestion->options->where('is_correct', true)->first();
-        $correctAnswerText = $correctOption ? $correctOption->option_text : 'Jawapan Betul';
-    }
-
-    // Clone the question row specifically for this quiz
-    $newQuestion = Question::create([
-        'question_text'       => $bankQuestion->question_text,
-        'question_type'       => 'single', 
-        'points'              => $request->points,
-        'quiz_id'             => $quiz->id,
-        'subject_id'          => $quiz->subject_id,
-        'difficulty'          => $quiz->difficulty,
-        'correct_answer_text' => $correctAnswerText
-    ]);
-
-    // Attach to the current quiz pivot table
-    $quiz->questions()->attach($newQuestion->id);
-
-    // 1. Re-add the verified correct answer text choice safely
-    $newQuestion->options()->create([
-        'option_text' => $correctAnswerText,
-        'is_correct'  => true
-    ]);
-
-    // 2. Loop and attach the custom wrong options submitted by the teacher
-    foreach ($request->wrong_options as $wrongText) {
-        if (trim($wrongText) == '') continue;
-        
-        $newQuestion->options()->create([
-            'option_text' => $wrongText,
-            'is_correct'  => false 
+    public function attachBankQuestion(Request $request, $quiz_id)
+    {
+        $request->validate([
+            'bank_question_id' => 'required|exists:questions,id',
+            'points'           => 'required|integer|min:1',
+            'wrong_options'    => 'required|array|min:1',
+            'wrong_options.*'  => 'required|string'
         ]);
+
+        $quiz = Quiz::findOrFail($quiz_id);
+        $bankQuestion = Question::with('options')->findOrFail($request->bank_question_id);
+
+        $correctAnswerText = $bankQuestion->correct_answer_text;
+        if (empty($correctAnswerText)) {
+            $correctOption = $bankQuestion->options->where('is_correct', true)->first();
+            $correctAnswerText = $correctOption ? $correctOption->option_text : 'Jawapan Betul';
+        }
+
+        // Clone the question row specifically for this quiz
+        $newQuestion = Question::create([
+            'question_text'       => $bankQuestion->question_text,
+            'question_type'       => 'single', 
+            'points'              => $request->points,
+            'quiz_id'             => $quiz->id,
+            'subject_id'          => $quiz->subject_id,
+            'difficulty'          => $quiz->difficulty,
+            'correct_answer_text' => $correctAnswerText
+        ]);
+
+        // Attach to the current quiz pivot table
+        $quiz->questions()->attach($newQuestion->id);
+
+        // 1. Re-add the verified correct answer text choice safely
+        $newQuestion->options()->create([
+            'option_text' => $correctAnswerText,
+            'is_correct'  => true
+        ]);
+
+        // 2. Loop and attach the custom wrong options submitted by the teacher
+        foreach ($request->wrong_options as $wrongText) {
+            if (trim($wrongText) == '') continue;
+            
+            $newQuestion->options()->create([
+                'option_text' => $wrongText,
+                'is_correct'  => false 
+            ]);
+        }
+
+        return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank successfully!');
     }
-
-    return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank successfully!');
-}
-
 }
