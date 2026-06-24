@@ -10,7 +10,7 @@ class Quiz extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'duration_minutes', 'teacher_id', 'subject_id', 'topic', 'difficulty',
+        'title', 'description', 'duration_minutes', 'teacher_id', 'subject_id', 'quiz_id', 'topic', 'difficulty',
     ];
 
     public function teacher() { return $this->belongsTo(User::class, 'teacher_id'); }

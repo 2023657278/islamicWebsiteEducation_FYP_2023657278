@@ -295,7 +295,7 @@ class QuizController extends Controller
 
     // 1. Store the uploaded file temporarily inside local framework directories
     $file = $request->file('pdf_file');
-    $rawText = (new Parser())->parseFile($file->getRealPath())->getText();
+    $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
 
     // 2. Break down text into rows
     $lines = explode("\n", $rawText);
@@ -321,6 +321,7 @@ class QuizController extends Controller
                 'points' => 2,
                 'subject_id' => $request->subject_id,
                 'difficulty' => 'Easy',
+                'quiz_id'       => null,
             ]);
 
             $importCount++;
