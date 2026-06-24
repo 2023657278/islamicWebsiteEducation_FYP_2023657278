@@ -360,4 +360,73 @@ class QuizController extends Controller
 
     return back()->with('success', "Al-Falah Bank Ingested Successfully! Imported {$importCount} questions.");
 }
+
+// =================================================================
+// 🟢 PART D: KEYWORD SEARCH & AUTO-FILL QUESTION BANK DISPATCHER
+// =================================================================
+
+public function searchBank(Request $request)
+{
+    $keyword = $request->query('keyword');
+
+    if (empty($keyword) || strlen($keyword) < 2) {
+        return response()->json([]);
+    }
+
+    // Search for matching rows in your 702 global questions dataset
+    $questions = Question::where('question_text', 'LIKE', "%{$keyword}%")
+        ->with(['options' => function($query) {
+            $query->where('is_correct', true); // Only grab the correct answer string from the bank
+        }])
+        ->limit(10)
+        ->get();
+
+    return response()->json($questions);
+}
+
+public function attachBankQuestion(Request $request, $quiz_id)
+{
+    $request->validate([
+        'bank_question_id' => 'required|exists:questions,id',
+        'points'           => 'required|integer|min:1',
+        'wrong_options'    => 'required|array|min:1',
+        'wrong_options.*'  => 'required|string'
+    ]);
+
+    $quiz = Quiz::findOrFail($quiz_id);
+    $bankQuestion = Question::findOrFail($request->bank_question_id);
+
+    // Clone the question row specifically for this quiz to avoid overwriting the master reservoir
+    $newQuestion = Question::create([
+        'question_text'       => $bankQuestion->question_text,
+        'question_type'       => 'single', // Converted to single choice multiple choice form
+        'points'              => $request->points,
+        'quiz_id'             => $quiz->id,
+        'subject_id'          => $quiz->subject_id,
+        'difficulty'          => $quiz->difficulty,
+        'correct_answer_text' => $bankQuestion->correct_answer_text
+    ]);
+
+    // Attach to the current quiz pivot table
+    $quiz->questions()->attach($newQuestion->id);
+
+    // 1. Re-add the master correct answer text choice for the student interface
+    $newQuestion->options()->create([
+        'option_text' => $bankQuestion->correct_answer_text,
+        'is_correct'  => true
+    ]);
+
+    // 2. Loop and attach the custom wrong options submitted by the teacher
+    foreach ($request->wrong_options as $wrongText) {
+        if (trim($wrongText) == '') continue;
+        
+        $newQuestion->options()->create([
+            'option_text' => $wrongText,
+            'is_correct'  => false // Strictly marked as wrong distractor rows
+        ]);
+    }
+
+    return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank and distractors added successfully!');
+}
+
 }

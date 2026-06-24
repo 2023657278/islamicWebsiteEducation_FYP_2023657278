@@ -44,6 +44,9 @@ Route::get('/home', function () {
 
 // 2. Admin Tools (Quiz Questions Bank Upload)
 Route::post('/admin/import-questions-bank', [QuizController::class, 'uploadQuestionsBank'])->name('questions.bank.upload');
+// Al-Falah Question Bank Keyword Search Operations
+    Route::get('/question-bank/search', [QuizController::class, 'searchBank'])->name('questions.bank.search');
+    Route::post('/quizzes/{id}/attach-bank-question', [QuizController::class, 'attachBankQuestion'])->name('questions.bank.attach');
 
 // 3. Admin Tools (Webhook Setup)
 Route::prefix('webhook')->group(function () {
