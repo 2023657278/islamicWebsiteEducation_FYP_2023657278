@@ -293,72 +293,106 @@ class QuizController extends Controller
         'subject_id' => 'required|integer'
     ]);
 
-    // 🟢 1. AUTOMATIC DATABASE SAFEGUARD: 
-    // Find or automatically create a hidden placeholder quiz to hold global bank questions
+    // Ensure our global bank reservoir quiz exists to maintain strict foreign keys
     $bankQuiz = \App\Models\Quiz::firstOrCreate(
         ['title' => 'Al-Falah Global Question Bank Reservoir'],
         [
             'description' => 'System-generated container for global pool extraction.',
             'duration_minutes' => 60,
-            'teacher_id' => auth()->id() ?? 1, // Fallback to first user ID if unauthenticated
+            'teacher_id' => auth()->id() ?? 1, 
             'subject_id' => $request->subject_id,
             'topic' => 'GLOBAL_BANK',
             'difficulty' => 'Easy'
         ]
     );
 
-    // 2. Store the uploaded file temporarily inside local framework directories
     $file = $request->file('pdf_file');
     $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
 
-    // 3. Break down text into rows
+    // Split text into literal lines exactly as the PDF structured it
     $lines = explode("\n", $rawText);
-    $currentQuestion = null;
+    
     $importCount = 0;
+    $currentQuestionText = "";
+    $currentAnswerLines = [];
 
     foreach ($lines as $line) {
         $line = trim($line);
 
-        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS')) {
+        // Skip layout metadata headers and footers
+        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || preg_match('/^\d+\s*$/', $line)) {
             continue;
         }
 
-        // RegEx Check: Detect lines starting with numbers (e.g., "1. Apakah maksud Mad Silah?")
+        // 1. DETECT A NEW QUESTION BLOCK (e.g., "7. Jelaskan prinsip...")
         if (preg_match('/^(\d+)\.\s*(.*)/', $line, $matches)) {
-            $questionString = trim($matches[2]);
+            
+            // Before moving to the new question, save the previous one if it exists
+            if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+                $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+                $importCount++;
+            }
 
-            if (empty($questionString)) continue;
-
-            // 🟢 4. INGEST QUESTION WITH VALID QUIZ PARENT
-            $currentQuestion = Question::create([
-                'question_text' => $questionString,
-                'question_type' => 'text',
-                'points'        => 2,
-                'subject_id'    => $request->subject_id,
-                'difficulty'    => 'Easy',
-                
-                // Maps to our safe placeholder quiz row to satisfy MySQL integrity rules
-                'quiz_id'       => $bankQuiz->id, 
-            ]);
-
-            // Also link it via the belongsToMany pivot table loop for full architectural support
-            $bankQuiz->questions()->attach($currentQuestion->id);
-
-            $importCount++;
+            // Reset buffers for the new question found
+            $currentQuestionText = trim($matches[2]);
+            $currentAnswerLines = [];
         } 
-        // Relational Binding Check: Save trailing row lines as the correct option answer text
-        elseif ($currentQuestion && !empty($line) && !str_contains($line, 'Markah') && !str_contains($line, 'BIL.')) {
-            $currentQuestion->options()->create([
-                'option_text' => $line,
-                'is_correct' => true
-            ]);
-
-            $currentQuestion->update(['correct_answer_text' => $line]);
-            $currentQuestion = null; 
+        // 2. DETECT SUB-ANSWERS OR BULLET LISTS (e.g., "1. Melaksanakan ibadah...")
+        elseif (preg_match('/^(\d+)\.\s*(.*)/', $line) || preg_match('/^[a-zA-h]\)\s*(.*)/', $line) || !empty($currentQuestionText)) {
+            
+            // If it's a continuing description of the question text before answers begin
+            if (empty($currentAnswerLines) && !preg_match('/^(\d+)\./', $line) && !str_contains($line, 'Markah')) {
+                // If the line contains the main keyword but belongs to the answer column header layout
+                if (str_contains($line, 'Wasatiyyah dari aspek') || str_contains($line, 'Umat yang')) {
+                    $currentAnswerLines[] = $line;
+                } else {
+                    $currentQuestionText .= " " . $line;
+                }
+            } 
+            // Otherwise, it's a line belonging to the answers matrix
+            else {
+                if (!str_contains($line, 'Markah') && !str_contains($line, 'BIL.')) {
+                    $currentAnswerLines[] = $line;
+                }
+            }
         }
     }
 
-    return back()->with('success', "Al-Falah Bank Ingested Successfully! Imported {$importCount} questions.");
+    // Save the final leftover question block remaining in the buffer
+    if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+        $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+        $importCount++;
+    }
+
+    return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} complex questions.");
+}
+
+/**
+ * Helper function to structure and save the buffered text blocks cleanly
+ */
+private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
+{
+    // Combine answer rows with clear line breaks so the exact list styling is retained
+    $combinedAnswerText = implode("\n", $answerLines);
+
+    $question = \App\Models\Question::create([
+        'question_text'       => trim($questionText),
+        'question_type'       => 'text', // Safe default fallback
+        'points'              => 2,
+        'subject_id'          => $subjectId,
+        'difficulty'          => 'Easy',
+        'quiz_id'             => $quizId, 
+        'correct_answer_text' => $combinedAnswerText
+    ]);
+
+    // Link it to our global search repository pivot array
+    $question->quizzes()->attach($quizId);
+
+    // Populate options relationship row
+    $question->options()->create([
+        'option_text' => $combinedAnswerText,
+        'is_correct'  => true
+    ]);
 }
 
 // =================================================================

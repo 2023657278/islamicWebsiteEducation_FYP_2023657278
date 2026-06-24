@@ -48,6 +48,23 @@ Route::post('/admin/import-questions-bank', [QuizController::class, 'uploadQuest
     Route::get('/question-bank/search', [QuizController::class, 'searchBank'])->name('questions.bank.search');
     Route::post('/quizzes/{id}/attach-bank-question', [QuizController::class, 'attachBankQuestion'])->name('questions.bank.attach');
 
+Route::get('/admin/clear-old-bank', function() {
+    // 1. Find the placeholder quiz reservoir row
+    $bankQuiz = \App\Models\Quiz::where('title', 'Al-Falah Global Question Bank Reservoir')->first();
+    
+    if ($bankQuiz) {
+        // 2. Detach all relations from the pivot table loop first
+        $bankQuiz->questions()->detach();
+        
+        // 3. Delete all question records that belong to this specific reservoir
+        \App\Models\Question::where('quiz_id', $bankQuiz->id)->delete();
+        
+        return "Old Al-Falah Bank records cleared safely! You can now re-upload.";
+    }
+    
+    return "No old question bank found to delete.";
+});
+
 // 3. Admin Tools (Webhook Setup)
 Route::prefix('webhook')->group(function () {
     Route::get('setup-telegram', [WebhookSetupController::class, 'setupTelegramWebhook'])->name('webhook.setup');
