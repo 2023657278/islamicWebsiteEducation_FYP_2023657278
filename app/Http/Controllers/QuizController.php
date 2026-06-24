@@ -353,17 +353,19 @@ class QuizController extends Controller
    /**
      * Helper function to structure and save the buffered text blocks cleanly
      */
-    private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
+   private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
     {
         $combinedAnswerText = implode("\n", $answerLines);
 
-        // 🟢 AUTOMATIC SCHEMA UPGRADE:
-        // Safely converts 'option_text' and 'question_text' to TEXT columns 
-        // to prevent character truncation errors on large paragraph arrays.
         try {
+            // 🟢 UPGRADED SCHEMA INSTRUCTION:
+            // Safely modifies columns to be TEXT and allows subject_id to be NULL
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE `options` MODIFY COLUMN `option_text` TEXT NULL");
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE `questions` MODIFY COLUMN `question_text` TEXT NULL");
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE `questions` MODIFY COLUMN `correct_answer_text` TEXT NULL");
+            
+            // Forces subject_id to be nullable so it doesn't belong to any specific subject
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE `questions` MODIFY COLUMN `subject_id` INT NULL");
         } catch (\Exception $e) {
             // Fails silently if already converted or restricted
         }
@@ -372,7 +374,10 @@ class QuizController extends Controller
             'question_text'       => trim($questionText),
             'question_type'       => 'text', 
             'points'              => 2,
-            'subject_id'          => $subjectId,
+            
+            // 🟢 CHANGED TO NULL: This question no longer consists of or is locked to any subject!
+            'subject_id'          => null, 
+            
             'difficulty'          => 'Easy',
             'quiz_id'             => $quizId, 
             'correct_answer_text' => $combinedAnswerText
