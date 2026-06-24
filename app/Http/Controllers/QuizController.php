@@ -80,7 +80,7 @@ class QuizController extends Controller
         
         $subjects = Subject::all();
         return view('quizzes.index', compact('quizzes', 'subjects'));
-        
+
         // 🟢 UPDATED: Excludes the dummy layout subject tracking record from showing up on the student side
     $subjects = Subject::where('subject_code', '!=', 'GLOBAL_RESERVOIR')
                         ->get();
@@ -414,72 +414,73 @@ class QuizController extends Controller
     // =================================================================
 
     public function searchBank(Request $request)
-    {
-        $keyword = $request->query('keyword');
+{
+    $keyword = $request->query('keyword');
 
-        if (empty($keyword) || strlen($keyword) < 2) {
-            return response()->json([]);
-        }
-
-        // Search for matching rows in your global questions dataset
-        $questions = Question::where('question_text', 'LIKE', "%{$keyword}%")
-            ->with(['options' => function($query) {
-                $query->where('is_correct', true);
-            }])
-            ->limit(10)
-            ->get();
-
-        return response()->json($questions);
+    if (empty($keyword) || strlen($keyword) < 2) {
+        return response()->json([]);
     }
 
-    public function attachBankQuestion(Request $request, $quiz_id)
-    {
-        $request->validate([
-            'bank_question_id' => 'required|exists:questions,id',
-            'points'           => 'required|integer|min:1',
-            'wrong_options'    => 'required|array|min:1',
-            'wrong_options.*'  => 'required|string'
-        ]);
+    // 🟢 ADDED: withoutGlobalScopes() allows the teacher search tool to query the bank safely
+    $questions = Question::where('question_text', 'LIKE', "%{$keyword}%")
+        ->with(['options' => function($query) {
+            $query->where('is_correct', true);
+        }])
+        ->whereHas('quizzes', function($query) {
+            $query->withoutGlobalScopes()->where('topic', 'GLOBAL_BANK');
+        })
+        ->limit(10)
+        ->get();
 
-        $quiz = Quiz::findOrFail($quiz_id);
-        $bankQuestion = Question::with('options')->findOrFail($request->bank_question_id);
+    return response()->json($questions);
+}
 
-        $correctAnswerText = $bankQuestion->correct_answer_text;
-        if (empty($correctAnswerText)) {
-            $correctOption = $bankQuestion->options->where('is_correct', true)->first();
-            $correctAnswerText = $correctOption ? $correctOption->option_text : 'Jawapan Betul';
-        }
+public function attachBankQuestion(Request $request, $quiz_id)
+{
+    $request->validate([
+        'bank_question_id' => 'required|exists:questions,id',
+        'points'           => 'required|integer|min:1',
+        'wrong_options'    => 'required|array|min:1',
+        'wrong_options.*'  => 'required|string'
+    ]);
 
-        // Clone the question row specifically for this quiz
-        $newQuestion = Question::create([
-            'question_text'       => $bankQuestion->question_text,
-            'question_type'       => 'single', 
-            'points'              => $request->points,
-            'quiz_id'             => $quiz->id,
-            'subject_id'          => $quiz->subject_id,
-            'difficulty'          => $quiz->difficulty,
-            'correct_answer_text' => $correctAnswerText
-        ]);
+    $quiz = Quiz::findOrFail($quiz_id);
+    
+    // 🟢 ADDED: withoutGlobalScopes() to securely locate the source question data
+    $bankQuestion = Question::withoutGlobalScopes()->with('options')->findOrFail($request->bank_question_id);
 
-        // Attach to the current quiz pivot table
-        $quiz->questions()->attach($newQuestion->id);
+    $correctAnswerText = $bankQuestion->correct_answer_text;
+    if (empty($correctAnswerText)) {
+        $correctOption = $bankQuestion->options->where('is_correct', true)->first();
+        $correctAnswerText = $correctOption ? $correctOption->option_text : 'Jawapan Betul';
+    }
 
-        // 1. Re-add the verified correct answer text choice safely
+    $newQuestion = Question::create([
+        'question_text'       => $bankQuestion->question_text,
+        'question_type'       => 'single', 
+        'points'              => $request->points,
+        'quiz_id'             => $quiz->id,
+        'subject_id'          => $quiz->subject_id,
+        'difficulty'          => $quiz->difficulty,
+        'correct_answer_text' => $correctAnswerText
+    ]);
+
+    $quiz->questions()->attach($newQuestion->id);
+
+    $newQuestion->options()->create([
+        'option_text' => $correctAnswerText,
+        'is_correct'  => true
+    ]);
+
+    foreach ($request->wrong_options as $wrongText) {
+        if (trim($wrongText) == '') continue;
+        
         $newQuestion->options()->create([
-            'option_text' => $correctAnswerText,
-            'is_correct'  => true
+            'option_text' => $wrongText,
+            'is_correct'  => false 
         ]);
-
-        // 2. Loop and attach the custom wrong options submitted by the teacher
-        foreach ($request->wrong_options as $wrongText) {
-            if (trim($wrongText) == '') continue;
-            
-            $newQuestion->options()->create([
-                'option_text' => $wrongText,
-                'is_correct'  => false 
-            ]);
-        }
-
-        return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank successfully!');
     }
+
+    return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank successfully!');
+}
 }

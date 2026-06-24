@@ -13,6 +13,16 @@ class Quiz extends Model
         'title', 'description', 'duration_minutes', 'teacher_id', 'subject_id', 'quiz_id', 'topic', 'difficulty',
     ];
 
+    protected static function booted()
+    {
+        static::addGlobalScope('hideGlobalBankFromStudents', function (Builder $builder) {
+            // 🟢 SECURITY BOUNDARY: Strip the backend container out of student views automatically
+            if (!Auth::check() || Auth::user()->role !== 'admin') {
+                $builder->where('topic', '!=', 'GLOBAL_BANK');
+            }
+        });
+    }
+
     public function teacher() { return $this->belongsTo(User::class, 'teacher_id'); }
     public function subject() { return $this->belongsTo(Subject::class); }
     public function results() { return $this->hasMany(Result::class); }
