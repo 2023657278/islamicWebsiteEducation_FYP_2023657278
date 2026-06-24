@@ -60,6 +60,7 @@ class StudentDashboardController extends Controller
 
             // 🟢 CRITICAL FIX: Explicitly exclude 'PVP_ARENA_BATTLE' from the roadmap query pool
             $quizzes = Quiz::where('subject_id', $sub->id)
+                           ->where('topic', '!=', 'GLOBAL_BANK')
                            ->where('topic', '!=', 'PVP_ARENA_BATTLE')
                            ->get();
                            

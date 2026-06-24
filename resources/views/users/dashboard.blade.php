@@ -34,12 +34,6 @@
 
     {{-- FULL MENU CARDS --}}
     <div class="row g-4 mb-5">
-        @foreach($subjects as $subj)
-        {{-- 🟢 HIDE GLOBAL RESERVOIR FROM STUDENTS --}}
-        @if($subj->subject_name === 'Global Reservoir' || $subj->subject_code === 'GLOBAL_RESERVOIR')
-            @continue
-        @endif
-        
         <div class="col-md-4">
             <a href="{{ route('student.progress.index') }}" class="card border-0 shadow-sm rounded-4 text-decoration-none h-100 hover-scale">
                 <div class="card-body p-4 d-flex align-items-center">
