@@ -80,6 +80,10 @@ class QuizController extends Controller
         
         $subjects = Subject::all();
         return view('quizzes.index', compact('quizzes', 'subjects'));
+        
+        // 🟢 UPDATED: Excludes the dummy layout subject tracking record from showing up on the student side
+    $subjects = Subject::where('subject_code', '!=', 'GLOBAL_RESERVOIR')
+                        ->get();
     }
 
     public function create()
