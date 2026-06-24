@@ -30,6 +30,12 @@
     </div>
 
 
+    @foreach($subjects as $subj)
+        {{-- 🟢 HIDE GLOBAL RESERVOIR FROM STUDENTS --}}
+        @if($subj->subject_name === 'Global Reservoir' || $subj->subject_code === 'GLOBAL_RESERVOIR')
+            @continue
+        @endif
+
     {{-- FULL MENU CARDS --}}
     <div class="row g-4 mb-5">
         <div class="col-md-4">
