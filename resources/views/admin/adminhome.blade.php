@@ -14,8 +14,7 @@
   <link rel="stylesheet" href="{{ asset('admin/dist/css/adminlte.min.css') }}">
   <link rel="stylesheet" href="{{ asset('admin/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ asset('css/custom.css?v=1.0.1') }}">
-<script src="{{ asset('js/app.js?v=1.0.1') }}"></script>
+  
 
   <style>
     /* --- THEME NUR CONFIGURATION --- */
