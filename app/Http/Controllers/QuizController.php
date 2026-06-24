@@ -293,21 +293,31 @@ class QuizController extends Controller
         'subject_id' => 'required|integer'
     ]);
 
-    // 🟢 FIXED HOLDER: Uses a numeric fallback index (0) to satisfy strict NOT NULL columns safely
+    // 🟢 1. SATISFY FOREIGN KEY: Find or cleanly insert a dedicated Master Bank Subject
+    $globalSubject = \App\Models\Subject::firstOrCreate(
+        ['subject_name' => 'Global Reservoir'],
+        [
+            // Fill any other columns your subjects table might require by default
+            'created_at' => now(),
+            'updated_at' => now()
+        ]
+    );
+
+    // 🟢 2. CREATE HOLDER CONTAINER: Linked cleanly to our valid master subject row ID
     $bankQuiz = \App\Models\Quiz::firstOrCreate(
         ['title' => 'Al-Falah Global Question Bank Reservoir'],
         [
             'description' => 'System-generated container for global pool extraction.',
             'duration_minutes' => 60,
             'teacher_id' => auth()->id() ?? 1, 
-            'subject_id' => 0, 
+            'subject_id' => $globalSubject->id, 
             'topic' => 'GLOBAL_BANK',
             'difficulty' => 'Easy'
         ]
     );
 
-    if ($bankQuiz->subject_id != 0) {
-        $bankQuiz->update(['subject_id' => 0]);
+    if ($bankQuiz->subject_id != $globalSubject->id) {
+        $bankQuiz->update(['subject_id' => $globalSubject->id]);
     }
 
     $file = $request->file('pdf_file');
@@ -320,7 +330,8 @@ class QuizController extends Controller
     $currentAnswerLines = [];
 
     foreach ($lines as $line) {
-        $line = trim(line);
+        // Fix the typo variable look-ahead from your copy-paste ($line instead of line)
+        $line = trim($line);
 
         if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
             continue;
@@ -328,7 +339,7 @@ class QuizController extends Controller
 
         if (preg_match('/^\d+/', $line)) {
             if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-                $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+                $this->saveBufferedQuestion($bankQuiz->id, $globalSubject->id, $currentQuestionText, $currentAnswerLines);
                 $importCount++;
             }
 
@@ -345,7 +356,7 @@ class QuizController extends Controller
     }
 
     if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-        $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+        $this->saveBufferedQuestion($bankQuiz->id, $globalSubject->id, $currentQuestionText, $currentAnswerLines);
         $importCount++;
     }
 

@@ -60,7 +60,7 @@
         <div class="quiz-item" 
              data-title="{{ strtolower($quiz->title) }}" 
              data-topic="{{ strtolower($quiz->topic) }}" 
-             data-subject="{{ $quiz->subject_id == 0 ? 'global reservoir' : ($quiz->subject ? $quiz->subject->subject_name : 'unassigned') }}"
+             data-subject="{{ $quiz->subject ? strtolower($quiz->subject->subject_name) : 'unassigned' }}"
              data-difficulty="{{ $quiz->difficulty }}">
             <div class="quiz-card">
                 <span class="difficulty-badge diff-{{ strtolower($quiz->difficulty) }}">
@@ -73,10 +73,10 @@
                 </div>
 
                 <div class="mb-4">
-                    @if($quiz->subject_id == 0 || !$quiz->subject)
+                   @if($quiz->subject && $quiz->subject->subject_name === 'Global Reservoir')
                         <span class="subject-pill bg-dark text-white border-0"><i class="fas fa-globe mr-1"></i>Global Reservoir</span>
                     @else
-                        <span class="subject-pill">{{ $quiz->subject->subject_name }}</span>
+                        <span class="subject-pill">{{ $quiz->subject ? $quiz->subject->subject_name : 'Unassigned' }}</span>
                     @endif
                     <span class="text-muted small ml-2">{{ $quiz->topic }}</span>
                 </div>
