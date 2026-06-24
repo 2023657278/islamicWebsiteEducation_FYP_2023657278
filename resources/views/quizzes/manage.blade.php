@@ -47,7 +47,9 @@
                             </div>
                             <div class="col-md-8">
                                 <label class="small font-weight-bold text-uppercase">Question Type</label>
-                                @php $qType = $editingQuestion ? $editingQuestion->question_type : 'single'; @phpendphp
+                                @php 
+                                    $qType = $editingQuestion ? $editingQuestion->question_type : 'single'; 
+                                @endphp
                                 <select name="question_type" id="typeSelector" class="form-control">
                                     <option value="single" {{ $qType == 'single' ? 'selected' : '' }}>Single Choice (Radio)</option>
                                     <option value="multiple" {{ $qType == 'multiple' ? 'selected' : '' }}>Multiple Correct (Checkbox)</option>
@@ -115,7 +117,7 @@
                 </div>
             </div>
 
-            {{-- 🟢 ADDED INDEPENDENTLY: AL-FALAH QUESTION BANK TOOL --}}
+            {{-- INDEPENDENT COMPONENT: AL-FALAH QUESTION BANK TOOL --}}
             <div class="card shadow-sm border-left-success mt-4">
                 <div class="card-header bg-white py-3">
                     <h5 class="m-0 font-weight-bold text-success"><i class="fas fa-university mr-2"></i>Al-Falah Question Bank Search</h5>
@@ -220,7 +222,6 @@
     </div>
 </div>
 
-{{-- UNTOUCHED ORIGINAL SCRIPT RUNNERS --}}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const typeSelector = document.getElementById('typeSelector');
@@ -297,7 +298,7 @@
             });
         }
 
-        // 🟢 FIXED RETRIEVAL ENGINE SCRIPT
+        // AL-FALAH RETRIEVAL ENGINE SCRIPT
         const keywordField = document.getElementById('bankKeywordField');
         const triggerBtn = document.getElementById('triggerSearchBtn');
         const resultsBox = document.getElementById('bankQueryListWrapper');
@@ -314,10 +315,9 @@
             }
             resultsBox.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin text-success mr-1"></i> Searching reservoir database...</div>';
 
-            // Fixed relative fetch path to search properly across DigitalOcean folder structures
             fetch(`/question-bank/search?keyword=${encodeURIComponent(keyword)}`)
-                .then(response => response.json())
-                .then(data => {
+                ->then(response => response.json())
+                ->then(data => {
                     resultsBox.innerHTML = '';
                     if(!data || data.length === 0) {
                         resultsBox.innerHTML = '<p class="text-muted text-center small py-3 my-0">No matching questions found.</p>';
