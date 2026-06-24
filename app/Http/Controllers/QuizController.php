@@ -293,30 +293,22 @@ class QuizController extends Controller
         'subject_id' => 'required|integer'
     ]);
 
-    try {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE `quizzes` MODIFY COLUMN `subject_id` INT NULL");
-    } catch (\Exception $e) {
-        // Fails silently if restricted
-    }
-
-    // 🟢 FIXED CONTAINER: Created cleanly with a NULL subject_id mapping
+    // 🟢 FIXED HOLDER: Uses a numeric fallback index (0) to satisfy strict NOT NULL columns safely
     $bankQuiz = \App\Models\Quiz::firstOrCreate(
         ['title' => 'Al-Falah Global Question Bank Reservoir'],
         [
             'description' => 'System-generated container for global pool extraction.',
             'duration_minutes' => 60,
             'teacher_id' => auth()->id() ?? 1, 
-            'subject_id' => null, 
+            'subject_id' => 0, 
             'topic' => 'GLOBAL_BANK',
             'difficulty' => 'Easy'
         ]
     );
 
-    if ($bankQuiz->subject_id !== null) {
-        $bankQuiz->update(['subject_id' => null]);
+    if ($bankQuiz->subject_id != 0) {
+        $bankQuiz->update(['subject_id' => 0]);
     }
-
-    // 🛑 REMOVED THE DUPLICATED RE-ASSIGNMENT CODE BLOCK FROM HERE
 
     $file = $request->file('pdf_file');
     $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
@@ -328,7 +320,7 @@ class QuizController extends Controller
     $currentAnswerLines = [];
 
     foreach ($lines as $line) {
-        $line = trim($line);
+        $line = trim(line);
 
         if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
             continue;
