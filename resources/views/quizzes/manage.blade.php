@@ -47,9 +47,7 @@
                             </div>
                             <div class="col-md-8">
                                 <label class="small font-weight-bold text-uppercase">Question Type</label>
-                                @php 
-                                    $qType = $editingQuestion ? $editingQuestion->question_type : 'single'; 
-                                @endphp
+                                @php $qType = $editingQuestion ? $editingQuestion->question_type : 'single'; @endphp
                                 <select name="question_type" id="typeSelector" class="form-control">
                                     <option value="single" {{ $qType == 'single' ? 'selected' : '' }}>Single Choice (Radio)</option>
                                     <option value="multiple" {{ $qType == 'multiple' ? 'selected' : '' }}>Multiple Correct (Checkbox)</option>
@@ -97,10 +95,10 @@
                                 @endif
                             </div>
 
-                            <button type="button" class="btn btn-sm btn-info mt-2" id="addOptionBtn">
-                                <i class="fas fa-plus"></i> Add Another Option
-                            </button>
-                        </div>
+                                <button type="button" class="btn btn-sm btn-info mt-2" id="addOptionBtn">
+                                    <i class="fas fa-plus"></i> Add Another Option
+                                </button>
+                            </div>
 
                         {{-- FILL IN THE BLANK TEXT SECTION --}}
                         <div id="textSection" style="{{ $qType == 'text' ? '' : 'display: none;' }}">
@@ -117,7 +115,7 @@
                 </div>
             </div>
 
-            {{-- INDEPENDENT COMPONENT: AL-FALAH QUESTION BANK TOOL --}}
+            {{-- 🟢 ADDED: NEW SEPARATE CARD FOR AL-FALAH QUESTION BANK TOOL --}}
             <div class="card shadow-sm border-left-success mt-4">
                 <div class="card-header bg-white py-3">
                     <h5 class="m-0 font-weight-bold text-success"><i class="fas fa-university mr-2"></i>Al-Falah Question Bank Search</h5>
@@ -186,6 +184,7 @@
                                 <span class="badge badge-secondary">{{ ucfirst($q->question_type) }}</span>
                                 <span class="badge badge-warning text-dark">{{ $q->points }} pts</span>
                                 
+                                {{-- 🟢 THE SIMPLE FIX: Trigger edit mode natively via URL parameters --}}
                                 <a href="{{ route('quizzes.manage', [$quiz->id, 'edit_question_id' => $q->id]) }}" class="btn btn-sm text-primary p-0 ml-2" title="Edit row data parameters">
                                     <i class="fas fa-pen"></i>
                                 </a>
@@ -298,7 +297,7 @@
             });
         }
 
-        // AL-FALAH RETRIEVAL ENGINE SCRIPT
+        // 🟢 ADDED: NEW INDEPENDENT SCRIPT RUNNERS FOR AL-FALAH WEB FETCHING
         const keywordField = document.getElementById('bankKeywordField');
         const triggerBtn = document.getElementById('triggerSearchBtn');
         const resultsBox = document.getElementById('bankQueryListWrapper');
@@ -315,9 +314,10 @@
             }
             resultsBox.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin text-success mr-1"></i> Searching reservoir database...</div>';
 
+            // 🏁 FIX: Explicit absolute routing target mapping path
             fetch(`/question-bank/search?keyword=${encodeURIComponent(keyword)}`)
-                ->then(response => response.json())
-                ->then(data => {
+                .then(response => response.json())
+                .then(data => {
                     resultsBox.innerHTML = '';
                     if(!data || data.length === 0) {
                         resultsBox.innerHTML = '<p class="text-muted text-center small py-3 my-0">No matching questions found.</p>';
@@ -325,7 +325,7 @@
                     }
                     data.forEach(q => {
                         let correctAnswerRow = q.options.find(o => o.is_correct == 1 || o.is_correct == true);
-                        let answerTextStr = correctAnswerRow ? correctAnswerRow.option_text : (q.correct_answer_text ? q.correct_answer_text : 'No explicit answer found');
+                        let answerTextStr = correctAnswerRow ? correctAnswerRow.option_text : q.correct_answer_text;
                         
                         let itemHtml = `
                             <div class="list-group-item p-2 mb-1 border-left-success d-flex justify-content-between align-items-center bg-white shadow-xs">
@@ -343,7 +343,7 @@
                         resultsBox.insertAdjacentHTML('beforeend', itemHtml);
                     });
                 }).catch(err => {
-                    resultsBox.innerHTML = '<div class="alert alert-danger small m-2 p-2 text-center">Error fetching search results.</div>';
+                    resultsBox.innerHTML = '<div class="alert alert-danger small m-2 p-2 text-center">Transmission routing error.</div>';
                 });
         }
 
