@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\AnalyticsService;
+use Smalot\PdfParser\Parser;
 
 class QuizController extends Controller
 {
@@ -282,4 +283,59 @@ class QuizController extends Controller
         
         return back()->with('success', 'Question deleted successfully.');
     }
+
+    // question banks
+    public function uploadQuestionsBank(Request $request)
+{
+    $request->validate([
+        'pdf_file' => 'required|mimes:pdf|max:20480', // Allow up to 20MB
+        'subject_id' => 'required|integer'
+    ]);
+
+    // 1. Store the uploaded file temporarily inside local framework directories
+    $file = $request->file('pdf_file');
+    $rawText = (new Parser())->parseFile($file->getRealPath())->getText();
+
+    // 2. Break down text into rows
+    $lines = explode("\n", $rawText);
+    $currentQuestion = null;
+    $importCount = 0;
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS')) {
+            continue;
+        }
+
+        // RegEx Check: Detect lines starting with numbers (e.g., "1. Apakah maksud Mad Silah?")
+        if (preg_match('/^(\d+)\.\s*(.*)/', $line, $matches)) {
+            $questionString = trim($matches[2]);
+
+            if (empty($questionString)) continue;
+
+            $currentQuestion = Question::create([
+                'question_text' => $questionString,
+                'question_type' => 'text',
+                'points' => 2,
+                'subject_id' => $request->subject_id,
+                'difficulty' => 'Easy',
+            ]);
+
+            $importCount++;
+        } 
+        // Relational Binding Check: Save trailing row lines as the correct option answer text
+        elseif ($currentQuestion && !empty($line) && !str_contains($line, 'Markah') && !str_contains($line, 'BIL.')) {
+            $currentQuestion->options()->create([
+                'option_text' => $line,
+                'is_correct' => true
+            ]);
+
+            $currentQuestion->update(['correct_answer_text' => $line]);
+            $currentQuestion = null; // Reset pointer object hook
+        }
+    }
+
+    return back()->with('success', "Al-Falah Bank Ingested Successfully! Imported {$importCount} questions.");
+}
 }

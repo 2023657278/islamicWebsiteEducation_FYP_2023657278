@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\WebhookSetupController;
 use App\Http\Controllers\YouTubeAuthController;
+use App\Http\Controllers\QuizController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +41,9 @@ Route::get('/home', function () {
     // Fallback if role is missing or mismatched
     return redirect('/');
 })->middleware('auth')->name('home');
+
+// 2. Admin Tools (Quiz Questions Bank Upload)
+Route::post('/admin/import-questions-bank', [QuizController::class, 'uploadQuestionsBank'])->name('questions.bank.upload');
 
 // 3. Admin Tools (Webhook Setup)
 Route::prefix('webhook')->group(function () {

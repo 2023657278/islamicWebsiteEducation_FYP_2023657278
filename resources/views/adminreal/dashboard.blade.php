@@ -196,6 +196,38 @@
     </div>
 </div>
 
+@if(auth()->user()->role === 'admin' || auth()->user()->role === 'teacher')
+<div class="card shadow mb-4 border-left-success">
+    <div class="card-header bg-white py-3">
+        <h6 class="m-0 font-weight-bold text-success"><i class="fas fa-file-upload mr-2"></i>Automated Al-Falah Bank PDF Ingestion Tool</h6>
+    </div>
+    <div class="card-body">
+        @if(session('success'))
+            <div class="alert alert-success small mb-3">{{ session('success') }}</div>
+        @endif
+
+        <form action="{{ route('questions.bank.upload') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="row align-items-end">
+                <div class="col-md-6 mb-2">
+                    <label class="small font-weight-bold text-uppercase text-muted">Select Modul Al-Falah PDF File</label>
+                    <input type="file" name="pdf_file" class="form-control-file border p-2 rounded bg-light" required>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="small font-weight-bold text-uppercase text-muted">Target Subject Mapping ID</label>
+                    <input type="number" name="subject_id" class="form-control" value="1" required title="1 usually represents Pendidikan Islam">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <button type="submit" class="btn btn-success btn-block font-weight-bold shadow-sm">
+                        <i class="fas fa-play mr-1"></i> Trigger Ingestion
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 {{-- 🛑 AIR-TIGHT EXTRACTION FIX: Modal moved completely out of structural page flows to override AdminLTE layout trees --}}
 <div class="modal fade" id="doubleVerificationModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" role="document">
