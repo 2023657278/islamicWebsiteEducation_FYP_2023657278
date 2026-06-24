@@ -62,7 +62,7 @@ class StudentDashboardController extends Controller
             $quizzes = Quiz::where('subject_id', $sub->id)
                            ->where('topic', '!=', 'GLOBAL_BANK')
                            ->where('topic', '!=', 'PVP_ARENA_BATTLE')
-                           ->where('subject_code', '!=', 'GLOBAL_RESERVOIR')
+                           ->where('subject_id', '!=', 'GLOBAL_RESERVOIR')
                            ->get();
                            
             $roadmapQuizzes = [];
