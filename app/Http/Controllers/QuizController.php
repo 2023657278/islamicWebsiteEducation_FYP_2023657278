@@ -287,77 +287,90 @@ class QuizController extends Controller
 
     // question banks
     public function uploadQuestionsBank(Request $request)
-{
-    $request->validate([
-        'pdf_file' => 'required|mimes:pdf|max:20480', 
-        'subject_id' => 'required|integer'
-    ]);
+    {
+        $request->validate([
+            'pdf_file' => 'required|mimes:pdf|max:20480', 
+            'subject_id' => 'required|integer'
+        ]);
 
-    $bankQuiz = \App\Models\Quiz::firstOrCreate(
-        ['title' => 'Al-Falah Global Question Bank Reservoir'],
-        [
-            'description' => 'System-generated container for global pool extraction.',
-            'duration_minutes' => 60,
-            'teacher_id' => auth()->id() ?? 1, 
-            'subject_id' => $request->subject_id,
-            'topic' => 'GLOBAL_BANK',
-            'difficulty' => 'Easy'
-        ]
-    );
+        $bankQuiz = \App\Models\Quiz::firstOrCreate(
+            ['title' => 'Al-Falah Global Question Bank Reservoir'],
+            [
+                'description' => 'System-generated container for global pool extraction.',
+                'duration_minutes' => 60,
+                'teacher_id' => auth()->id() ?? 1, 
+                'subject_id' => $request->subject_id,
+                'topic' => 'GLOBAL_BANK',
+                'difficulty' => 'Easy'
+            ]
+        );
 
-    $file = $request->file('pdf_file');
-    $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
+        $file = $request->file('pdf_file');
+        $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
 
-    // Break text down line by line
-    $lines = explode("\n", $rawText);
-    
-    $importCount = 0;
-    $currentQuestionText = "";
-    $currentAnswerLines = [];
+        $lines = explode("\n", $rawText);
+        
+        $importCount = 0;
+        $currentQuestionText = "";
+        $currentAnswerLines = [];
 
-    foreach ($lines as $line) {
-        $line = trim($line);
+        foreach ($lines as $line) {
+            $line = trim($line);
 
-        // Strip clear system junk, headers, and page footprints
-        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
-            continue;
-        }
-
-        // DETECT START OF A NEW ROW (Any text starting with a number, or just a standalone number from table splits)
-        if (preg_match('/^\d+/', $line)) {
-            
-            // Save what we have accumulated in our buffers so far
-            if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-                $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
-                $importCount++;
+            if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
+                continue;
             }
 
-            // Clean up the line to extract the text next to the number if there is any
-            $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
-            
-            $currentQuestionText = $cleaned;
-            $currentAnswerLines = [];
-        } 
-        // ACCUMULATE TEXT INTO BUFFERS
-        else {
-            // If the row contains column text markers, save it as answer body content
-            if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
-                $currentAnswerLines[] = $line;
+            if (preg_match('/^\d+/', $line)) {
+                if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+                    $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+                    $importCount++;
+                }
+
+                $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
+                $currentQuestionText = $cleaned;
+                $currentAnswerLines = [];
             } else {
-                // Otherwise, append it directly to build our main question sentence
-                $currentQuestionText .= " " . $line;
+                if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
+                    $currentAnswerLines[] = $line;
+                } else {
+                    $currentQuestionText .= " " . $line;
+                }
             }
         }
+
+        if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+            $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+            $importCount++;
+        }
+
+        return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
     }
 
-    // Flush remaining buffer item
-    if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-        $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
-        $importCount++;
-    }
+    /**
+     * 🟢 THE MISSING METHOD - PASTE THIS RIGHT BELOW THE UPLOAD FUNCTION
+     */
+    private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
+    {
+        $combinedAnswerText = implode("\n", $answerLines);
 
-    return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
-}
+        $question = \App\Models\Question::create([
+            'question_text'       => trim($questionText),
+            'question_type'       => 'text', 
+            'points'              => 2,
+            'subject_id'          => $subjectId,
+            'difficulty'          => 'Easy',
+            'quiz_id'             => $quizId, 
+            'correct_answer_text' => $combinedAnswerText
+        ]);
+
+        $question->quizzes()->attach($quizId);
+
+        $question->options()->create([
+            'option_text' => $combinedAnswerText,
+            'is_correct'  => true
+        ]);
+    }
 
 // =================================================================
 // 🟢 PART D: KEYWORD SEARCH & AUTO-FILL QUESTION BANK DISPATCHER
