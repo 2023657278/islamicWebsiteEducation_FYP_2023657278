@@ -289,15 +289,29 @@ class QuizController extends Controller
     public function uploadQuestionsBank(Request $request)
 {
     $request->validate([
-        'pdf_file' => 'required|mimes:pdf|max:20480', // Allow up to 20MB
+        'pdf_file' => 'required|mimes:pdf|max:20480', 
         'subject_id' => 'required|integer'
     ]);
 
-    // 1. Store the uploaded file temporarily inside local framework directories
+    // 🟢 1. AUTOMATIC DATABASE SAFEGUARD: 
+    // Find or automatically create a hidden placeholder quiz to hold global bank questions
+    $bankQuiz = \App\Models\Quiz::firstOrCreate(
+        ['title' => 'Al-Falah Global Question Bank Reservoir'],
+        [
+            'description' => 'System-generated container for global pool extraction.',
+            'duration_minutes' => 60,
+            'teacher_id' => auth()->id() ?? 1, // Fallback to first user ID if unauthenticated
+            'subject_id' => $request->subject_id,
+            'topic' => 'GLOBAL_BANK',
+            'difficulty' => 'Easy'
+        ]
+    );
+
+    // 2. Store the uploaded file temporarily inside local framework directories
     $file = $request->file('pdf_file');
     $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
 
-    // 2. Break down text into rows
+    // 3. Break down text into rows
     $lines = explode("\n", $rawText);
     $currentQuestion = null;
     $importCount = 0;
@@ -315,14 +329,20 @@ class QuizController extends Controller
 
             if (empty($questionString)) continue;
 
+            // 🟢 4. INGEST QUESTION WITH VALID QUIZ PARENT
             $currentQuestion = Question::create([
                 'question_text' => $questionString,
                 'question_type' => 'text',
-                'points' => 2,
-                'subject_id' => $request->subject_id,
-                'difficulty' => 'Easy',
-                'quiz_id'       => null,
+                'points'        => 2,
+                'subject_id'    => $request->subject_id,
+                'difficulty'    => 'Easy',
+                
+                // Maps to our safe placeholder quiz row to satisfy MySQL integrity rules
+                'quiz_id'       => $bankQuiz->id, 
             ]);
+
+            // Also link it via the belongsToMany pivot table loop for full architectural support
+            $bankQuiz->questions()->attach($currentQuestion->id);
 
             $importCount++;
         } 
@@ -334,7 +354,7 @@ class QuizController extends Controller
             ]);
 
             $currentQuestion->update(['correct_answer_text' => $line]);
-            $currentQuestion = null; // Reset pointer object hook
+            $currentQuestion = null; 
         }
     }
 
