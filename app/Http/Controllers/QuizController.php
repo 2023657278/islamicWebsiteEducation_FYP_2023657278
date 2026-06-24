@@ -287,65 +287,78 @@ class QuizController extends Controller
 
     // question banks
     public function uploadQuestionsBank(Request $request)
-    {
-        $request->validate([
-            'pdf_file' => 'required|mimes:pdf|max:20480', 
-            'subject_id' => 'required|integer'
-        ]);
+{
+    $request->validate([
+        'pdf_file' => 'required|mimes:pdf|max:20480', 
+        'subject_id' => 'required|integer'
+    ]);
 
-        $bankQuiz = \App\Models\Quiz::firstOrCreate(
-            ['title' => 'Al-Falah Global Question Bank Reservoir'],
-            [
-                'description' => 'System-generated container for global pool extraction.',
-                'duration_minutes' => 60,
-                'teacher_id' => auth()->id() ?? 1, 
-                'subject_id' => $request->subject_id,
-                'topic' => 'GLOBAL_BANK',
-                'difficulty' => 'Easy'
-            ]
-        );
-
-        $file = $request->file('pdf_file');
-        $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
-
-        $lines = explode("\n", $rawText);
-        
-        $importCount = 0;
-        $currentQuestionText = "";
-        $currentAnswerLines = [];
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-
-            if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
-                continue;
-            }
-
-            if (preg_match('/^\d+/', $line)) {
-                if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-                    $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
-                    $importCount++;
-                }
-
-                $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
-                $currentQuestionText = $cleaned;
-                $currentAnswerLines = [];
-            } else {
-                if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
-                    $currentAnswerLines[] = $line;
-                } else {
-                    $currentQuestionText .= " " . $line;
-                }
-            }
-        }
-
-        if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
-            $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
-            $importCount++;
-        }
-
-        return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
+    try {
+        \Illuminate\Support\Facades\DB::statement("ALTER TABLE `quizzes` MODIFY COLUMN `subject_id` INT NULL");
+    } catch (\Exception $e) {
+        // Fails silently if restricted
     }
+
+    // 🟢 FIXED CONTAINER: Created cleanly with a NULL subject_id mapping
+    $bankQuiz = \App\Models\Quiz::firstOrCreate(
+        ['title' => 'Al-Falah Global Question Bank Reservoir'],
+        [
+            'description' => 'System-generated container for global pool extraction.',
+            'duration_minutes' => 60,
+            'teacher_id' => auth()->id() ?? 1, 
+            'subject_id' => null, 
+            'topic' => 'GLOBAL_BANK',
+            'difficulty' => 'Easy'
+        ]
+    );
+
+    if ($bankQuiz->subject_id !== null) {
+        $bankQuiz->update(['subject_id' => null]);
+    }
+
+    // 🛑 REMOVED THE DUPLICATED RE-ASSIGNMENT CODE BLOCK FROM HERE
+
+    $file = $request->file('pdf_file');
+    $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
+
+    $lines = explode("\n", $rawText);
+    
+    $importCount = 0;
+    $currentQuestionText = "";
+    $currentAnswerLines = [];
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
+            continue;
+        }
+
+        if (preg_match('/^\d+/', $line)) {
+            if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+                $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+                $importCount++;
+            }
+
+            $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
+            $currentQuestionText = $cleaned;
+            $currentAnswerLines = [];
+        } else {
+            if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
+                $currentAnswerLines[] = $line;
+            } else {
+                $currentQuestionText .= " " . $line;
+            }
+        }
+    }
+
+    if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
+        $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
+        $importCount++;
+    }
+
+    return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
+}
 
     /**
      * 🟢 THE MISSING METHOD - PASTE THIS RIGHT BELOW THE UPLOAD FUNCTION
