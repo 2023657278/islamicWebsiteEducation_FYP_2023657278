@@ -293,7 +293,6 @@ class QuizController extends Controller
         'subject_id' => 'required|integer'
     ]);
 
-    // Ensure our global bank reservoir quiz exists to maintain strict foreign keys
     $bankQuiz = \App\Models\Quiz::firstOrCreate(
         ['title' => 'Al-Falah Global Question Bank Reservoir'],
         [
@@ -309,7 +308,7 @@ class QuizController extends Controller
     $file = $request->file('pdf_file');
     $rawText = (new \Smalot\PdfParser\Parser())->parseFile($file->getRealPath())->getText();
 
-    // Split text into literal lines exactly as the PDF structured it
+    // Break text down line by line
     $lines = explode("\n", $rawText);
     
     $importCount = 0;
@@ -319,80 +318,45 @@ class QuizController extends Controller
     foreach ($lines as $line) {
         $line = trim($line);
 
-        // Skip layout metadata headers and footers
-        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || preg_match('/^\d+\s*$/', $line)) {
+        // Strip clear system junk, headers, and page footprints
+        if (empty($line) || str_contains($line, 'MODUL AL-FALAH') || str_contains($line, 'BUKU TEKS') || str_contains($line, 'Markah') || str_contains($line, 'BIL.')) {
             continue;
         }
 
-        // 1. DETECT A NEW QUESTION BLOCK (e.g., "7. Jelaskan prinsip...")
-        if (preg_match('/^(\d+)\.\s*(.*)/', $line, $matches)) {
+        // DETECT START OF A NEW ROW (Any text starting with a number, or just a standalone number from table splits)
+        if (preg_match('/^\d+/', $line)) {
             
-            // Before moving to the new question, save the previous one if it exists
+            // Save what we have accumulated in our buffers so far
             if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
                 $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
                 $importCount++;
             }
 
-            // Reset buffers for the new question found
-            $currentQuestionText = trim($matches[2]);
+            // Clean up the line to extract the text next to the number if there is any
+            $cleaned = preg_replace('/^\d+\s*[\.\)]?\s*/', '', $line);
+            
+            $currentQuestionText = $cleaned;
             $currentAnswerLines = [];
         } 
-        // 2. DETECT SUB-ANSWERS OR BULLET LISTS (e.g., "1. Melaksanakan ibadah...")
-        elseif (preg_match('/^(\d+)\.\s*(.*)/', $line) || preg_match('/^[a-zA-h]\)\s*(.*)/', $line) || !empty($currentQuestionText)) {
-            
-            // If it's a continuing description of the question text before answers begin
-            if (empty($currentAnswerLines) && !preg_match('/^(\d+)\./', $line) && !str_contains($line, 'Markah')) {
-                // If the line contains the main keyword but belongs to the answer column header layout
-                if (str_contains($line, 'Wasatiyyah dari aspek') || str_contains($line, 'Umat yang')) {
-                    $currentAnswerLines[] = $line;
-                } else {
-                    $currentQuestionText .= " " . $line;
-                }
-            } 
-            // Otherwise, it's a line belonging to the answers matrix
-            else {
-                if (!str_contains($line, 'Markah') && !str_contains($line, 'BIL.')) {
-                    $currentAnswerLines[] = $line;
-                }
+        // ACCUMULATE TEXT INTO BUFFERS
+        else {
+            // If the row contains column text markers, save it as answer body content
+            if (str_contains($line, 'Umat') || preg_match('/^\d/', $line) || count($currentAnswerLines) > 0 || strlen($line) > 40) {
+                $currentAnswerLines[] = $line;
+            } else {
+                // Otherwise, append it directly to build our main question sentence
+                $currentQuestionText .= " " . $line;
             }
         }
     }
 
-    // Save the final leftover question block remaining in the buffer
+    // Flush remaining buffer item
     if (!empty($currentQuestionText) && !empty($currentAnswerLines)) {
         $this->saveBufferedQuestion($bankQuiz->id, $request->subject_id, $currentQuestionText, $currentAnswerLines);
         $importCount++;
     }
 
-    return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} complex questions.");
-}
-
-/**
- * Helper function to structure and save the buffered text blocks cleanly
- */
-private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
-{
-    // Combine answer rows with clear line breaks so the exact list styling is retained
-    $combinedAnswerText = implode("\n", $answerLines);
-
-    $question = \App\Models\Question::create([
-        'question_text'       => trim($questionText),
-        'question_type'       => 'text', // Safe default fallback
-        'points'              => 2,
-        'subject_id'          => $subjectId,
-        'difficulty'          => 'Easy',
-        'quiz_id'             => $quizId, 
-        'correct_answer_text' => $combinedAnswerText
-    ]);
-
-    // Link it to our global search repository pivot array
-    $question->quizzes()->attach($quizId);
-
-    // Populate options relationship row
-    $question->options()->create([
-        'option_text' => $combinedAnswerText,
-        'is_correct'  => true
-    ]);
+    return back()->with('success', "Al-Falah Bank Ingested Successfully! Line-by-line matching pulled {$importCount} questions.");
 }
 
 // =================================================================
