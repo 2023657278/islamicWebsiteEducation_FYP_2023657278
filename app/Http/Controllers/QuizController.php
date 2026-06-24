@@ -73,6 +73,7 @@ class QuizController extends Controller
     public function index()
     {
         $quizzes = Quiz::where('topic', '!=', 'PVP_ARENA_BATTLE')
+                        ->where('topic', '!=', 'GLOBAL_BANK')
                         ->with(['subject']) 
                         ->latest()
                         ->get();
