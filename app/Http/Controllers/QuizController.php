@@ -373,10 +373,10 @@ public function searchBank(Request $request)
         return response()->json([]);
     }
 
-    // Search for matching rows in your 702 global questions dataset
+    // Search for matching rows in your global questions dataset
     $questions = Question::where('question_text', 'LIKE', "%{$keyword}%")
         ->with(['options' => function($query) {
-            $query->where('is_correct', true); // Only grab the correct answer string from the bank
+            $query->where('is_correct', true);
         }])
         ->limit(10)
         ->get();
@@ -394,25 +394,32 @@ public function attachBankQuestion(Request $request, $quiz_id)
     ]);
 
     $quiz = Quiz::findOrFail($quiz_id);
-    $bankQuestion = Question::findOrFail($request->bank_question_id);
+    $bankQuestion = Question::with('options')->findOrFail($request->bank_question_id);
 
-    // Clone the question row specifically for this quiz to avoid overwriting the master reservoir
+    // 🏁 FIX: If correct_answer_text is null, look inside the options table relation for the answer
+    $correctAnswerText = $bankQuestion->correct_answer_text;
+    if (empty($correctAnswerText)) {
+        $correctOption = $bankQuestion->options->where('is_correct', true)->first();
+        $correctAnswerText = $correctOption ? $correctOption->option_text : 'Jawapan Betul';
+    }
+
+    // Clone the question row specifically for this quiz
     $newQuestion = Question::create([
         'question_text'       => $bankQuestion->question_text,
-        'question_type'       => 'single', // Converted to single choice multiple choice form
+        'question_type'       => 'single', 
         'points'              => $request->points,
         'quiz_id'             => $quiz->id,
         'subject_id'          => $quiz->subject_id,
         'difficulty'          => $quiz->difficulty,
-        'correct_answer_text' => $bankQuestion->correct_answer_text
+        'correct_answer_text' => $correctAnswerText
     ]);
 
     // Attach to the current quiz pivot table
     $quiz->questions()->attach($newQuestion->id);
 
-    // 1. Re-add the master correct answer text choice for the student interface
+    // 1. Re-add the verified correct answer text choice safely
     $newQuestion->options()->create([
-        'option_text' => $bankQuestion->correct_answer_text,
+        'option_text' => $correctAnswerText,
         'is_correct'  => true
     ]);
 
@@ -422,11 +429,11 @@ public function attachBankQuestion(Request $request, $quiz_id)
         
         $newQuestion->options()->create([
             'option_text' => $wrongText,
-            'is_correct'  => false // Strictly marked as wrong distractor rows
+            'is_correct'  => false 
         ]);
     }
 
-    return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank and distractors added successfully!');
+    return redirect()->route('quizzes.manage', $quiz->id)->with('success', 'Question linked from Al-Falah Bank successfully!');
 }
 
 }
