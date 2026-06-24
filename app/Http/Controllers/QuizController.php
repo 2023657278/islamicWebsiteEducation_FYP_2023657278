@@ -350,9 +350,23 @@ class QuizController extends Controller
     /**
      * 🟢 THE MISSING METHOD - PASTE THIS RIGHT BELOW THE UPLOAD FUNCTION
      */
+   /**
+     * Helper function to structure and save the buffered text blocks cleanly
+     */
     private function saveBufferedQuestion($quizId, $subjectId, $questionText, $answerLines)
     {
         $combinedAnswerText = implode("\n", $answerLines);
+
+        // 🟢 AUTOMATIC SCHEMA UPGRADE:
+        // Safely converts 'option_text' and 'question_text' to TEXT columns 
+        // to prevent character truncation errors on large paragraph arrays.
+        try {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE `options` MODIFY COLUMN `option_text` TEXT NULL");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE `questions` MODIFY COLUMN `question_text` TEXT NULL");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE `questions` MODIFY COLUMN `correct_answer_text` TEXT NULL");
+        } catch (\Exception $e) {
+            // Fails silently if already converted or restricted
+        }
 
         $question = \App\Models\Question::create([
             'question_text'       => trim($questionText),
