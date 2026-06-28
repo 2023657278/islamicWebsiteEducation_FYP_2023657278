@@ -162,42 +162,104 @@
       border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
     }
 
-    @media (max-width: 768px) {
-            .sidebar-wrapper, [class*="sidebar"] { 
-                width: 100% !important;
-                height: auto !important;
-                position: relative !important;
-                display: flex !important;
-                flex-direction: row !important;
-                justify-content: space-around;
-                padding: 10px 0 !important;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
+    /* 🖥️ DESKTOP VIEW: Bottom bar completely invisible */
+    @media (min-width: 768px) {
+      .mobile-teacher-nav {
+        display: none !important;
+      }
+    }
 
-            .sidebar-wrapper .nav, [class*="sidebar"] ul {
-                display: flex !important;
-                flex-direction: row !important;
-                width: 100%;
-                justify-content: space-around;
-                margin: 0;
-                padding: 0;
-            }
+    /* 📱 MOBILE RESPONSIVE TUNING */
+    @media (max-width: 767px) {
+      .main-sidebar {
+        display: none !important; /* Strips desktop sidebar framework */
+      }
 
-            .sidebar-wrapper .nav-item, [class*="sidebar"] li {
-                margin: 0 !important;
-            }
+      .main-header {
+        margin-left: 0 !important;
+        padding: 5px 10px !important;
+      }
 
-            .main-content, main, #content {
-                margin-left: 0 !important;
-                width: 100% !important;
-                padding: 15px !important;
-            }
-        }
+      .main-header .nav-link[data-widget="pushmenu"] {
+        display: none !important; /* Hides pushmenu icon since sidebar is inactive */
+      }
+
+      .content-wrapper {
+        margin-left: 0 !important;
+        padding-bottom: 85px !important; /* Prevents text elements from slipping underneath bottom bar */
+      }
+
+      .website-container {
+        padding: 15px 10px !important;
+      }
+
+      /* Bottom App Layout Styles */
+      .mobile-teacher-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #4a0404; /* Matches Teacher Portal deep maroon theme */
+        display: flex !important;
+        justify-content: space-around;
+        align-items: center;
+        padding: 8px 0;
+        z-index: 9999;
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .mobile-teacher-item {
+        color: #e5e5e5 !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 500;
+        text-decoration: none !important;
+        transition: 0.2s;
+      }
+
+      .mobile-teacher-item i {
+        font-size: 16px;
+        margin-bottom: 3px;
+      }
+
+      .mobile-teacher-item.active {
+        color: #fbbf24 !important; /* Gold selection state color */
+      }
+    }
   </style>
 </head>
 
 <body class="hold-transition layout-fixed layout-navbar-fixed">
 <div class="wrapper">
+
+  <!-- 📱 Mobile App Bottom Navbar -->
+  <div class="mobile-teacher-nav d-block d-md-none">
+    <a href="{{ route('admin.dashboard') }}" class="mobile-teacher-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+      <i class="fas fa-th-large"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="{{ route('messages.index') }}" class="mobile-teacher-item {{ request()->routeIs('messages.*') ? 'active' : '' }}">
+      <i class="fas fa-comment-alt"></i>
+      <span>Messages</span>
+    </a>
+    <a href="{{ route('quizzes.index') }}" class="mobile-teacher-item {{ request()->routeIs('quizzes.*') ? 'active' : '' }}">
+      <i class="fas fa-question-circle"></i>
+      <span>Quizzes</span>
+    </a>
+    <a href="{{ route('resources.index') }}" class="mobile-teacher-item {{ request()->routeIs('resources.*') ? 'active' : '' }}">
+      <i class="fas fa-folder"></i>
+      <span>Resources</span>
+    </a>
+    <a href="#" class="mobile-teacher-item text-danger" onclick="event.preventDefault(); document.getElementById('mobile-teacher-logout').submit();">
+      <i class="fas fa-power-off"></i>
+      <span>Exit</span>
+    </a>
+  </div>
+
+  <!-- Mobile Form Anchor Link Logic -->
+  <form id="mobile-teacher-logout" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
 
   <nav class="main-header navbar navbar-expand navbar-light">
     <ul class="navbar-nav">
