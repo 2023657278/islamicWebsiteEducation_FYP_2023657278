@@ -145,85 +145,104 @@
         }
 
         /* 🖥️ DESKTOP VIEW: Keep everything normal */
-@media (min-width: 768px) {
-    .mobile-nav-bar {
-        display: none !important; /* Hides the mobile bar completely on laptops */
-    }
-}
+        @media (min-width: 768px) {
+            .mobile-nav-bar {
+                display: none !important; 
+            }
+        }
 
-/* 📱 MOBILE VIEW: Only applies to phones */
-@media (max-width: 767px) {
-    /* Add .sidebar here so it vanishes completely on phones! */
-    .sidebar, .topbar {
-        display: none !important;
-    }
+        /* 📱 MOBILE VIEW: Only applies to phones */
+        @media (max-width: 767px) {
+            .sidebar {
+                display: none !important;
+            }
 
-    /* 2. Force the main page content to take up 100% space... */
-    .content-wrapper, .main-content, main {
-        margin-left: 0 !important;
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-        padding-bottom: 70px !important; 
-        width: 100% !important;
-    }
+            .topbar {
+                margin-left: 0 !important;
+                padding: 10px 15px !important;
+                background: #fff;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .system-hub {
+                padding: 5px 12px !important;
+                gap: 10px !important;
+            }
+            
+            .hub-item span {
+                font-size: 0.6rem !important;
+            }
 
-    /* 3. Style the mobile nav bar as a clean bottom bar (like Instagram or modern apps) */
-    .mobile-nav-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: #4a0404; /* Matches your Deep Maroon theme */
-        display: flex !important;
-        justify-content: space-around;
-        align-items: center;
-        padding: 10px 0;
-        z-index: 9999;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
-    }
+            .content-wrapper, .main-content, main {
+                margin-left: 0 !important;
+                padding-left: 15px !important;
+                padding-right: 15px !important;
+                padding-bottom: 80px !important; 
+                width: 100% !important;
+            }
 
-    /* 4. Style individual icons inside the mobile menu */
-    .mobile-nav-item {
-        color: #e5e5e5 !important; /* Light text */
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        font-size: 12px;
-        text-decoration: none !important;
-    }
+            .mobile-nav-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background-color: #8B1E24; 
+                display: flex !important;
+                justify-content: space-around;
+                align-items: center;
+                padding: 8px 0;
+                z-index: 9999;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+            }
 
-    .mobile-nav-item i {
-        font-size: 18px;
-        margin-bottom: 3px;
-    }
+            .mobile-nav-item {
+                color: #e5e5e5 !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                font-size: 10px;
+                text-decoration: none !important;
+            }
 
-    /* Highlight the active link page */
-    .mobile-nav-item.active {
-        color: #fbbf24 !important; /* Matches your Active Gold theme */
-    }
-}
+            .mobile-nav-item i {
+                font-size: 16px;
+                margin-bottom: 2px;
+            }
+
+            .mobile-nav-item.active {
+                color: #fbbf24 !important; 
+            }
+        }
     </style>
 </head>
 <body class="{{ Route::is('student.homepage') ? 'is-homepage' : '' }}">
 
     <div class="mobile-nav-bar d-block d-md-none">
-    <a href="{{ route('student.homepage') }}" class="mobile-nav-item {{ Route::is('student.homepage') ? 'active' : '' }}">
-        <i class="fas fa-home"></i>
-        <span>Home</span>
-    </a>
-    <a href="{{ route('student.dashboard') }}" class="mobile-nav-item {{ Route::is('student.dashboard') ? 'active' : '' }}">
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="{{ route('student.quizzes.index') }}" class="mobile-nav-item {{ Route::is('student.quizzes.index') ? 'active' : '' }}">
-        <i class="fas fa-book-open"></i>
-        <span>Quizzes</span>
-    </a>
-    <a href="{{ route('student.ranking') }}" class="mobile-nav-item {{ Route::is('student.ranking') ? 'active' : '' }}">
-        <i class="fas fa-award"></i>
-        <span>Leaderboard</span>
-    </a>
-</div>
+        <a href="{{ route('student.homepage') }}" class="mobile-nav-item {{ Route::is('student.homepage') ? 'active' : '' }}">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ route('student.dashboard') }}" class="mobile-nav-item {{ Route::is('student.dashboard') ? 'active' : '' }}">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="{{ route('student.textbooks.index') }}" class="mobile-nav-item {{ Route::is('student.textbooks.index') ? 'active' : '' }}">
+            <i class="fas fa-book-reader"></i>
+            <span>Textbooks</span>
+        </a>
+        <a href="{{ route('student.quizzes.index') }}" class="mobile-nav-item {{ Route::is('student.quizzes.index') ? 'active' : '' }}">
+            <i class="fas fa-tasks"></i>
+            <span>Quizzes</span>
+        </a>
+        <a href="#" class="mobile-nav-item text-danger" onclick="event.preventDefault(); document.getElementById('mobile-logout-form').submit();">
+            <i class="fas fa-power-off"></i>
+            <span>Exit</span>
+        </a>
+    </div>
+
+    <form id="mobile-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+    </form>
 
     <div class="sidebar">
         <!-- Logo Section -->
