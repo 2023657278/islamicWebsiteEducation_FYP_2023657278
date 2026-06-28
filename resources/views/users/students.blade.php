@@ -145,36 +145,48 @@
         }
 
         @media (max-width: 768px) {
-            .sidebar-wrapper, [class*="sidebar"] { 
-                width: 100% !important;
-                height: auto !important;
-                position: relative !important;
-                display: flex !important;
-                flex-direction: row !important;
-                justify-content: space-around;
-                padding: 10px 0 !important;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
+    /* 1. Turn the main sidebar container into a neat top navigation bar */
+    .main-sidebar, [class*="sidebar"] {
+        width: 100% !important;
+        height: auto !important;
+        position: relative !important;
+        display: block !important;
+        float: none !important;
+        padding: 5px 0 !important;
+    }
 
-            .sidebar-wrapper .nav, [class*="sidebar"] ul {
-                display: flex !important;
-                flex-direction: row !important;
-                width: 100%;
-                justify-content: space-around;
-                margin: 0;
-                padding: 0;
-            }
+    /* 2. Force the vertical menu links to stack side-by-side as clean row items */
+    .nav-sidebar, [class*="sidebar"] ul {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important; /* Allows items to jump to a new line if screen is tiny */
+        justify-content: space-around !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
 
-            .sidebar-wrapper .nav-item, [class*="sidebar"] li {
-                margin: 0 !important;
-            }
+    /* 3. Strip out the desktop styles that break mobile layout tracking */
+    .nav-sidebar .nav-item {
+        margin: 2px 5px !important;
+    }
 
-            .main-content, main, #content {
-                margin-left: 0 !important;
-                width: 100% !important;
-                padding: 15px !important;
-            }
-        }
+    .nav-sidebar .nav-link {
+        padding: 8px 12px !important;
+        text-align: center !important;
+    }
+
+    /* 4. Reset the main content page body so it sits perfectly underneath the top bar */
+    .content-wrapper, .main-content, main {
+        margin-left: 0 !important;
+        padding-top: 15px !important;
+        width: 100% !important;
+    }
+
+    /* Hide unnecessary branding text blocks on mobile screens to save space */
+    .brand-link, .sidebar-user, .user-panel {
+        display: none !important;
+    }
+}
     </style>
 </head>
 <body class="{{ Route::is('student.homepage') ? 'is-homepage' : '' }}">
