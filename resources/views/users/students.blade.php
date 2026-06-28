@@ -144,52 +144,86 @@
             border-radius: 15px; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        @media (max-width: 768px) {
-    /* 1. Turn the main sidebar container into a neat top navigation bar */
-    .main-sidebar, [class*="sidebar"] {
-        width: 100% !important;
-        height: auto !important;
-        position: relative !important;
-        display: block !important;
-        float: none !important;
-        padding: 5px 0 !important;
+        /* 🖥️ DESKTOP VIEW: Keep everything normal */
+@media (min-width: 768px) {
+    .mobile-nav-bar {
+        display: none !important; /* Hides the mobile bar completely on laptops */
+    }
+}
+
+/* 📱 MOBILE VIEW: Only applies to phones */
+@media (max-width: 767px) {
+    /* Add .sidebar here so it vanishes completely on phones! */
+    .sidebar, .topbar {
+        display: none !important;
     }
 
-    /* 2. Force the vertical menu links to stack side-by-side as clean row items */
-    .nav-sidebar, [class*="sidebar"] ul {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important; /* Allows items to jump to a new line if screen is tiny */
-        justify-content: space-around !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* 3. Strip out the desktop styles that break mobile layout tracking */
-    .nav-sidebar .nav-item {
-        margin: 2px 5px !important;
-    }
-
-    .nav-sidebar .nav-link {
-        padding: 8px 12px !important;
-        text-align: center !important;
-    }
-
-    /* 4. Reset the main content page body so it sits perfectly underneath the top bar */
+    /* 2. Force the main page content to take up 100% space... */
     .content-wrapper, .main-content, main {
         margin-left: 0 !important;
-        padding-top: 15px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: 70px !important; 
         width: 100% !important;
     }
 
-    /* Hide unnecessary branding text blocks on mobile screens to save space */
-    .brand-link, .sidebar-user, .user-panel {
-        display: none !important;
+    /* 3. Style the mobile nav bar as a clean bottom bar (like Instagram or modern apps) */
+    .mobile-nav-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #4a0404; /* Matches your Deep Maroon theme */
+        display: flex !important;
+        justify-content: space-around;
+        align-items: center;
+        padding: 10px 0;
+        z-index: 9999;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 4. Style individual icons inside the mobile menu */
+    .mobile-nav-item {
+        color: #e5e5e5 !important; /* Light text */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 12px;
+        text-decoration: none !important;
+    }
+
+    .mobile-nav-item i {
+        font-size: 18px;
+        margin-bottom: 3px;
+    }
+
+    /* Highlight the active link page */
+    .mobile-nav-item.active {
+        color: #fbbf24 !important; /* Matches your Active Gold theme */
     }
 }
     </style>
 </head>
 <body class="{{ Route::is('student.homepage') ? 'is-homepage' : '' }}">
+
+    <div class="mobile-nav-bar d-block d-md-none">
+    <a href="{{ route('student.homepage') }}" class="mobile-nav-item {{ Route::is('student.homepage') ? 'active' : '' }}">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ route('student.dashboard') }}" class="mobile-nav-item {{ Route::is('student.dashboard') ? 'active' : '' }}">
+        <i class="fas fa-tachometer-alt"></i>
+        <span>Dashboard</span>
+    </a>
+    <a href="{{ route('student.quizzes.index') }}" class="mobile-nav-item {{ Route::is('student.quizzes.index') ? 'active' : '' }}">
+        <i class="fas fa-book-open"></i>
+        <span>Quizzes</span>
+    </a>
+    <a href="{{ route('student.ranking') }}" class="mobile-nav-item {{ Route::is('student.ranking') ? 'active' : '' }}">
+        <i class="fas fa-award"></i>
+        <span>Leaderboard</span>
+    </a>
+</div>
 
     <div class="sidebar">
         <!-- Logo Section -->
