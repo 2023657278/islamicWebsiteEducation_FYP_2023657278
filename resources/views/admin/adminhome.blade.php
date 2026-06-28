@@ -161,6 +161,38 @@
       -webkit-backdrop-filter: blur(15px);
       border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
     }
+
+    @media (max-width: 768px) {
+            .sidebar-wrapper, [class*="sidebar"] { 
+                width: 100% !important;
+                height: auto !important;
+                position: relative !important;
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-around;
+                padding: 10px 0 !important;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+
+            .sidebar-wrapper .nav, [class*="sidebar"] ul {
+                display: flex !important;
+                flex-direction: row !important;
+                width: 100%;
+                justify-content: space-around;
+                margin: 0;
+                padding: 0;
+            }
+
+            .sidebar-wrapper .nav-item, [class*="sidebar"] li {
+                margin: 0 !important;
+            }
+
+            .main-content, main, #content {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 15px !important;
+            }
+        }
   </style>
 </head>
 
