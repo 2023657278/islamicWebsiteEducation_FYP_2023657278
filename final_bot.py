@@ -5,11 +5,15 @@ import matplotlib.pyplot as plt
 import io
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
+# Load secret environment variables from local .env file
+load_dotenv()
+
 # 🔥 SYSTEM ENVIRONMENT CONFIGURATION
-TOKEN = "8036575496:AAFtaYbG65gKDAFPV7BBcDNs9vmeFrB4nk0"
+TOKEN = os.getenv("BOT_TOKEN")
 db_config = {
     'user': 'adminuser', 
     'password': 'Password123!', 
@@ -17,6 +21,9 @@ db_config = {
     'database': 'islamicwebsite', 
     'raise_on_warnings': True
 }
+
+if not TOKEN:
+    raise ValueError("BOT_TOKEN is missing! Please check your .env file.")
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
