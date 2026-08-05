@@ -43,7 +43,7 @@
         <select id="subjectFilter" class="form-control w-auto">
             <option value="">All Subjects</option>
             @foreach($subjects as $s)
-                <option value="{{ $s->subject_name }}">{{ $s->subject_name }}</option>
+                <option value="{{ strtolower($s->subject_name) }}">{{ $s->subject_name }}</option>
             @endforeach
         </select>
 
@@ -60,7 +60,7 @@
         <div class="quiz-item" 
              data-title="{{ strtolower($quiz->title) }}" 
              data-topic="{{ strtolower($quiz->topic) }}" 
-             data-subject="{{ $quiz->subject ? strtolower($quiz->subject->subject_name) : 'unassigned' }}"
+             data-subject="{{ $quiz->subject ? strtolower(trim($quiz->subject->subject_name)) : 'unassigned' }}"
              data-difficulty="{{ $quiz->difficulty }}">
             <div class="quiz-card">
                 <span class="difficulty-badge diff-{{ strtolower($quiz->difficulty) }}">
@@ -120,14 +120,19 @@
         const items = document.querySelectorAll('.quiz-item');
 
         function filter() {
-            const search = searchInput.value.toLowerCase();
-            const subject = subjectFilter.value;
-            const diff = diffFilter.value;
+            const search = searchInput.value.toLowerCase().trim();
+            const selectedSubject = subjectFilter.value.toLowerCase().trim();
+            const selectedDiff = diffFilter.value.trim();
 
             items.forEach(item => {
-                const matchesSearch = item.dataset.title.includes(search) || item.dataset.topic.includes(search);
-                const matchesSubject = subject === "" || item.dataset.subject === subject;
-                const matchesDiff = diff === "" || item.dataset.difficulty === diff;
+                const title = item.dataset.title || '';
+                const topic = item.dataset.topic || '';
+                const itemSubject = (item.dataset.subject || '').toLowerCase().trim();
+                const itemDiff = item.dataset.difficulty || '';
+
+                const matchesSearch = search === "" || title.includes(search) || topic.includes(search);
+                const matchesSubject = selectedSubject === "" || itemSubject === selectedSubject;
+                const matchesDiff = selectedDiff === "" || itemDiff === selectedDiff;
 
                 if (matchesSearch && matchesSubject && matchesDiff) {
                     item.style.display = "block";

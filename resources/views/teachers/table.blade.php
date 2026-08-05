@@ -49,12 +49,14 @@
                 </thead>
                 <tbody>
                     @forelse ($teachers as $t)
-                    <tr>
+                    <tr onclick="window.location='{{ route('teachers.show', $t->id) }}'" class="clickable-row">
                         <td class="ps-3 pl-3 font-weight-bold {{ auth()->user()->role === 'admin' ? 'text-info' : 'text-dark' }}">{{ $t->id }}</td>
-                        <td><div class="font-weight-bold text-white-90">{{ $t->name }}</div></td>
+                        <td>
+                            <div class="font-weight-bold {{ auth()->user()->role === 'admin' ? 'text-white-90' : 'text-primary' }}">{{ $t->name }}</div>
+                        </td>
                         <td>{{ $t->email }}</td>
                         <td>{{ $t->phone_number ?? 'Not Provided' }}</td>
-                        <td class="text-center">
+                        <td class="text-center" onclick="event.stopPropagation();">
                             <div class="btn-group">
                                 {{-- All Roles: View Details capability vector --}}
                                 <a href="{{ route('teachers.show', $t->id) }}" class="btn btn-sm btn-info text-white shadow-sm" title="View Progress">
@@ -100,6 +102,17 @@
     .btn-maroon { background-color: #800000; border-color: #800000; color: white; }
     .btn-maroon:hover { background-color: #660000; color: white; }
     .top-right-btn { right: 15px; top: 50%; transform: translateY(-50%); z-index: 10; }
+
+    /* Interactive Clickable Rows */
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    /* Row hover effect adapted for light mode */
+    .table:not(.table-dark) tbody .clickable-row:hover {
+        background-color: #e9ecef !important;
+    }
 
     @media (max-width: 768px) {
         .row.g-2 > div { margin-bottom: 10px; }
