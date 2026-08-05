@@ -80,10 +80,10 @@
                 </thead>
                 <tbody>
                     @forelse ($students as $s)
-                    <tr>
+                    <tr onclick="window.location='{{ route('students.show', $s->id) }}'" class="clickable-row">
                         <td class="ps-3 fw-bold text-dark">{{ $s->id }}</td>
                         <td>
-                            <div class="fw-bold">{{ $s->name }}</div>
+                            <div class="fw-bold text-primary">{{ $s->name }}</div>
                         </td>
                         <td>
                             <span class="badge bg-secondary text-white px-2">
@@ -95,7 +95,7 @@
                         <td class="text-center small">
                             {{ $s->created_at->format('d/m/Y') }}
                         </td>
-                        <td class="text-center">
+                        <td class="text-center" onclick="event.stopPropagation();">
                             <div class="btn-group">
                                 <a href="{{ route('students.show', $s->id) }}" class="btn btn-sm btn-info text-white shadow-sm" title="View Details">
                                     <i class="fas fa-eye"></i>
@@ -136,6 +136,15 @@
     .btn-maroon { background-color: #800000; border-color: #800000; color: white; }
     .btn-maroon:hover { background-color: #660000; color: white; }
     .top-right-btn { right: 15px; top: 50%; transform: translateY(-50%); }
+
+    /* Interactive Row Hover Effect */
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    .clickable-row:hover {
+        background-color: #e9ecef !important;
+    }
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
